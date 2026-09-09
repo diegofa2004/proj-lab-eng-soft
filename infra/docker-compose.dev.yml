@@ -1,73 +1,70 @@
-# Desenvolvimento local — db + backend (reload) + frontend (hot-reload).
-# Variáveis em infra/.env.dev, chamado explicitamente (env_file + --env-file):
+# Desenvolvimento local: PostgreSQL + FastAPI + Next.js.
+# Na raiz do projeto:
+#   docker compose up --build
+# Ou usando este arquivo diretamente, também a partir da raiz:
 #   docker compose --env-file infra/.env.dev -f infra/docker-compose.dev.yml up --build
-# Também sobe sem --env-file (defaults inseguros embutidos, só para dev).
-#
-# Serviços:
-#   db       -> localhost:5432 (postgres 16, user/pass default: login/senha)
-#   backend  -> localhost:8000 (FastAPI, docs em /docs)
-#   frontend -> localhost:3000 (Next.js dev)
 
 name: proj-lab-eng-soft
 
 services:
-  # db:
-  #   image: postgres:16-alpine
-  #   restart: unless-stopped
-  #   env_file:
-  #     - .env.dev
-  #   environment:
-  #     POSTGRES_USER: ${POSTGRES_USER:-login}
-  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-senha}
-  #     POSTGRES_DB: ${POSTGRES_DB:-pcs3443}
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - pgdata-dev:/var/lib/postgresql/data
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-login}"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-login}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-senha}
+      POSTGRES_DB: ${POSTGRES_DB:-pcs3443}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata-dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
-  # backend:
-  #   build:
-  #     context: ../backend
-  #     target: development
-  #   restart: unless-stopped
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #   env_file:
-  #     - .env.dev
-  #   environment:
-  #     DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-login}:${POSTGRES_PASSWORD:-senha}@db/${POSTGRES_DB:-pcs3443}
-  #     JWT_SECRET_KEY: ${JWT_SECRET_KEY:-segredo-dev-troque-em-producao}
-  #     BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS:-["http://localhost:3000"]}
-  #   ports:
-  #     - "8000:8000"
-  #   volumes:
-  #     - ../backend/app:/app/app # hot-reload do código
+  backend:
+    build:
+      context: ../backend
+      target: development
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env.dev
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-login}:${POSTGRES_PASSWORD:-senha}@db:5432/${POSTGRES_DB:-pcs3443}
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ../backend/app:/app/app
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/openapi.json', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   frontend:
     build:
       context: ../frontend
       target: development
     restart: unless-stopped
-    # depends_on:
-    #   - backend
-    env_file:
-      - .env.dev
+    depends_on:
+      backend:
+        condition: service_healthy
     environment:
-      # Dentro da rede do compose o backend se chama "backend".
-      # O browser nunca fala com o backend direto: só com os Route Handlers /api/*.
+      # Endereço para chamadas feitas pelo servidor Next.js dentro do Docker.
       BACKEND_URL: http://backend:8000
-      JWT_SECRET: ${JWT_SECRET_KEY:-segredo-dev-troque-em-producao}
+    command: ["npm", "run", "dev", "--", "--hostname", "0.0.0.0"]
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     volumes:
       - ../frontend:/app
-      - /app/node_modules # preserva os bins instalados no build
+      - /app/node_modules # preserva as dependências instaladas na imagem
       - /app/.next
 
 volumes:

@@ -1,2 +1,5 @@
+name: proj-lab-eng-soft
+
 include:
-  - infra/docker-compose.dev.yml
+  - path: infra/docker-compose.dev.yml
+    env_file: infra/.env.dev
