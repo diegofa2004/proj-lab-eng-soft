@@ -8,23 +8,24 @@
 
 FROM node:24-alpine AS base
 WORKDIR /app
+RUN corepack enable
 
 FROM base AS deps
-COPY package.json package-lock.json* ./
-RUN npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 FROM base AS development
 ENV NODE_ENV=development
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 EXPOSE 3000
-CMD ["npm", "run", "dev"]
+CMD ["pnpm", "dev"]
 
 FROM base AS build
 ENV NODE_ENV=production DOCKER_BUILD=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+RUN pnpm build
 
 FROM node:24-alpine AS production
 ENV NODE_ENV=production

@@ -59,7 +59,7 @@ services:
     environment:
       # Endereço para chamadas feitas pelo servidor Next.js dentro do Docker.
       BACKEND_URL: http://backend:8000
-    command: ["npm", "run", "dev", "--", "--hostname", "0.0.0.0"]
+    command: ["pnpm", "exec", "next", "dev", "--hostname", "0.0.0.0"]
     ports:
       - "127.0.0.1:3000:3000"
     volumes:
