@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export default function CadastroPage() {
+export default function SignupPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 text-slate-900">
       <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
