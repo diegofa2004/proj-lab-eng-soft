@@ -32,8 +32,9 @@ no volume `pgdata-dev`. Esta configuração é para desenvolvimento local.
 
 O backend recebe `DATABASE_URL`, com o banco no endereço `db:5432`, e o servidor
 Next.js recebe `BACKEND_URL=http://backend:8000`. Esses nomes funcionam dentro da
-rede do Docker; no navegador, use `localhost:8000` para acessar a API. A aplicação
-ainda precisa implementar a conexão com o banco e as chamadas do frontend à API.
+rede do Docker; no navegador, use `localhost:8000` para acessar a API. O backend
+usa SQLAlchemy e uma sessão PostgreSQL por requisição; os modelos e rotas da API
+ainda serão adicionados nas próximas etapas.
 
 Para acompanhar os logs do backend:
 
