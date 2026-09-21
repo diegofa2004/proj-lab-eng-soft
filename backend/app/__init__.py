@@ -1,1 +1,0 @@
-"""LivrUSP backend application package."""

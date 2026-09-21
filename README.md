@@ -21,7 +21,7 @@ para preencher as variáveis de configuração.
 | Documentação da API | http://localhost:8000/docs |
 | PostgreSQL 16 | localhost:5432 |
 
-O backend usa Python 3.14 e inicia a aplicação `app` de `backend/app/Main.py`.
+O backend usa Python 3.14 e inicia a aplicação `app` de `backend/app/main.py`.
 As dependências são instaladas a partir de `backend/requirements.txt`; o `.venv`
 local não é necessário para executar os contêineres. Alterações em `backend/app`
 reiniciam a API automaticamente, e o frontend roda com `next dev`.
