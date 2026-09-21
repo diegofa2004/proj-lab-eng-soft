@@ -3,7 +3,6 @@ from sqlalchemy import text
 
 from app.db.session import engine
 
-
 router = APIRouter(tags=["health"])
 
 

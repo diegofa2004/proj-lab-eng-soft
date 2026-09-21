@@ -13,6 +13,10 @@ COPY app ./app
 EXPOSE 8000
 
 FROM base AS development
+COPY requirements-dev.txt ./
+COPY pyproject.toml ./
+COPY tests ./tests
+RUN python -m pip install --no-cache-dir -r requirements-dev.txt
 CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 FROM base AS production
