@@ -11,8 +11,9 @@ class Settings(BaseSettings):
 
     PROJECT_NAME: str = "LivrUSP API"
     DATABASE_URL: str = "sqlite:///./data.db"
-    JWT_SECRET_KEY: str = "change-this-in-production"
+    JWT_SECRET_KEY: str = "development-secret-key-at-least-32-bytes"
     JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     BACKEND_CORS_ORIGINS: list[str] | str = ["*"]
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")

@@ -1,6 +1,7 @@
 import os
 
 os.environ["DATABASE_URL"] = "sqlite:////tmp/livrusp-test-lifespan.db"
+os.environ["JWT_SECRET_KEY"] = "test-secret-key-at-least-32-bytes-long"
 
 import pytest
 from fastapi.testclient import TestClient

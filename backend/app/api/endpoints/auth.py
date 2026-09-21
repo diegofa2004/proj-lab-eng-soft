@@ -3,10 +3,11 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.security import get_password_hash, verify_password
+from app.core.deps import get_current_user
+from app.core.security import create_access_token, get_password_hash, verify_password
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.user import UserCreate, UserLogin, UserPublic
+from app.schemas.user import LoginResponse, UserCreate, UserLogin, UserPublic
 
 router = APIRouter(tags=["auth"])
 
@@ -46,12 +47,17 @@ def register_user(data: UserCreate, db: Session = Depends(get_db)) -> User:
     return user
 
 
-@router.post("/login", response_model=UserPublic)
-def login_user(data: UserLogin, db: Session = Depends(get_db)) -> User:
+@router.post("/login", response_model=LoginResponse)
+def login_user(data: UserLogin, db: Session = Depends(get_db)) -> LoginResponse:
     user = db.scalar(select(User).where(User.username == data.username))
     if user is None or not verify_password(data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password.",
         )
-    return user
+    return LoginResponse(access_token=create_access_token(user.id), user=user)
+
+
+@router.get("/me", response_model=UserPublic)
+def get_current_user_profile(current_user: User = Depends(get_current_user)) -> User:
+    return current_user

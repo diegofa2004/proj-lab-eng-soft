@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import { type SyntheticEvent, useState } from "react";
 
 type FormStatus = "idle" | "submitting" | "success" | "error";
 
 export default function LoginPage() {
   const [formStatus, setFormStatus] = useState<FormStatus>("idle");
   const [message, setMessage] = useState("");
+  const router = useRouter();
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
 
@@ -42,7 +44,9 @@ export default function LoginPage() {
       }
 
       setFormStatus("success");
-      setMessage(`Credentials verified for ${data.username}. Session support will be added next.`);
+      setMessage(`Signed in as ${data.username}.`);
+      router.replace("/profile");
+      router.refresh();
     } catch {
       setFormStatus("error");
       setMessage("Unable to reach the authentication service. Please try again.");

@@ -43,8 +43,29 @@ def test_login_accepts_valid_credentials(client):
     response = client.post("/login", json={"username": "reader", "password": "password123"})
 
     assert response.status_code == 200
+    assert response.json()["access_token"]
+    assert response.json()["token_type"] == "bearer"
+    assert response.json()["user"]["username"] == "reader"
+    assert "password_hash" not in response.json()["user"]
+
+
+def test_me_returns_the_authenticated_user(client):
+    register(client)
+    login = client.post("/login", json={"username": "reader", "password": "password123"})
+    response = client.get(
+        "/me",
+        headers={"Authorization": f"Bearer {login.json()['access_token']}"},
+    )
+
+    assert response.status_code == 200
     assert response.json()["username"] == "reader"
-    assert "password_hash" not in response.json()
+
+
+def test_me_rejects_a_missing_token(client):
+    response = client.get("/me")
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Not authenticated."
 
 
 def test_login_rejects_invalid_credentials(client):

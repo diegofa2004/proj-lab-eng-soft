@@ -28,3 +28,9 @@ class UserPublic(BaseModel):
     id: int
     username: str
     email: EmailStr
+
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserPublic

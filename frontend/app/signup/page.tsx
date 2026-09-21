@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useState } from "react";
+import { type SyntheticEvent, useState } from "react";
 
 type FormStatus = "idle" | "submitting" | "success" | "error";
 
@@ -9,7 +9,7 @@ export default function SignupPage() {
   const [formStatus, setFormStatus] = useState<FormStatus>("idle");
   const [message, setMessage] = useState("");
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
 
