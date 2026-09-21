@@ -1,68 +1,87 @@
-# proj-lab-eng-soft
-Book reading and publishing app designed for the Software Engineering Lab. Class
+# LivrUSP
+Book reading and publishing application for the Software Engineering Laboratory.
 
-Para executar o ambiente de desenvolvimento, instale o Docker Engine com o
-plugin Docker Compose 2.20 ou superior (ou use o Docker Desktop). A versão do
-Compose é necessária por causa do `include` usado no arquivo da raiz.
+To run the development environment, install Docker Engine with Docker Compose
+plugin 2.20 or later, or use Docker Desktop. That Compose version is required
+because the root file uses `include`.
 
-Na raiz de `proj-lab-eng-soft`, execute:
+From the `proj-lab-eng-soft` root directory, run:
 
 ```bash
 docker compose up --build
 ```
 
-O arquivo da raiz carrega `infra/docker-compose.dev.yml` e usa `infra/.env.dev`
-para preencher as variáveis de configuração.
+The root file includes `infra/docker-compose.dev.yml` and uses `infra/.env.dev`
+to provide configuration variables.
 
-| Serviço | Endereço local |
+| Service | Local address |
 | --- | --- |
 | Frontend Next.js | http://localhost:3000 |
 | Backend FastAPI | http://localhost:8000 |
-| Documentação da API | http://localhost:8000/docs |
+| API documentation | http://localhost:8000/docs |
 | PostgreSQL 16 | localhost:5432 |
 
-O backend usa Python 3.14 e inicia a aplicação `app` de `backend/app/main.py`.
-As dependências são instaladas a partir de `backend/requirements.txt`; o `.venv`
-local não é necessário para executar os contêineres. Alterações em `backend/app`
-reiniciam a API automaticamente, e o frontend roda com `next dev`.
+The backend uses Python 3.14 and starts the `app` application in
+`backend/app/main.py`. Dependencies are installed from
+`backend/requirements.txt`; a local `.venv` is not required to run containers.
+Changes in `backend/app` automatically restart the API, and the frontend runs
+with `next dev`.
 
-O Compose aguarda o PostgreSQL ficar disponível antes de iniciar o backend, e
-aguarda a API responder antes de iniciar o frontend. O banco persiste os dados
-no volume `pgdata-dev`. Esta configuração é para desenvolvimento local.
+Compose waits for PostgreSQL before starting the backend and waits for the API
+before starting the frontend. Database data persists in the `pgdata-dev` volume.
+This configuration is for local development.
 
-O backend recebe `DATABASE_URL`, com o banco no endereço `db:5432`, e o servidor
-Next.js recebe `BACKEND_URL=http://backend:8000`. Esses nomes funcionam dentro da
-rede do Docker; no navegador, use `localhost:8000` para acessar a API. O backend
-usa SQLAlchemy e uma sessão PostgreSQL por requisição; os modelos e rotas da API
-ainda serão adicionados nas próximas etapas.
+The backend receives `DATABASE_URL`, with the database at `db:5432`, and the
+Next.js server receives `BACKEND_URL=http://backend:8000`. These names work
+inside the Docker network; use `localhost:8000` in the browser to access the
+API. The backend uses SQLAlchemy and one PostgreSQL session per request.
 
-Para acompanhar os logs do backend:
+## Database
+
+Alembic controls the schema. Pending migrations run automatically when the
+backend starts through Docker. To generate a migration after changing a
+SQLAlchemy model:
+
+```bash
+docker compose exec backend alembic revision --autogenerate -m "create books"
+```
+
+Review the generated file in `backend/alembic/versions/`. To apply migrations:
+
+```bash
+docker compose exec backend alembic upgrade head
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the new-feature skeleton, API
+conventions, and pull request checklist.
+
+To follow backend logs:
 
 ```bash
 docker compose logs -f backend
 ```
 
-Depois de alterar as dependências, reconstrua as imagens e renove os volumes
-anônimos de dependências do frontend (o volume nomeado do PostgreSQL é mantido):
+After changing dependencies, rebuild images and renew the frontend anonymous
+dependency volumes. The named PostgreSQL volume is preserved:
 
 ```bash
 docker compose up --build --renew-anon-volumes
 ```
 
-Para parar e remover os contêineres, preservando os dados do banco:
+To stop and remove containers while preserving database data:
 
 ```bash
 docker compose down
 ```
 
-O Dockerfile do backend também tem um estágio `production`, que inicia a API sem
-recarga automática. Para construir e executar somente essa imagem:
+The backend Dockerfile also has a `production` stage that starts the API without
+automatic reload. To build and run only that image:
 
 ```bash
 docker build --target production -t proj-lab-eng-soft-backend ./backend
 docker run --rm -p 127.0.0.1:8000:8000 proj-lab-eng-soft-backend
 ```
 
-Referências: [FastAPI com Docker](https://fastapi.tiangolo.com/deployment/docker/),
-[include do Compose](https://docs.docker.com/reference/compose-file/include/) e
-[ordem de inicialização](https://docs.docker.com/compose/how-tos/startup-order/).
+References: [FastAPI with Docker](https://fastapi.tiangolo.com/deployment/docker/),
+[Compose include](https://docs.docker.com/reference/compose-file/include/), and
+[startup order](https://docs.docker.com/compose/how-tos/startup-order/).
