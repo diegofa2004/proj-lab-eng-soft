@@ -7,18 +7,48 @@ type FormStatus = "idle" | "submitting" | "success" | "error";
 
 export default function SignupPage() {
   const [formStatus, setFormStatus] = useState<FormStatus>("idle");
+  const [message, setMessage] = useState("");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const form = event.currentTarget;
 
-    if (!event.currentTarget.checkValidity()) {
+    if (!form.checkValidity()) {
       setFormStatus("error");
-      event.currentTarget.reportValidity();
+      setMessage("Please correct the highlighted fields.");
+      form.reportValidity();
       return;
     }
 
     setFormStatus("submitting");
-    window.setTimeout(() => setFormStatus("success"), 300);
+    setMessage("");
+
+    try {
+      const formData = new FormData(form);
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: formData.get("username"),
+          email: formData.get("email"),
+          password: formData.get("password"),
+        }),
+      });
+      const data = (await response.json()) as { detail?: string; username?: string };
+
+      if (!response.ok) {
+        setFormStatus("error");
+        setMessage(data.detail ?? "Account creation failed. Please try again.");
+        return;
+      }
+
+      form.reset();
+      setFormStatus("success");
+      setMessage(`Account created for ${data.username}. You can now sign in.`);
+    } catch {
+      setFormStatus("error");
+      setMessage("Unable to reach the authentication service. Please try again.");
+    }
   }
 
   const isSubmitting = formStatus === "submitting";
@@ -87,9 +117,12 @@ export default function SignupPage() {
             {isSubmitting ? "Creating account..." : "Sign up"}
           </button>
 
-          <p aria-live="polite" className="text-sm" role="status">
-            {formStatus === "error" && "Please correct the highlighted fields."}
-            {formStatus === "success" && "Your account details are ready to be sent to the API."}
+          <p
+            aria-live="polite"
+            className={`text-sm ${formStatus === "error" ? "text-red-600" : "text-emerald-600"}`}
+            role="status"
+          >
+            {message}
           </p>
         </form>
 

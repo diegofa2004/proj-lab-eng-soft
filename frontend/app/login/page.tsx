@@ -7,18 +7,46 @@ type FormStatus = "idle" | "submitting" | "success" | "error";
 
 export default function LoginPage() {
   const [formStatus, setFormStatus] = useState<FormStatus>("idle");
+  const [message, setMessage] = useState("");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const form = event.currentTarget;
 
-    if (!event.currentTarget.checkValidity()) {
+    if (!form.checkValidity()) {
       setFormStatus("error");
-      event.currentTarget.reportValidity();
+      setMessage("Please correct the highlighted fields.");
+      form.reportValidity();
       return;
     }
 
     setFormStatus("submitting");
-    window.setTimeout(() => setFormStatus("success"), 300);
+    setMessage("");
+
+    try {
+      const formData = new FormData(form);
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: formData.get("username"),
+          password: formData.get("password"),
+        }),
+      });
+      const data = (await response.json()) as { detail?: string; username?: string };
+
+      if (!response.ok) {
+        setFormStatus("error");
+        setMessage(data.detail ?? "Sign-in failed. Please try again.");
+        return;
+      }
+
+      setFormStatus("success");
+      setMessage(`Credentials verified for ${data.username}. Session support will be added next.`);
+    } catch {
+      setFormStatus("error");
+      setMessage("Unable to reach the authentication service. Please try again.");
+    }
   }
 
   const isSubmitting = formStatus === "submitting";
@@ -71,9 +99,12 @@ export default function LoginPage() {
             {isSubmitting ? "Signing in..." : "Sign in"}
           </button>
 
-          <p aria-live="polite" className="text-sm" role="status">
-            {formStatus === "error" && "Please correct the highlighted fields."}
-            {formStatus === "success" && "Your sign-in details are ready to be sent to the API."}
+          <p
+            aria-live="polite"
+            className={`text-sm ${formStatus === "error" ? "text-red-600" : "text-emerald-600"}`}
+            role="status"
+          >
+            {message}
           </p>
         </form>
 
