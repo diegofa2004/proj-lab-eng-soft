@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
 from app.core.config import settings
+from app.db import base as _models  # noqa: F401
 
 
 def create_app() -> FastAPI:
