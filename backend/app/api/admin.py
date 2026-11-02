@@ -5,11 +5,11 @@ from sqlalchemy.orm import Session
 from app.core.deps import get_current_admin
 from app.db.session import get_db
 from app.models.acesso_livro import AcessoLivro
-from app.models.assinatura import Assinatura
-from app.models.avaliacao import Avaliacao
 from app.models.atividade_admin import AtividadeAdmin
+from app.models.avaliacao import Avaliacao
 from app.models.livro import Livro
 from app.models.user import User
+from app.schemas.atividade_admin import AtividadeAdminPublic
 from app.schemas.livro import LivroPublic, LivroUpdate
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -84,7 +84,7 @@ def moderate_review(review_id: int, db: Session = Depends(get_db), admin: User =
     return {"message": "Review removed"}
 
 
-@router.get("/activities")
+@router.get("/activities", response_model=list[AtividadeAdminPublic])
 def activities(db: Session = Depends(get_db), admin: User = Depends(get_current_admin)) -> list[AtividadeAdmin]:
     return list(db.scalars(select(AtividadeAdmin).order_by(AtividadeAdmin.data_hora.desc())).all())
 

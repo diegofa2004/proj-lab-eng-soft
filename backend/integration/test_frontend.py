@@ -17,7 +17,7 @@ def test_frontend_journey():
     assert settings.DEMO_BILLING, "Use a dedicated test database and enable demo billing"
     seed()
     seed()
-    client = TestClient(app)
+    client = TestClient(app, base_url="http://testserver/v2/")
 
     def api(method, path, expected=200, token=None, **kwargs):
         headers = {"Authorization": f"Bearer {token}"} if token else {}
@@ -134,3 +134,31 @@ def test_frontend_journey():
     api("POST", "/login", 403, json={"username": reader["username"], "password": "password123"})
     api("GET", "/admin/dashboard", token=admin)
     assert api("GET", "/admin/actions", token=admin)
+
+
+def test_legacy_billing_and_publication(monkeypatch):
+    seed()
+    c = TestClient(app)
+    name = "legacy-" + uuid4().hex
+    creds = {"username": name, "password": "password123"}
+    assert c.post("/register", json=dict(creds, email=f"{name}@example.com")).status_code == 201
+    token = c.post("/login", json=creds).json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    plan_id = c.get("/v2/plans").json()[0]["id_plano"]
+    monkeypatch.setattr(settings, "DEMO_BILLING", False)
+    assert c.post("/users/me/subscription", headers=headers).status_code == 503
+    assert c.post("/v2/me/checkout", json={"id_plano": plan_id}, headers=headers).status_code == 503
+    assert not c.get("/v2/me/profile", headers=headers).json()["is_premium"]
+    assert c.get("/premium/discover", headers=headers).status_code == 403
+    monkeypatch.setattr(settings, "DEMO_BILLING", True)
+    for _ in range(2):
+        assert c.post("/users/me/subscription", headers=headers).status_code == 200
+    assert len(c.get("/v2/me/payments", headers=headers).json()) == 1
+    assert c.get("/premium/discover", headers=headers).status_code == 200
+    assert c.get("/users/me/suggestions", headers=headers).status_code == 200
+    assert c.get("/content/user-created").status_code == 200
+    assert c.get("/demo/avatar.svg").status_code == 200
+    item = c.get("/v2/books", params={"q":"Primeiros passos"}).json()[0]
+    assert item["arquivo_conteudo"].startswith("/v2/books/")
+    for path in [item["arquivo_conteudo"], item["arquivo_conteudo"].removeprefix("/v2")]:
+        assert c.get(path).content.startswith(b"%PDF-")

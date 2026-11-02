@@ -1,10 +1,11 @@
-from datetime import date, datetime, timezone
+from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import delete, func, or_, select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.api.endpoints.catalog import grant_publish
 from app.core.deps import get_current_user
 from app.db.session import get_db
 from app.models.acesso_livro import AcessoLivro
@@ -20,7 +21,7 @@ from app.models.progresso_leitura import ProgressoLeitura
 from app.models.user import User
 from app.schemas.avaliacao import AvaliacaoCreate, AvaliacaoPublic
 from app.schemas.item_lista import ItemListaCreate, ItemListaPublic
-from app.schemas.livro import LivroCreate, LivroPublic, LivroUpdate
+from app.schemas.livro import LivroCreate, LivroPublic
 from app.schemas.nota_pessoal import NotaPessoalCreate, NotaPessoalPublic, NotaPessoalUpdate
 from app.schemas.progresso_leitura import ProgressoLeituraPublic, ProgressoLeituraUpdate
 
@@ -90,8 +91,7 @@ def publish_book(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ) -> Livro:
-    if user.is_blocked:
-        raise HTTPException(status_code=403, detail="User is blocked")
+    grant_publish(db, user)
     book = Livro(
         titulo=payload.titulo,
         descricao=payload.descricao,

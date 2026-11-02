@@ -144,7 +144,7 @@ def create(data: BookInput, db: DB, user: Reader):
     )
     db.add(row)
     db.flush()
-    row.arquivo_conteudo = f"/books/{row.id_livro}/content"
+    row.arquivo_conteudo = f"/v2/books/{row.id_livro}/content"
     metadata(db, row, data)
     return save(db, row)
 

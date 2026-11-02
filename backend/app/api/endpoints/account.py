@@ -114,22 +114,33 @@ def cycle_end(now, plan):
 
 @router.post("/me/checkout", response_model=CheckoutResult)
 def checkout(data: Checkout, db: DB, user: Reader):
+    return purchase_plan(db, user, data.id_plano)
+
+
+def purchase_plan(db, user, plan_id):
+    """Demo checkout shared by the legacy and v2 routes; legacy selects a default plan."""
     if not settings.DEMO_BILLING:
         raise HTTPException(503, "Payment provider not configured")
     lock_reader(db, user)
-    plan = require(db.scalar(select(Plano).filter_by(id_plano=data.id_plano, ativo=True)))
     active = db.scalar(select(Assinatura).filter_by(id_usuario=user.id, status="ativa"))
     now = datetime.now(UTC)
     if active and active.fim <= now:
         active.status = "expirada"
         db.flush()
     elif active:
-        if active.id_plano != plan.id_plano:
+        if plan_id is not None and active.id_plano != plan_id:
             raise HTTPException(409, "Cancel the current plan before switching")
-        payment = require(
-            db.scalar(select(Pagamento).filter_by(id_assinatura=active.id_assinatura))
-        )
+        payment = db.scalar(select(Pagamento).filter_by(id_assinatura=active.id_assinatura))
+        if payment is None and plan_id is not None:
+            raise HTTPException(409, "An existing subscription has no payment record")
         return {"subscription": active, "payment": payment}
+    plans = select(Plano).filter_by(ativo=True)
+    if plan_id is None:
+        plan = db.scalar(plans.order_by(Plano.id_plano).limit(1))
+        if plan is None:
+            raise HTTPException(503, "No active subscription plan is configured")
+    else:
+        plan = require(db.scalar(plans.filter_by(id_plano=plan_id)))
     sub = Assinatura(
         id_usuario=user.id,
         id_plano=plan.id_plano,

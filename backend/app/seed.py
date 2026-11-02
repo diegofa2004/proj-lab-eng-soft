@@ -37,7 +37,7 @@ def seed():
             Plano, dict(preco=9.90, moeda="BRL", periodicidade="mensal"), nome="Premium demo"
         )
         get_or_create(Nivel, dict(permite_publicar=True, nome="Autor"), pontos_minimos=5)
-        get_or_create(AssetPerfil, dict(arquivo="/demo/avatar.svg"), tipo="avatar", nome="Leitor")
+        get_or_create(AssetPerfil, dict(arquivo="/v2/demo/avatar.svg"), tipo="avatar", nome="Leitor")
         author = get_or_create(Autor, nome="Equipe LivrUSP")
         genre = get_or_create(Genero, nome="Introdução")
         row = get_or_create(
@@ -55,7 +55,7 @@ def seed():
         )
         get_or_create(LivroAutor, id_livro=row.id_livro, id_autor=author.id_autor)
         get_or_create(LivroGenero, id_livro=row.id_livro, id_genero=genre.id_genero)
-        row.arquivo_conteudo = f"/books/{row.id_livro}/content"
+        row.arquivo_conteudo = f"/v2/books/{row.id_livro}/content"
         CONTENT.mkdir(exist_ok=True)
         shutil.copyfile(
             Path(__file__).parent / "demo/leituras.pdf", CONTENT / f"{row.id_livro}.pdf"

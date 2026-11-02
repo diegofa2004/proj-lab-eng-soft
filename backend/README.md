@@ -28,7 +28,7 @@ Abra [Swagger](http://localhost:8000/docs). A carga de exemplo inclui um livro d
 
 ## Conectar React/Vite
 
-Defina `VITE_API_URL=http://localhost:8000` no projeto frontend. Copie `frontend-kit/client.ts` e `schema.d.ts` para a mesma pasta em src. O contrato integral está em `frontend-kit/openapi.json` e no endpoint `/openapi.json`. O JSON usa os nomes em português das entidades; as rotas de autenticação mantêm os nomes originais em inglês. Datas são ISO 8601 e valores monetários são decimais serializados como strings.
+Defina `VITE_API_URL=http://localhost:8000/v2` no projeto frontend. Copie `frontend-kit/client.ts` e `schema.d.ts` para a mesma pasta em src. O contrato do kit usa caminhos relativos a /v2. O endpoint /openapi.json descreve as duas versões da API. As rotas da tabela abaixo são relativas a /v2. O JSON usa os nomes em português das entidades; as rotas de autenticação mantêm os nomes originais em inglês. Datas são ISO 8601 e valores monetários são decimais serializados como strings.
 
 ```ts
 import { livrusp } from "./client";
@@ -75,5 +75,4 @@ python -m alembic upgrade head
 python -m pytest -q integration
 ```
 
-Para regenerar o contrato, salve /openapi.json em frontend-kit/openapi.json e execute
-`npx openapi-typescript frontend-kit/openapi.json -o frontend-kit/schema.d.ts`.
+Para atualizar o kit, exporte somente as rotas sob /v2 de /openapi.json, remova o prefixo /v2 dos caminhos e use /v2 como URL base. Gere os tipos com `npx openapi-typescript frontend-kit/openapi.json -o frontend-kit/schema.d.ts`.

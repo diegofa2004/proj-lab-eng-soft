@@ -30,3 +30,8 @@ for router in (
     v2_router.include_router(router)
 
 api_router.include_router(v2_router)
+
+
+# Existing records may still point to the content and avatar paths from before v2.
+api_router.add_api_route("/books/{book_id}/content", catalog.content, include_in_schema=False)
+api_router.add_api_route("/demo/avatar.svg", reference.demo_avatar, include_in_schema=False)

@@ -1,13 +1,13 @@
-from datetime import date, datetime, timedelta, timezone
+from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.api.endpoints.account import purchase_plan
+from app.api.platform import profile_stats
 from app.core.deps import get_current_user
 from app.db.session import get_db
-from app.models.assinatura import Assinatura
-from app.models.item_lista import ItemLista
 from app.models.livro import Livro
 from app.models.movimento_pontos import MovimentoPontos
 from app.models.nivel import Nivel
@@ -15,6 +15,7 @@ from app.models.plano import Plano
 from app.models.progresso_leitura import ProgressoLeitura
 from app.models.sessao_leitura import SessaoLeitura
 from app.models.user import User
+from app.schemas.livro import LivroPublic
 
 router = APIRouter(prefix="/users/me", tags=["users"])
 content_router = APIRouter(prefix="/content", tags=["content"])
@@ -54,33 +55,25 @@ def inactivity(days: int, db: Session = Depends(get_db), user: User = Depends(ge
     return points(db, user)
 
 
-@router.get("/suggestions")
+@router.get("/suggestions", response_model=list[LivroPublic])
 def suggestions(db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> list[Livro]:
     return list(db.scalars(select(Livro).where(Livro.status_publicacao == "publicado", Livro.status_bloqueado.is_(False)).order_by(Livro.criado_em.desc()).limit(20)).all())
 
 
 @router.post("/subscription")
 def subscribe(db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> dict[str, str]:
-    plan = db.scalar(select(Plano).where(Plano.ativo.is_(True)).order_by(Plano.id_plano).limit(1))
-    if plan is None:
-        raise HTTPException(status_code=503, detail="No active subscription plan is configured")
-    active = db.scalar(select(Assinatura).where(Assinatura.id_usuario == user.id, Assinatura.status == "ativa"))
-    if active is not None:
-        return {"status": "active"}
-    now = datetime.now(timezone.utc)
-    db.add(Assinatura(id_usuario=user.id, id_plano=plan.id_plano, status="ativa", inicio=now, fim=now + timedelta(days=30)))
-    db.commit()
+    result = purchase_plan(db, user, None)
+    plan = db.get(Plano, result["subscription"].id_plano)
     return {"status": "active", "plan": plan.nome}
 
 
-@premium_router.get("/discover")
+@premium_router.get("/discover", response_model=list[LivroPublic])
 def discover(db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> list[Livro]:
-    active = db.scalar(select(Assinatura).where(Assinatura.id_usuario == user.id, Assinatura.status == "ativa"))
-    if active is None:
+    if not profile_stats(db, user)["is_premium"]:
         raise HTTPException(status_code=403, detail="Premium subscription required")
     return list(db.scalars(select(Livro).where(Livro.status_publicacao == "publicado", Livro.status_bloqueado.is_(False))).all())
 
 
-@content_router.get("/user-created")
+@content_router.get("/user-created", response_model=list[LivroPublic])
 def user_created_content(db: Session = Depends(get_db)) -> list[Livro]:
     return list(db.scalars(select(Livro).where(Livro.origem == "usuario", Livro.status_publicacao == "publicado", Livro.status_bloqueado.is_(False))).all())
