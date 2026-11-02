@@ -1,7 +1,16 @@
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 
-class UserCreate(BaseModel):
+class PasswordInput(BaseModel):
+    @field_validator("password", check_fields=False)
+    @classmethod
+    def validate_bytes(cls, value: str) -> str:
+        if len(value.encode()) > 72:
+            raise ValueError("Password exceeds 72 UTF-8 bytes")
+        return value
+
+
+class UserCreate(PasswordInput):
     username: str = Field(min_length=3, max_length=100)
     email: EmailStr = Field(max_length=254)
     password: str = Field(min_length=8, max_length=72)
@@ -17,7 +26,7 @@ class UserCreate(BaseModel):
         return str(value).strip().lower()
 
 
-class UserLogin(BaseModel):
+class UserLogin(PasswordInput):
     username: str = Field(min_length=1, max_length=100)
     password: str = Field(min_length=1, max_length=72)
 

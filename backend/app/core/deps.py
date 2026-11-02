@@ -39,6 +39,8 @@ def get_current_user(
     user = db.get(User, user_id)
     if user is None:
         raise unauthorized("Invalid session.")
+    if user.is_blocked:
+        raise HTTPException(403, "Account blocked.")
     return user
 
 
@@ -46,3 +48,8 @@ def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
     if not current_user.is_admin or current_user.is_blocked:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Administrator privileges required.")
     return current_user
+def optional_reader(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+) -> User | None:
+    return get_current_user(credentials, db) if credentials else None
