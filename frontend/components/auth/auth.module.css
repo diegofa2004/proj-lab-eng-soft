@@ -1,0 +1,382 @@
+.shell {
+  --ink: #000000;
+  --muted: #666b73;
+  --mist: #c8d1df;
+  --paper: #e8edf7;
+  --blue: #82a7d5;
+  --navy: #2e4470;
+  --deep: #1e2e4f;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  background: var(--mist);
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.header,
+.main,
+.footer {
+  width: min(100%, 1440px);
+  margin-inline: auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px clamp(24px, 3.2vw, 48px) 0;
+}
+
+.logoLink {
+  display: block;
+  width: 232px;
+  height: 52px;
+  flex: none;
+}
+
+.logo {
+  display: block;
+  width: 331px;
+  height: 73px;
+  background-image: url("/livrusp-wordmark-source.png");
+  background-size: 1280px 426px;
+  background-position: -39px -10px;
+  background-repeat: no-repeat;
+  mix-blend-mode: darken;
+  transform: scale(0.7);
+  transform-origin: left top;
+}
+
+.headerAction,
+.submitButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 48px;
+  border-radius: 999px;
+  background: var(--deep);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.headerAction {
+  min-width: 180px;
+  min-height: 58px;
+  padding: 0 26px;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+.headerAction:hover,
+.submitButton:hover:not(:disabled) {
+  background: var(--navy);
+  transform: translateY(-1px);
+}
+
+.headerAction:focus-visible,
+.submitButton:focus-visible,
+.textLink:focus-visible,
+.logoLink:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 4px;
+}
+
+.main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(360px, 470px);
+  align-items: center;
+  gap: clamp(40px, 7vw, 112px);
+  padding: clamp(48px, 6vh, 90px) clamp(24px, 3.2vw, 48px) 64px;
+}
+
+.editorial {
+  min-width: 0;
+}
+
+.formEyebrow,
+.footer {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.09em;
+}
+
+.heroTitle {
+  max-width: 740px;
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(60px, 6.1vw, 92px);
+  font-weight: 400;
+  letter-spacing: -0.065em;
+  line-height: 0.97;
+}
+
+.heroDescription {
+  max-width: 440px;
+  margin: 26px 0 0;
+  color: #4c5666;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.bookshelf {
+  position: relative;
+  height: clamp(245px, 27vw, 350px);
+  margin-top: clamp(34px, 5vh, 58px);
+}
+
+.bookshelf::before {
+  content: "";
+  position: absolute;
+  inset: 28% 0 0;
+  border-radius: 30px;
+  background: var(--deep);
+}
+
+.booksImage {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+.formPanel {
+  width: 100%;
+  padding: clamp(28px, 3.4vw, 48px);
+  border: 1px solid #f5f6fa88;
+  border-radius: 32px;
+  background: var(--paper);
+}
+
+.formEyebrow {
+  margin: 0 0 22px;
+  color: var(--navy);
+}
+
+.formTitle {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(42px, 3.8vw, 58px);
+  font-weight: 400;
+  letter-spacing: -0.06em;
+  line-height: 1.04;
+}
+
+.formDescription {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.form {
+  display: grid;
+  gap: 18px;
+  margin-top: 32px;
+}
+
+.field {
+  min-width: 0;
+}
+
+.label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--deep);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.input {
+  display: block;
+  width: 100%;
+  min-height: 49px;
+  padding: 12px 16px;
+  border: 1px solid #9ca9bc;
+  border-radius: 12px;
+  outline: none;
+  background: #fff;
+  color: var(--deep);
+  font: inherit;
+  font-size: 15px;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.input:hover {
+  border-color: var(--navy);
+}
+
+.input:focus-visible {
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px #82a7d566;
+}
+
+.input::placeholder {
+  color: #858d9b;
+}
+
+.hint {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.submitButton {
+  width: 100%;
+  min-height: 52px;
+  margin-top: 7px;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.submitButton:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.formMessage {
+  min-height: 20px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.formMessage:empty {
+  display: none;
+}
+
+.error {
+  color: #a12d36;
+}
+
+.success {
+  color: #275d50;
+}
+
+.switchText {
+  margin: 28px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.textLink {
+  color: var(--deep);
+  font-weight: 700;
+  text-underline-offset: 3px;
+}
+
+.textLink:hover {
+  color: var(--navy);
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 clamp(24px, 3.2vw, 48px) 25px;
+  color: var(--navy);
+}
+
+@media (max-width: 900px) {
+  .main {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+    gap: 28px;
+  }
+
+  .heroTitle {
+    font-size: clamp(52px, 7vw, 76px);
+  }
+
+}
+
+@media (max-width: 700px) {
+  .header {
+    padding-top: 20px;
+  }
+
+  .logoLink {
+    width: 199px;
+    height: 44px;
+  }
+
+  .logo {
+    transform: scale(0.6);
+  }
+
+  .headerAction {
+    min-width: 120px;
+    min-height: 46px;
+    padding-inline: 18px;
+    font-size: 14px;
+  }
+
+  .main {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 32px;
+    padding-top: 54px;
+  }
+
+  .heroTitle {
+    max-width: 540px;
+    font-size: clamp(55px, 12vw, 78px);
+  }
+
+  .heroDescription {
+    margin-top: 18px;
+  }
+
+  .bookshelf {
+    display: none;
+  }
+
+  .formPanel {
+    max-width: 540px;
+    margin-inline: auto;
+  }
+}
+
+@media (max-width: 420px) {
+  .header {
+    gap: 8px;
+  }
+
+  .logoLink {
+    width: 166px;
+    height: 37px;
+  }
+
+  .logo {
+    transform: scale(0.5);
+  }
+
+  .headerAction {
+    min-width: 0;
+    gap: 5px;
+    padding-inline: 13px;
+  }
+
+  .main {
+    padding-top: 42px;
+  }
+
+  .heroTitle {
+    font-size: clamp(49px, 12vw, 60px);
+  }
+
+  .footer {
+    flex-direction: column;
+  }
+}
