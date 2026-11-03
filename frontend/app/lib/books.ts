@@ -71,7 +71,7 @@ export type BookSearchResult = Book & {
 };
 
 export const BOOK_SORT_OPTIONS = [
-  { value: "relevance", label: "Most relevant" },
+  { value: "relevance", label: "Default order" },
   { value: "title", label: "Title (A-Z)" },
   { value: "newest", label: "Newest first" },
   { value: "oldest", label: "Oldest first" },
@@ -279,20 +279,16 @@ type PaginatedBooksResponse = {
   page_size?: number;
 };
 
-/**
- * Searches the public catalog through `GET /books`.
- *
- * Expected backend contract: `{ items, total, page, page_size }`. A plain
- * array is also accepted and treated as the complete result set, which is
- * then paginated locally.
- */
+/** The current /books endpoint filters by title, author and genre and returns a list. */
 export async function searchBooks(filters: BookSearchFilters): Promise<BookSearchResponse> {
-  const params = buildBookSearchQuery(filters);
-  params.set("page", String(filters.page));
-  params.set("page_size", String(BOOK_SEARCH_PAGE_SIZE));
+  const params = new URLSearchParams();
+  if (filters.query) params.set("title", filters.query);
+  if (filters.author) params.set("author", filters.author);
+  if (filters.genre) params.set("genre", filters.genre);
 
   try {
-    const response = await fetch(`${getBackendUrl()}/books?${params.toString()}`, {
+    const queryString = params.toString();
+    const response = await fetch(`${getBackendUrl()}/books${queryString ? `?${queryString}` : ""}`, {
       cache: "no-store",
     });
 
@@ -310,11 +306,32 @@ export async function searchBooks(filters: BookSearchFilters): Promise<BookSearc
     const data = (await response.json()) as BookSearchResult[] | PaginatedBooksResponse;
 
     if (Array.isArray(data)) {
+      const books = data.filter(
+        (book) => filters.source === "all" || book.origem === filters.source,
+      );
+
+      if (filters.sort === "title") {
+        books.sort((a, b) => a.titulo.localeCompare(b.titulo) || a.id_livro - b.id_livro);
+      } else if (filters.sort === "newest" || filters.sort === "oldest") {
+        const direction = filters.sort === "newest" ? -1 : 1;
+        books.sort((a, b) =>
+          direction * (Date.parse(a.data_publicacao) - Date.parse(b.data_publicacao)) ||
+          a.id_livro - b.id_livro,
+        );
+      } else if (filters.query) {
+        const query = filters.query.toLocaleLowerCase();
+        books.sort((a, b) => {
+          const aStarts = a.titulo.toLocaleLowerCase().startsWith(query) ? 0 : 1;
+          const bStarts = b.titulo.toLocaleLowerCase().startsWith(query) ? 0 : 1;
+          return aStarts - bStarts;
+        });
+      }
+
       const start = (filters.page - 1) * BOOK_SEARCH_PAGE_SIZE;
       return {
         status: "ok",
-        books: data.slice(start, start + BOOK_SEARCH_PAGE_SIZE),
-        total: data.length,
+        books: books.slice(start, start + BOOK_SEARCH_PAGE_SIZE),
+        total: books.length,
         page: filters.page,
         pageSize: BOOK_SEARCH_PAGE_SIZE,
       };
@@ -348,7 +365,7 @@ export async function searchBooks(filters: BookSearchFilters): Promise<BookSearc
 /** Lists the genres used by the search filters. Returns an empty list on failure. */
 export async function getGenres(): Promise<Genre[]> {
   try {
-    const response = await fetch(`${getBackendUrl()}/genres`, {
+    const response = await fetch(`${getBackendUrl()}/v2/genres`, {
       cache: "no-store",
     });
 
@@ -599,12 +616,18 @@ export async function getSignedHomeData(
   const myStoryIds: number[] = [];
   if (v2MyBooksResponse.ok && Array.isArray(v2MyBooksResponse.data)) {
     for (const book of v2MyBooksResponse.data) {
-      myStoryIds.push(book.id_livro);
+      if (book.status_publicacao === "publicado" && !book.status_bloqueado) {
+        myStoryIds.push(book.id_livro);
+      }
     }
   }
   if (currentUser) {
     for (const book of bookMap.values()) {
-      if (book.id_publicador === currentUser.id) {
+      if (
+        book.id_publicador === currentUser.id &&
+        book.status_publicacao === "publicado" &&
+        !book.status_bloqueado
+      ) {
         myStoryIds.push(book.id_livro);
       }
     }
@@ -623,7 +646,9 @@ export async function getSignedHomeData(
   const toBeRead = await resolveBooksByIds(toReadIds, bookMap);
 
   // Reviews across catalog books -> My Reviews & Socials
-  const allCatalogBooks = Array.from(bookMap.values());
+  const allCatalogBooks = Array.from(bookMap.values()).filter(
+    (book) => book.status_publicacao === "publicado" && !book.status_bloqueado,
+  );
   const reviewsByBook = await Promise.all(
     allCatalogBooks.map(async (book) => ({
       book,

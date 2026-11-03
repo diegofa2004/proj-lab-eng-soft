@@ -16,7 +16,7 @@ const BENEFITS: BenefitItem[] = [
   {
     title: "Read for free",
     description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi egestas velit sed neque sodales aliquam. Integer est velit, luctus quis cursus eu, tristique nec lectus.",
+      "Explore published books, discover new authors, and keep your next read close at hand.",
     icon: (
       <svg
         aria-hidden="true"
@@ -36,7 +36,7 @@ const BENEFITS: BenefitItem[] = [
   {
     title: "Connect with your friends",
     description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi egestas velit sed neque sodales aliquam. Integer est velit, luctus quis cursus eu, tristique nec lectus.",
+      "Share reviews and find books through the readers in your community.",
     icon: (
       <svg
         aria-hidden="true"
@@ -55,9 +55,9 @@ const BENEFITS: BenefitItem[] = [
     ),
   },
   {
-    title: "AI assisted search",
+    title: "Search the catalog",
     description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi egestas velit sed neque sodales aliquam. Integer est velit, luctus quis cursus eu, tristique nec lectus.",
+      "Look for books by title, author, genre, or source, then choose what to read next.",
     icon: (
       <svg
         aria-hidden="true"
@@ -79,7 +79,7 @@ const BENEFITS: BenefitItem[] = [
   {
     title: "Publish",
     description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi egestas velit sed neque sodales aliquam. Integer est velit, luctus quis cursus eu, tristique nec lectus.",
+      "Share original stories with readers when publishing is available for your account.",
     icon: (
       <svg
         aria-hidden="true"
@@ -106,8 +106,8 @@ const STEPS = [
   },
   {
     number: "02",
-    title: "Customize",
-    description: "Adapt livrUSP to your specific requirements and preferences.",
+    title: "Build your shelf",
+    description: "Save favorites and keep a list of books to read later.",
   },
   {
     number: "03",
@@ -128,14 +128,14 @@ export default async function Home() {
     <div className="min-h-screen bg-[#D9E1F1] font-sans text-black selection:bg-[#1E2E4F] selection:text-white">
       <div className="mx-auto max-w-[1280px] px-6 sm:px-10 lg:px-12">
         {/* Top Navbar */}
-        <header className="flex items-center justify-between py-6">
+        <header className="flex flex-wrap items-center justify-between gap-4 py-6">
           <Link aria-label="LivrUSP Home" className="inline-flex items-center" href="/">
             <LivruspHeaderLogo />
           </Link>
 
           <nav
             aria-label="Primary"
-            className="flex items-center gap-6 rounded-full bg-[#E6EBF5]/90 px-7 py-3 text-xs font-semibold text-black shadow-xs backdrop-blur-xs sm:gap-8 sm:text-sm"
+            className="order-3 flex w-full items-center justify-center gap-6 rounded-full bg-[#E6EBF5]/90 px-7 py-3 text-xs font-semibold text-black shadow-xs backdrop-blur-xs sm:order-2 sm:w-auto sm:gap-8 sm:text-sm"
           >
             <Link className="transition hover:opacity-70" href="/books">
               Search
@@ -146,7 +146,7 @@ export default async function Home() {
           </nav>
 
           <Link
-            className="inline-flex items-center justify-center rounded-full bg-[#24324F] px-6 py-2.5 text-xs font-semibold text-white transition hover:bg-[#1A253B] sm:px-7 sm:py-3 sm:text-sm"
+            className="order-2 inline-flex items-center justify-center rounded-full bg-[#24324F] px-6 py-2.5 text-xs font-semibold text-white transition hover:bg-[#1A253B] sm:order-3 sm:px-7 sm:py-3 sm:text-sm"
             href="/signup"
           >
             Sign up
@@ -252,7 +252,7 @@ export default async function Home() {
                   className="inline-flex w-full max-w-xl items-center justify-center gap-1 rounded-full bg-[#1E2E4F] px-8 py-3.5 text-xs font-semibold text-white transition hover:bg-[#15223B] sm:text-sm"
                   href="/signup"
                 >
-                  <span>Learn More</span>
+                  <span>Sign up</span>
                   <span aria-hidden="true">↗</span>
                 </Link>
               </div>
@@ -277,7 +277,7 @@ export default async function Home() {
                 <LivruspFooterLogo />
               </Link>
               <span className="font-mono text-[11px] text-[#556B45]">
-                © livrUSP. &nbsp; 2025
+                © livrUSP. &nbsp; {new Date().getFullYear()}
               </span>
             </div>
 
