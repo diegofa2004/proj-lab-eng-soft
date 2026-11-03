@@ -31,8 +31,8 @@
 
 .logoLink {
   display: block;
-  width: 331px;
-  height: 73px;
+  width: 232px;
+  height: 52px;
   flex: none;
 }
 
@@ -45,6 +45,8 @@
   background-position: -39px -10px;
   background-repeat: no-repeat;
   mix-blend-mode: darken;
+  transform: scale(0.7);
+  transform-origin: left top;
 }
 
 .headerAction,
@@ -64,7 +66,10 @@
 }
 
 .headerAction {
-  padding: 0 24px;
+  min-width: 180px;
+  min-height: 58px;
+  padding: 0 26px;
+  font-size: 16px;
   white-space: nowrap;
 }
 
@@ -95,28 +100,21 @@
   min-width: 0;
 }
 
-.eyebrow,
 .formEyebrow,
-.bookshelfCaption,
 .footer {
   font-family: var(--font-geist-mono), ui-monospace, monospace;
   font-size: 11px;
   letter-spacing: 0.09em;
 }
 
-.eyebrow {
-  margin: 0 0 20px;
-  color: var(--navy);
-}
-
 .heroTitle {
   max-width: 740px;
   margin: 0;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(66px, 7.1vw, 112px);
+  font-size: clamp(60px, 6.1vw, 92px);
   font-weight: 400;
-  letter-spacing: -0.072em;
-  line-height: 0.94;
+  letter-spacing: -0.065em;
+  line-height: 0.97;
 }
 
 .heroDescription {
@@ -129,77 +127,25 @@
 
 .bookshelf {
   position: relative;
-  height: clamp(220px, 24vw, 310px);
-  margin-top: clamp(40px, 6vh, 70px);
-  overflow: hidden;
+  height: clamp(245px, 27vw, 350px);
+  margin-top: clamp(34px, 5vh, 58px);
+}
+
+.bookshelf::before {
+  content: "";
+  position: absolute;
+  inset: 28% 0 0;
   border-radius: 30px;
   background: var(--deep);
 }
 
-.book {
-  position: absolute;
-  bottom: -55px;
-  display: flex;
-  flex-direction: column;
-  width: 168px;
-  height: 270px;
-  padding: 18px;
-  box-shadow: -9px 11px 20px #0d193577;
-  transform-origin: bottom center;
-}
-
-.bookOne {
-  left: 8%;
-  z-index: 1;
-  background: #f5f4ef;
-  color: var(--deep);
-  transform: rotate(-17deg);
-}
-
-.bookTwo {
-  left: 36%;
-  z-index: 2;
-  background: var(--blue);
-  color: var(--deep);
-  transform: rotate(-5deg);
-}
-
-.bookThree {
-  left: 64%;
-  z-index: 3;
-  background: var(--navy);
-  color: #fff;
-  transform: rotate(13deg);
-}
-
-.bookTop,
-.bookBottom {
-  font-family: var(--font-geist-mono), ui-monospace, monospace;
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-}
-
-.bookBig {
+.booksImage {
+  position: relative;
   display: block;
-  margin: auto 0;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 31px;
-  line-height: 0.94;
-  letter-spacing: -0.06em;
-}
-
-.bookBottom {
-  margin-top: auto;
-}
-
-.bookshelfCaption {
-  position: absolute;
-  right: 24px;
-  bottom: 16px;
-  z-index: 4;
-  color: #e8edf7;
-  font-size: 9px;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
 }
 
 .formPanel {
@@ -352,14 +298,6 @@
     font-size: clamp(52px, 7vw, 76px);
   }
 
-  .book {
-    width: 135px;
-    height: 220px;
-  }
-
-  .bookBig {
-    font-size: 25px;
-  }
 }
 
 @media (max-width: 700px) {
@@ -368,19 +306,19 @@
   }
 
   .logoLink {
-    width: 216px;
-    height: 45px;
+    width: 199px;
+    height: 44px;
   }
 
   .logo {
-    transform: scale(0.65);
-    transform-origin: left top;
+    transform: scale(0.6);
   }
 
   .headerAction {
-    min-height: 42px;
-    padding-inline: 16px;
-    font-size: 12px;
+    min-width: 120px;
+    min-height: 46px;
+    padding-inline: 18px;
+    font-size: 14px;
   }
 
   .main {
@@ -416,15 +354,16 @@
   }
 
   .logoLink {
-    width: 177px;
+    width: 166px;
     height: 37px;
   }
 
   .logo {
-    transform: scale(0.53);
+    transform: scale(0.5);
   }
 
   .headerAction {
+    min-width: 0;
     gap: 5px;
     padding-inline: 13px;
   }

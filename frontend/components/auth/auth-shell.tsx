@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { ReactNode } from "react";
 
 import styles from "./auth.module.css";
@@ -28,7 +29,6 @@ export function AuthShell({ mode, children }: AuthShellProps) {
 
       <main className={styles.main}>
         <section className={styles.editorial} aria-label="About livrUSP">
-          <p className={styles.eyebrow}>READ · REVIEW · PUBLISH</p>
           <h1 className={styles.heroTitle}>
             {isLogin ? (
               <>Back to the books.</>
@@ -43,22 +43,14 @@ export function AuthShell({ mode, children }: AuthShellProps) {
           </p>
 
           <div className={styles.bookshelf} aria-hidden="true">
-            <div className={`${styles.book} ${styles.bookOne}`}>
-              <span className={styles.bookTop}>LIVRUSP EDITIONS</span>
-              <span className={styles.bookBig}>THE<br />NEXT<br />PAGE</span>
-              <span className={styles.bookBottom}>A world of stories</span>
-            </div>
-            <div className={`${styles.book} ${styles.bookTwo}`}>
-              <span className={styles.bookTop}>THE READING LIST</span>
-              <span className={styles.bookBig}>BOOKS<br />&amp; YOU</span>
-              <span className={styles.bookBottom}>Vol. 01</span>
-            </div>
-            <div className={`${styles.book} ${styles.bookThree}`}>
-              <span className={styles.bookTop}>AN OPEN BOOK</span>
-              <span className={styles.bookBig}>EVERY<br />STORY<br />COUNTS.</span>
-              <span className={styles.bookBottom}>livrUSP</span>
-            </div>
-            <span className={styles.bookshelfCaption}>YOUR NEXT CHAPTER STARTS HERE ↗</span>
+            <Image
+              alt=""
+              className={styles.booksImage}
+              height={1024}
+              sizes="(max-width: 900px) 40vw, 600px"
+              src="/auth-books-v2.png"
+              width={1536}
+            />
           </div>
         </section>
 
