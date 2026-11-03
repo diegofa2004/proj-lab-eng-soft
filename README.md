@@ -8,11 +8,21 @@ because the root file uses `include`.
 From the `proj-lab-eng-soft` root directory, run:
 
 ```bash
+python3 - <<'PY'
+from pathlib import Path
+from secrets import token_hex
+
+env = Path("infra/.env.local")
+env.write_text(f"JWT_SECRET_KEY={token_hex(32)}\n")
+env.chmod(0o600)
+PY
 docker compose up --build
 ```
 
-The root file includes `infra/docker-compose.dev.yml` and uses `infra/.env.dev`
-to provide configuration variables.
+The root file includes `infra/docker-compose.dev.yml`. The backend loads the
+Git-ignored `infra/.env.local` after the versioned `infra/.env.dev`, so the
+private JWT key overrides the rejected development placeholder. Generate a
+fresh JWT key for each local setup.
 
 | Service | Local address |
 | --- | --- |

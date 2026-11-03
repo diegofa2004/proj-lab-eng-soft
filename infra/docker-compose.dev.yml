@@ -35,6 +35,7 @@ services:
         condition: service_healthy
     env_file:
       - .env.dev
+      - .env.local
     environment:
       DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-login}:${POSTGRES_PASSWORD:-senha}@db:5432/${POSTGRES_DB:-pcs3443}
     ports:
