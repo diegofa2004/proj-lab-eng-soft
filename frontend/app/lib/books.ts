@@ -364,3 +364,330 @@ export async function getGenres(): Promise<Genre[]> {
     return [];
   }
 }
+
+export type ReadingProgressItem = {
+  id_progresso?: number;
+  id_usuario: number;
+  id_livro: number;
+  ultima_posicao?: string | null;
+  paginas_distintas_lidas: number;
+  concluido_em?: string | null;
+};
+
+export type ReadingSessionItem = {
+  id_sessao: number;
+  id_usuario: number;
+  id_livro: number;
+  inicio: string;
+  fim?: string | null;
+  tempo_ativo_segundos: number;
+};
+
+export type PublicProfile = {
+  id_usuario: number;
+  nome_perfil: string;
+  biografia: string;
+  id_avatar?: number | null;
+  id_icone?: number | null;
+  nivel?: string | null;
+};
+
+export type SocialActivityItem = {
+  id: string;
+  userId: number;
+  username: string;
+  bookId: number;
+  bookTitle: string;
+  authorName: string | null;
+  rating: number;
+  reviewText: string | null;
+  createdAt: string;
+};
+
+export type SignedHomeData = {
+  myReadings: BookSearchResult[];
+  myStories: BookSearchResult[];
+  toBeRead: BookSearchResult[];
+  myReviews: { book: BookSearchResult; review: Review }[];
+  socials: SocialActivityItem[];
+};
+
+async function fetchJsonOrNull<T>(
+  url: string,
+  headers?: HeadersInit,
+): Promise<{ ok: true; data: T } | { ok: false; status: number }> {
+  try {
+    const response = await fetch(url, {
+      headers,
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return { ok: false, status: response.status };
+    }
+
+    const data = (await response.json()) as T;
+    return { ok: true, data };
+  } catch {
+    return { ok: false, status: 0 };
+  }
+}
+
+function extractBookList(
+  payload: BookSearchResult[] | PaginatedBooksResponse | null | undefined,
+): BookSearchResult[] {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (payload && Array.isArray(payload.items)) {
+    return payload.items;
+  }
+
+  return [];
+}
+
+async function resolveBooksByIds(
+  ids: number[],
+  bookMap: Map<number, BookSearchResult>,
+): Promise<BookSearchResult[]> {
+  const uniqueIds = Array.from(new Set(ids.filter((id) => Number.isInteger(id) && id > 0)));
+  const missingIds = uniqueIds.filter((id) => !bookMap.has(id));
+
+  if (missingIds.length > 0) {
+    const fetchedResults = await Promise.all(missingIds.map((id) => getBookById(id)));
+    for (const result of fetchedResults) {
+      if (result.status === "ok") {
+        bookMap.set(result.book.id_livro, result.book);
+      }
+    }
+  }
+
+  return uniqueIds
+    .map((id) => bookMap.get(id))
+    .filter((book): book is BookSearchResult => Boolean(book));
+}
+
+async function fetchPublicProfileName(
+  userId: number,
+  currentUser: CurrentUser | null,
+): Promise<string> {
+  if (currentUser && currentUser.id === userId) {
+    return currentUser.username;
+  }
+
+  const backendUrl = getBackendUrl();
+  const v2Profile = await fetchJsonOrNull<PublicProfile>(`${backendUrl}/v2/profiles/${userId}`);
+  if (v2Profile.ok && v2Profile.data?.nome_perfil) {
+    return v2Profile.data.nome_perfil;
+  }
+
+  const rootProfile = await fetchJsonOrNull<PublicProfile>(`${backendUrl}/profiles/${userId}`);
+  if (rootProfile.ok && rootProfile.data?.nome_perfil) {
+    return rootProfile.data.nome_perfil;
+  }
+
+  return `user_${userId}`;
+}
+
+export async function getSignedHomeData(
+  currentUser: CurrentUser | null,
+): Promise<SignedHomeData> {
+  const backendUrl = getBackendUrl();
+  const token = (await cookies()).get(accessTokenCookieName)?.value;
+  const authHeaders: HeadersInit | undefined = token
+    ? { Authorization: `Bearer ${token}` }
+    : undefined;
+
+  const [
+    catalogResponse,
+    v2CatalogResponse,
+    userCreatedResponse,
+    v2ProgressResponse,
+    v2SessionsResponse,
+    favoritesResponse,
+    v2FavoritesResponse,
+    toReadResponse,
+    v2ToReadResponse,
+    v2MyBooksResponse,
+  ] = await Promise.all([
+    fetchJsonOrNull<BookSearchResult[] | PaginatedBooksResponse>(`${backendUrl}/books`),
+    fetchJsonOrNull<BookSearchResult[] | PaginatedBooksResponse>(`${backendUrl}/v2/books`),
+    fetchJsonOrNull<BookSearchResult[]>(`${backendUrl}/content/user-created`),
+    authHeaders
+      ? fetchJsonOrNull<ReadingProgressItem[]>(`${backendUrl}/v2/me/progress`, authHeaders)
+      : Promise.resolve({ ok: false as const, status: 401 }),
+    authHeaders
+      ? fetchJsonOrNull<ReadingSessionItem[]>(`${backendUrl}/v2/me/sessions`, authHeaders)
+      : Promise.resolve({ ok: false as const, status: 401 }),
+    authHeaders
+      ? fetchJsonOrNull<ListItem[]>(`${backendUrl}/users/me/favorites`, authHeaders)
+      : Promise.resolve({ ok: false as const, status: 401 }),
+    authHeaders
+      ? fetchJsonOrNull<ListItem[]>(`${backendUrl}/v2/me/lists?tipo=favorito`, authHeaders)
+      : Promise.resolve({ ok: false as const, status: 401 }),
+    authHeaders
+      ? fetchJsonOrNull<ListItem[]>(`${backendUrl}/users/me/to-read`, authHeaders)
+      : Promise.resolve({ ok: false as const, status: 401 }),
+    authHeaders
+      ? fetchJsonOrNull<ListItem[]>(`${backendUrl}/v2/me/lists?tipo=ler_depois`, authHeaders)
+      : Promise.resolve({ ok: false as const, status: 401 }),
+    authHeaders
+      ? fetchJsonOrNull<BookSearchResult[]>(`${backendUrl}/v2/me/books`, authHeaders)
+      : Promise.resolve({ ok: false as const, status: 401 }),
+  ]);
+
+  const bookMap = new Map<number, BookSearchResult>();
+
+  for (const list of [
+    catalogResponse.ok ? extractBookList(catalogResponse.data) : [],
+    v2CatalogResponse.ok ? extractBookList(v2CatalogResponse.data) : [],
+    userCreatedResponse.ok && Array.isArray(userCreatedResponse.data)
+      ? userCreatedResponse.data
+      : [],
+    v2MyBooksResponse.ok && Array.isArray(v2MyBooksResponse.data)
+      ? v2MyBooksResponse.data
+      : [],
+  ]) {
+    for (const book of list) {
+      if (book && typeof book.id_livro === "number") {
+        const existing = bookMap.get(book.id_livro);
+        bookMap.set(book.id_livro, existing ? { ...existing, ...book } : book);
+      }
+    }
+  }
+
+  // Reading progress IDs
+  const readingBookIds: number[] = [];
+
+  if (v2ProgressResponse.ok && Array.isArray(v2ProgressResponse.data)) {
+    for (const item of v2ProgressResponse.data) {
+      readingBookIds.push(item.id_livro);
+    }
+  } else if (authHeaders && bookMap.size > 0) {
+    // Fallback for backend versions with per-book /books/{id}/progress
+    const catalogIds = Array.from(bookMap.keys());
+    const perBookProgress = await Promise.all(
+      catalogIds.map((id) =>
+        fetchJsonOrNull<ReadingProgressItem>(`${backendUrl}/books/${id}/progress`, authHeaders),
+      ),
+    );
+    for (const res of perBookProgress) {
+      if (res.ok && res.data && typeof res.data.id_livro === "number") {
+        readingBookIds.push(res.data.id_livro);
+      }
+    }
+  }
+
+  if (v2SessionsResponse.ok && Array.isArray(v2SessionsResponse.data)) {
+    for (const session of v2SessionsResponse.data) {
+      readingBookIds.push(session.id_livro);
+    }
+  }
+
+  for (const favRes of [favoritesResponse, v2FavoritesResponse]) {
+    if (favRes.ok && Array.isArray(favRes.data)) {
+      for (const item of favRes.data) {
+        readingBookIds.push(item.id_livro);
+      }
+    }
+  }
+
+  const myReadings = await resolveBooksByIds(readingBookIds, bookMap);
+
+  // My stories (books published/created by the current user)
+  const myStoryIds: number[] = [];
+  if (v2MyBooksResponse.ok && Array.isArray(v2MyBooksResponse.data)) {
+    for (const book of v2MyBooksResponse.data) {
+      myStoryIds.push(book.id_livro);
+    }
+  }
+  if (currentUser) {
+    for (const book of bookMap.values()) {
+      if (book.id_publicador === currentUser.id) {
+        myStoryIds.push(book.id_livro);
+      }
+    }
+  }
+  const myStories = await resolveBooksByIds(myStoryIds, bookMap);
+
+  // To-be-read
+  const toReadIds: number[] = [];
+  for (const trRes of [toReadResponse, v2ToReadResponse]) {
+    if (trRes.ok && Array.isArray(trRes.data)) {
+      for (const item of trRes.data) {
+        toReadIds.push(item.id_livro);
+      }
+    }
+  }
+  const toBeRead = await resolveBooksByIds(toReadIds, bookMap);
+
+  // Reviews across catalog books -> My Reviews & Socials
+  const allCatalogBooks = Array.from(bookMap.values());
+  const reviewsByBook = await Promise.all(
+    allCatalogBooks.map(async (book) => ({
+      book,
+      reviews: await getBookReviews(book.id_livro),
+    })),
+  );
+
+  const myReviews: { book: BookSearchResult; review: Review }[] = [];
+  const allReviewsWithBook: { book: BookSearchResult; review: Review }[] = [];
+
+  for (const { book, reviews } of reviewsByBook) {
+    for (const review of reviews) {
+      if (review.is_removida) continue;
+      allReviewsWithBook.push({ book, review });
+      if (currentUser && review.id_usuario === currentUser.id) {
+        myReviews.push({ book, review });
+      }
+    }
+  }
+
+  myReviews.sort(
+    (a, b) =>
+      new Date(b.review.data_hora).getTime() - new Date(a.review.data_hora).getTime() ||
+      b.review.id_avaliacao - a.review.id_avaliacao,
+  );
+
+  allReviewsWithBook.sort(
+    (a, b) =>
+      new Date(b.review.data_hora).getTime() - new Date(a.review.data_hora).getTime() ||
+      b.review.id_avaliacao - a.review.id_avaliacao,
+  );
+
+  const recentSocialReviews = allReviewsWithBook.slice(0, 6);
+  const uniqueReviewerIds = Array.from(
+    new Set(recentSocialReviews.map((entry) => entry.review.id_usuario)),
+  );
+  const profileNamesEntries = await Promise.all(
+    uniqueReviewerIds.map(async (userId) => [
+      userId,
+      await fetchPublicProfileName(userId, currentUser),
+    ] as const),
+  );
+  const profileNameMap = new Map<number, string>(profileNamesEntries);
+
+  const socials: SocialActivityItem[] = recentSocialReviews.map(({ book, review }) => {
+    const authorNames = (book.autores ?? []).map((author) => author.nome).filter(Boolean);
+    return {
+      id: `${review.id_avaliacao}-${book.id_livro}`,
+      userId: review.id_usuario,
+      username: profileNameMap.get(review.id_usuario) ?? `user_${review.id_usuario}`,
+      bookId: book.id_livro,
+      bookTitle: book.titulo,
+      authorName: authorNames.length > 0 ? authorNames.join(", ") : null,
+      rating: review.nota,
+      reviewText: review.texto_revisao,
+      createdAt: review.data_hora,
+    };
+  });
+
+  return {
+    myReadings,
+    myStories,
+    toBeRead,
+    myReviews,
+    socials,
+  };
+}
