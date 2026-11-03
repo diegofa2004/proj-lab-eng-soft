@@ -116,6 +116,9 @@ const STEPS = [
   },
 ];
 
+const authButtonClassName =
+  "inline-flex items-center justify-center rounded-full bg-[#24324F] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#1A253B] sm:px-7 sm:py-3 sm:text-sm";
+
 export default async function Home() {
   const currentUser = await getOptionalCurrentUser();
 
@@ -145,12 +148,14 @@ export default async function Home() {
             </Link>
           </nav>
 
-          <Link
-            className="order-2 inline-flex items-center justify-center rounded-full bg-[#24324F] px-6 py-2.5 text-xs font-semibold text-white transition hover:bg-[#1A253B] sm:order-3 sm:px-7 sm:py-3 sm:text-sm"
-            href="/signup"
-          >
-            Sign up
-          </Link>
+          <div className="order-2 flex items-center gap-2 sm:order-3 sm:gap-3">
+            <Link className={authButtonClassName} href="/login">
+              Sign in
+            </Link>
+            <Link className={authButtonClassName} href="/signup">
+              Sign up
+            </Link>
+          </div>
         </header>
 
         <main>

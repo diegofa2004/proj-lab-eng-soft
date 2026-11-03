@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { type SyntheticEvent, useState } from "react";
 
 import { AuthShell } from "@/components/auth/auth-shell";
@@ -11,6 +12,7 @@ type FormStatus = "idle" | "submitting" | "success" | "error";
 export default function SignupPage() {
   const [formStatus, setFormStatus] = useState<FormStatus>("idle");
   const [message, setMessage] = useState("");
+  const router = useRouter();
 
   async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -44,6 +46,7 @@ export default function SignupPage() {
 
     setFormStatus("submitting");
     setMessage("");
+    let accountCreated = false;
 
     try {
       const response = await fetch("/api/register", {
@@ -63,16 +66,39 @@ export default function SignupPage() {
         return;
       }
 
+      accountCreated = true;
+      const loginResponse = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: data.username ?? formData.get("username"),
+          password,
+        }),
+      });
+
+      if (!loginResponse.ok) {
+        throw new Error("Automatic sign-in failed.");
+      }
+
       form.reset();
       setFormStatus("success");
-      setMessage(`Account created for ${data.username}. You can now sign in.`);
+      setMessage("Account created. Welcome to livrUSP!");
+      router.replace("/home");
+      router.refresh();
     } catch {
-      setFormStatus("error");
-      setMessage("Unable to reach the authentication service. Please try again.");
+      if (accountCreated) {
+        form.reset();
+        setFormStatus("success");
+        setMessage("Your account was created, but automatic sign-in failed. Please use Sign in below.");
+      } else {
+        setFormStatus("error");
+        setMessage("Unable to reach the authentication service. Please try again.");
+      }
     }
   }
 
   const isSubmitting = formStatus === "submitting";
+  const isComplete = formStatus === "success";
 
   return (
     <AuthShell mode="signup">
@@ -143,9 +169,9 @@ export default function SignupPage() {
             />
           </div>
 
-          <button className={styles.submitButton} disabled={isSubmitting} type="submit">
-            {isSubmitting ? "Creating account..." : "Create account"}
-            {!isSubmitting && <span aria-hidden="true">↗</span>}
+          <button className={styles.submitButton} disabled={isSubmitting || isComplete} type="submit">
+            {isSubmitting ? "Creating account..." : isComplete ? "Account created" : "Create account"}
+            {!isSubmitting && !isComplete && <span aria-hidden="true">↗</span>}
           </button>
 
           <p
