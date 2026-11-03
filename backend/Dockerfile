@@ -19,8 +19,9 @@ COPY requirements-dev.txt ./
 COPY pyproject.toml ./
 COPY tests ./tests
 COPY integration ./integration
+COPY dev-entrypoint.sh ./
 RUN python -m pip install --no-cache-dir -r requirements-dev.txt
-CMD ["sh", "-c", "alembic upgrade head && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"]
+CMD ["sh", "./dev-entrypoint.sh"]
 
 FROM base AS production
 CMD ["sh", "-c", "alembic upgrade head && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"]

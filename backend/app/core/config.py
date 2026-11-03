@@ -1,5 +1,7 @@
 import json
+import os
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -14,6 +16,14 @@ class Settings(BaseSettings):
     )
     JWT_SECRET_KEY: str
     DEMO_BILLING: bool = False
+
+    @field_validator("JWT_SECRET_KEY", mode="before")
+    @classmethod
+    def load_key_from_file(cls, key: str) -> str:
+        path = os.environ.get("JWT_SECRET_KEY_FILE")
+        if not key and path:
+            return Path(path).read_text().strip()
+        return key
 
     @field_validator("JWT_SECRET_KEY")
     @classmethod
