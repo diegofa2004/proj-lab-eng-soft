@@ -11,6 +11,7 @@ import {
 } from "@/app/lib/books";
 import BookResults, { BookResultsSkeleton } from "@/components/books/book-results";
 import BookSearchForm from "@/components/books/book-search-form";
+import { LivruspLogo } from "@/components/home/livrusp-logos";
 
 export const metadata: Metadata = {
   title: "Browse books · LivrUSP",
@@ -30,10 +31,10 @@ export default async function BooksPage({ searchParams }: BooksPageProps) {
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Link
-              className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600 hover:text-indigo-700"
+              className="inline-flex items-center hover:opacity-70"
               href="/"
             >
-              LivrUSP
+              <LivruspLogo className="block h-5 w-auto" />
             </Link>
             <span aria-hidden="true" className="text-slate-300">
               /

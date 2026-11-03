@@ -2,6 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
 
+import { LivruspLogo } from "@/components/home/livrusp-logos";
+
 import styles from "./auth.module.css";
 
 type AuthShellProps = {
@@ -16,7 +18,7 @@ export function AuthShell({ mode, children }: AuthShellProps) {
     <div className={styles.shell}>
       <header className={styles.header}>
         <Link className={styles.logoLink} href="/" aria-label="livrUSP — home">
-          <span className={styles.logo} aria-hidden="true" />
+          <LivruspLogo alt="" className={styles.logo} />
         </Link>
 
         <nav aria-label="Account">

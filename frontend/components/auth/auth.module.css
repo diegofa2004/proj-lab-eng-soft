@@ -32,21 +32,13 @@
 .logoLink {
   display: block;
   width: 232px;
-  height: 52px;
   flex: none;
 }
 
 .logo {
   display: block;
-  width: 331px;
-  height: 73px;
-  background-image: url("/livrusp-wordmark-source.png");
-  background-size: 1280px 426px;
-  background-position: -39px -10px;
-  background-repeat: no-repeat;
-  mix-blend-mode: darken;
-  transform: scale(0.7);
-  transform-origin: left top;
+  width: 100%;
+  height: auto;
 }
 
 .headerAction,
@@ -307,11 +299,6 @@
 
   .logoLink {
     width: 199px;
-    height: 44px;
-  }
-
-  .logo {
-    transform: scale(0.6);
   }
 
   .headerAction {
@@ -355,11 +342,6 @@
 
   .logoLink {
     width: 166px;
-    height: 37px;
-  }
-
-  .logo {
-    transform: scale(0.5);
   }
 
   .headerAction {

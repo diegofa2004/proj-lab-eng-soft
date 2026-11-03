@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import type { BookSearchResult } from "@/app/lib/books";
+import { LivruspLogo } from "@/components/home/livrusp-logos";
 
 type BookResultCardProps = {
   book: BookSearchResult;
@@ -32,8 +33,8 @@ export default function BookResultCard({ book }: BookResultCardProps) {
           aria-hidden="true"
           className="flex h-36 w-24 shrink-0 flex-col justify-between rounded-lg bg-gradient-to-br from-indigo-600 via-indigo-700 to-slate-900 p-2.5 text-white shadow"
         >
-          <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-indigo-200">
-            LivrUSP
+          <span className="inline-flex w-fit rounded bg-white/90 px-1 py-0.5">
+            <LivruspLogo alt="" className="block h-2.5 w-auto" />
           </span>
           <p className="line-clamp-4 text-xs font-bold leading-snug">{book.titulo}</p>
         </div>

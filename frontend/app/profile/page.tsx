@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import LogoutButton from "@/components/auth/logout-button";
 import { requireCurrentUser } from "@/app/lib/auth";
+import { LivruspLogo } from "@/components/home/livrusp-logos";
 
 export default async function ProfilePage() {
   const user = await requireCurrentUser();
@@ -9,7 +10,7 @@ export default async function ProfilePage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 text-slate-900">
       <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">LivrUSP</p>
+        <LivruspLogo className="block h-7 w-auto" />
         <h1 className="mt-4 text-3xl font-bold tracking-tight">Welcome, {user.username}</h1>
         <dl className="mt-6 space-y-3 rounded-lg bg-slate-50 p-4 text-sm">
           <div>

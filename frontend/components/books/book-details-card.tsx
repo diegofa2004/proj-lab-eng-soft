@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Book, CurrentUser, Review } from "@/app/lib/books";
 import BookListActions from "@/components/books/book-list-actions";
 import { StarRatingDisplay } from "@/components/books/star-rating";
+import { LivruspLogo } from "@/components/home/livrusp-logos";
 
 type BookDetailsCardProps = {
   book: Book;
@@ -46,8 +47,8 @@ export default function BookDetailsCard({
       <div className="flex flex-col gap-8 md:flex-row md:items-start">
         {/* Book Cover Placeholder */}
         <div className="flex h-64 w-44 shrink-0 flex-col justify-between rounded-xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-slate-900 p-5 text-white shadow-md">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-indigo-200">
-            LivrUSP
+          <span className="inline-flex w-fit rounded bg-white/90 px-1.5 py-1">
+            <LivruspLogo alt="" className="block h-3 w-auto" />
           </span>
           <div>
             <p className="line-clamp-4 text-lg font-bold leading-snug">{book.titulo}</p>
