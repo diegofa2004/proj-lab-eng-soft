@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select, text
 
 from app.api.platform import DB, Reader, lock_reader, public_book, require, save
+from app.api.reading_progress import apply_reading_progress
 from app.db.base import (
     Avaliacao,
     ItemLista,
@@ -14,6 +15,7 @@ from app.db.base import (
     SessaoLeitura,
 )
 from app.schemas.avaliacao import AvaliacaoPublic
+from app.schemas.common import NonEmptyText
 from app.schemas.item_lista import ItemListaPublic, TipoItemLista
 from app.schemas.movimento_pontos import MovimentoPontosPublic
 from app.schemas.nota_pessoal import NotaPessoalCreate, NotaPessoalPublic, NotaPessoalUpdate
@@ -83,7 +85,7 @@ def delete_note(note_id: int, db: DB, user: Reader):
 
 class Review(BaseModel):
     nota: int = Field(ge=1, le=5)
-    texto_revisao: str | None = None
+    texto_revisao: NonEmptyText | None = None
 
 
 @router.get("/books/{book_id}/reviews", response_model=list[AvaliacaoPublic])
@@ -120,7 +122,7 @@ def delete_review(book_id: int, db: DB, user: Reader):
 
 class Progress(BaseModel):
     ultima_posicao: str | None = None
-    paginas_distintas_lidas: int = Field(ge=0)
+    paginas_distintas_lidas: int = Field(ge=0, le=2147483647)
 
 
 @router.get("/me/progress", response_model=list[ProgressoLeituraPublic])
@@ -131,25 +133,11 @@ def progress(db: DB, user: Reader):
 @router.put("/me/progress/{book_id}", response_model=ProgressoLeituraPublic)
 def progress_update(book_id: int, data: Progress, db: DB, user: Reader):
     book = public_book(db, book_id)
-    if data.paginas_distintas_lidas > book.total_paginas:
-        raise HTTPException(422, "Page count exceeds book length")
     lock_reader(db, user)
     row = db.scalar(mine(db, user, ProgressoLeitura, id_livro=book_id))
-    if row is None:
-        row = ProgressoLeitura(id_usuario=user.id, id_livro=book_id, paginas_distintas_lidas=0)
-    row.paginas_distintas_lidas = max(data.paginas_distintas_lidas, row.paginas_distintas_lidas)
-    row.ultima_posicao = data.ultima_posicao
-    if row.paginas_distintas_lidas == book.total_paginas and row.concluido_em is None:
-        row.concluido_em = datetime.now(UTC)
-        db.add(
-            MovimentoPontos(
-                id_usuario=user.id,
-                id_livro=book_id,
-                quantidade=1,
-                motivo="leitura",
-                chave_evento=f"completed:{user.id}:{book_id}",
-            )
-        )
+    row = apply_reading_progress(
+        db, user, book, row, data.paginas_distintas_lidas, data.ultima_posicao
+    )
     return save(db, row)
 
 

@@ -9,7 +9,12 @@ from app.models.common import SCHEMA, primary_key_column
 
 class AcessoLivro(Base):
     __tablename__ = "acesso_livro"
-    __table_args__ = ({"schema": SCHEMA},)
+    __table_args__ = (
+        {
+            "schema": SCHEMA,
+            "comment": "Cada linha e um evento de acesso; usuario NULL permite visitantes",
+        },
+    )
 
     id_acesso: Mapped[int] = primary_key_column()
     id_usuario: Mapped[int | None] = mapped_column(

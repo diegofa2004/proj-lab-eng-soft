@@ -1,4 +1,5 @@
 from app.db.session import Base
+from app.models import indexes as _indexes  # noqa: F401 - register SQL indexes in metadata
 from app.models.acesso_livro import AcessoLivro
 from app.models.asset_perfil import AssetPerfil
 from app.models.assinatura import Assinatura
@@ -18,6 +19,7 @@ from app.models.plano import Plano
 from app.models.progresso_leitura import ProgressoLeitura
 from app.models.sessao_leitura import SessaoLeitura
 from app.models.user import User
+from app.models.usuario_legado_pendente import UsuarioLegadoPendente
 
 __all__ = [
     "AcessoLivro",
@@ -40,4 +42,5 @@ __all__ = [
     "ProgressoLeitura",
     "SessaoLeitura",
     "User",
+    "UsuarioLegadoPendente",
 ]

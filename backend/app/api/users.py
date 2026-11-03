@@ -1,5 +1,3 @@
-from datetime import date
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -23,45 +21,90 @@ premium_router = APIRouter(prefix="/premium", tags=["premium"])
 
 
 def user_points(db: Session, user_id: int) -> int:
-    return int(db.scalar(select(func.coalesce(func.sum(MovimentoPontos.quantidade), 0)).where(MovimentoPontos.id_usuario == user_id)) or 0)
+    return int(
+        db.scalar(
+            select(func.coalesce(func.sum(MovimentoPontos.quantidade), 0)).where(
+                MovimentoPontos.id_usuario == user_id
+            )
+        )
+        or 0
+    )
 
 
 @router.get("/dashboard")
 def dashboard(db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> dict:
-    completed = db.scalar(select(func.count()).select_from(ProgressoLeitura).where(ProgressoLeitura.id_usuario == user.id, ProgressoLeitura.concluido_em.is_not(None))) or 0
-    pages = db.scalar(select(func.coalesce(func.sum(ProgressoLeitura.paginas_distintas_lidas), 0)).where(ProgressoLeitura.id_usuario == user.id)) or 0
-    seconds = db.scalar(select(func.coalesce(func.sum(SessaoLeitura.tempo_ativo_segundos), 0)).where(SessaoLeitura.id_usuario == user.id)) or 0
+    completed = (
+        db.scalar(
+            select(func.count())
+            .select_from(ProgressoLeitura)
+            .where(
+                ProgressoLeitura.id_usuario == user.id, ProgressoLeitura.concluido_em.is_not(None)
+            )
+        )
+        or 0
+    )
+    pages = (
+        db.scalar(
+            select(func.coalesce(func.sum(ProgressoLeitura.paginas_distintas_lidas), 0)).where(
+                ProgressoLeitura.id_usuario == user.id
+            )
+        )
+        or 0
+    )
+    seconds = (
+        db.scalar(
+            select(func.coalesce(func.sum(SessaoLeitura.tempo_ativo_segundos), 0)).where(
+                SessaoLeitura.id_usuario == user.id
+            )
+        )
+        or 0
+    )
     return {"books_read": completed, "pages_read": pages, "active_seconds": seconds}
 
 
 @router.get("/points")
 def points(db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> dict:
     total = user_points(db, user.id)
-    level = db.scalar(select(Nivel).where(Nivel.pontos_minimos <= max(total, 0)).order_by(Nivel.pontos_minimos.desc()).limit(1))
-    return {"points": total, "level": level.nome if level else None, "publisher": bool(level and level.permite_publicar)}
+    level = db.scalar(
+        select(Nivel)
+        .where(Nivel.pontos_minimos <= max(total, 0))
+        .order_by(Nivel.pontos_minimos.desc())
+        .limit(1)
+    )
+    return {
+        "points": total,
+        "level": level.nome if level else None,
+        "publisher": bool(level and level.permite_publicar),
+    }
 
 
 @router.post("/inactivity")
-def inactivity(days: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> dict:
-    if days <= 0:
-        raise HTTPException(status_code=422, detail="Days must be positive")
-    movement = MovimentoPontos(id_usuario=user.id, quantidade=-days, motivo="inatividade", data_referencia=date.today(), chave_evento=f"inactivity:{user.id}:{date.today().isoformat()}")
-    db.add(movement)
-    try:
-        db.commit()
-    except Exception as error:
-        db.rollback()
-        raise HTTPException(status_code=409, detail="Inactivity was already recorded for today") from error
+def inactivity(
+    days: int | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)
+) -> dict:
+    if days is not None:
+        raise HTTPException(status_code=422, detail="Inactivity days are calculated by the server")
     return points(db, user)
 
 
 @router.get("/suggestions", response_model=list[LivroPublic])
-def suggestions(db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> list[Livro]:
-    return list(db.scalars(select(Livro).where(Livro.status_publicacao == "publicado", Livro.status_bloqueado.is_(False)).order_by(Livro.criado_em.desc()).limit(20)).all())
+def suggestions(
+    db: Session = Depends(get_db), user: User = Depends(get_current_user)
+) -> list[Livro]:
+    return list(
+        db.scalars(
+            select(Livro)
+            .where(Livro.status_publicacao == "publicado", Livro.status_bloqueado.is_(False))
+            .order_by(Livro.criado_em.desc())
+            .limit(20)
+        ).all()
+    )
 
 
 @router.post("/subscription")
-def subscribe(db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> dict[str, str]:
+def subscribe(
+    db: Session = Depends(get_db), user: User = Depends(get_current_user)
+) -> dict[str, str]:
     result = purchase_plan(db, user, None)
     plan = db.get(Plano, result["subscription"].id_plano)
     return {"status": "active", "plan": plan.nome}
@@ -71,9 +114,23 @@ def subscribe(db: Session = Depends(get_db), user: User = Depends(get_current_us
 def discover(db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> list[Livro]:
     if not profile_stats(db, user)["is_premium"]:
         raise HTTPException(status_code=403, detail="Premium subscription required")
-    return list(db.scalars(select(Livro).where(Livro.status_publicacao == "publicado", Livro.status_bloqueado.is_(False))).all())
+    return list(
+        db.scalars(
+            select(Livro).where(
+                Livro.status_publicacao == "publicado", Livro.status_bloqueado.is_(False)
+            )
+        ).all()
+    )
 
 
 @content_router.get("/user-created", response_model=list[LivroPublic])
 def user_created_content(db: Session = Depends(get_db)) -> list[Livro]:
-    return list(db.scalars(select(Livro).where(Livro.origem == "usuario", Livro.status_publicacao == "publicado", Livro.status_bloqueado.is_(False))).all())
+    return list(
+        db.scalars(
+            select(Livro).where(
+                Livro.origem == "usuario",
+                Livro.status_publicacao == "publicado",
+                Livro.status_bloqueado.is_(False),
+            )
+        ).all()
+    )

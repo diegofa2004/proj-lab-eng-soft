@@ -45,6 +45,7 @@ services:
       - ../backend/app:/app/app
       - ../backend/alembic:/app/alembic
       - ../backend/alembic.ini:/app/alembic.ini
+      - books-dev:/app/content
       - jwt-secret-dev:/run/livrusp-dev
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
@@ -74,4 +75,5 @@ services:
 
 volumes:
   pgdata-dev:
+  books-dev:
   jwt-secret-dev:

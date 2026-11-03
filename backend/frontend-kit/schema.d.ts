@@ -14,7 +14,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Register User */
-        post: operations["register_user_register_post"];
+        post: operations["register_user_v2_register_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -31,7 +31,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Login User */
-        post: operations["login_user_login_post"];
+        post: operations["login_user_v2_login_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -46,7 +46,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get Current User Profile */
-        get: operations["get_current_user_profile_me_get"];
+        get: operations["get_current_user_profile_v2_me_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -63,7 +63,7 @@ export interface paths {
             cookie?: never;
         };
         /** Health */
-        get: operations["health_health_get"];
+        get: operations["health_v2_health_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -80,14 +80,14 @@ export interface paths {
             cookie?: never;
         };
         /** Profile */
-        get: operations["profile_me_profile_get"];
+        get: operations["profile_v2_me_profile_get"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
         /** Update Profile */
-        patch: operations["update_profile_me_profile_patch"];
+        patch: operations["update_profile_v2_me_profile_patch"];
         trace?: never;
     };
     "/billing/config": {
@@ -98,7 +98,7 @@ export interface paths {
             cookie?: never;
         };
         /** Billing Config */
-        get: operations["billing_config_billing_config_get"];
+        get: operations["billing_config_v2_billing_config_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -115,7 +115,7 @@ export interface paths {
             cookie?: never;
         };
         /** Subscriptions */
-        get: operations["subscriptions_me_subscriptions_get"];
+        get: operations["subscriptions_v2_me_subscriptions_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -132,7 +132,7 @@ export interface paths {
             cookie?: never;
         };
         /** Payments */
-        get: operations["payments_me_payments_get"];
+        get: operations["payments_v2_me_payments_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -151,7 +151,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Checkout */
-        post: operations["checkout_me_checkout_post"];
+        post: operations["checkout_v2_me_checkout_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -169,7 +169,7 @@ export interface paths {
         put?: never;
         post?: never;
         /** Cancel */
-        delete: operations["cancel_me_subscriptions__sub_id__delete"];
+        delete: operations["cancel_v2_me_subscriptions__sub_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -183,7 +183,7 @@ export interface paths {
             cookie?: never;
         };
         /** Public Profile */
-        get: operations["public_profile_profiles__user_id__get"];
+        get: operations["public_profile_v2_profiles__user_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -200,7 +200,7 @@ export interface paths {
             cookie?: never;
         };
         /** Users */
-        get: operations["users_admin_users_get"];
+        get: operations["users_v2_admin_users_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -217,7 +217,7 @@ export interface paths {
             cookie?: never;
         };
         /** Books */
-        get: operations["books_admin_books_get"];
+        get: operations["books_v2_admin_books_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -234,7 +234,7 @@ export interface paths {
             cookie?: never;
         };
         /** Reviews */
-        get: operations["reviews_admin_reviews_get"];
+        get: operations["reviews_v2_admin_reviews_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -251,10 +251,10 @@ export interface paths {
             cookie?: never;
         };
         /** Logs */
-        get: operations["logs_admin_actions_get"];
+        get: operations["logs_v2_admin_actions_get"];
         put?: never;
         /** Moderate */
-        post: operations["moderate_admin_actions_post"];
+        post: operations["moderate_v2_admin_actions_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -269,7 +269,7 @@ export interface paths {
             cookie?: never;
         };
         /** Report */
-        get: operations["report_admin_dashboard_get"];
+        get: operations["report_v2_admin_dashboard_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -286,10 +286,10 @@ export interface paths {
             cookie?: never;
         };
         /** Catalog */
-        get: operations["catalog_books_get"];
+        get: operations["catalog_v2_books_get"];
         put?: never;
         /** Create */
-        post: operations["create_books_post"];
+        post: operations["create_v2_books_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -304,9 +304,9 @@ export interface paths {
             cookie?: never;
         };
         /** Detail */
-        get: operations["detail_books__book_id__get"];
+        get: operations["detail_v2_books__book_id__get"];
         /** Replace */
-        put: operations["replace_books__book_id__put"];
+        put: operations["replace_v2_books__book_id__put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -322,7 +322,7 @@ export interface paths {
             cookie?: never;
         };
         /** My Books */
-        get: operations["my_books_me_books_get"];
+        get: operations["my_books_v2_me_books_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -339,9 +339,9 @@ export interface paths {
             cookie?: never;
         };
         /** Content */
-        get: operations["content_books__book_id__content_get"];
+        get: operations["content_v2_books__book_id__content_get"];
         /** Upload */
-        put: operations["upload_books__book_id__content_put"];
+        put: operations["upload_v2_books__book_id__content_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -357,7 +357,7 @@ export interface paths {
             cookie?: never;
         };
         /** Lists */
-        get: operations["lists_me_lists_get"];
+        get: operations["lists_v2_me_lists_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -375,10 +375,10 @@ export interface paths {
         };
         get?: never;
         /** Bookmark */
-        put: operations["bookmark_me_lists__tipo___book_id__put"];
+        put: operations["bookmark_v2_me_lists__tipo___book_id__put"];
         post?: never;
         /** Unbookmark */
-        delete: operations["unbookmark_me_lists__tipo___book_id__delete"];
+        delete: operations["unbookmark_v2_me_lists__tipo___book_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -392,10 +392,10 @@ export interface paths {
             cookie?: never;
         };
         /** Notes */
-        get: operations["notes_me_notes_get"];
+        get: operations["notes_v2_me_notes_get"];
         put?: never;
         /** Note */
-        post: operations["note_me_notes_post"];
+        post: operations["note_v2_me_notes_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -413,11 +413,11 @@ export interface paths {
         put?: never;
         post?: never;
         /** Delete Note */
-        delete: operations["delete_note_me_notes__note_id__delete"];
+        delete: operations["delete_note_v2_me_notes__note_id__delete"];
         options?: never;
         head?: never;
         /** Edit Note */
-        patch: operations["edit_note_me_notes__note_id__patch"];
+        patch: operations["edit_note_v2_me_notes__note_id__patch"];
         trace?: never;
     };
     "/books/{book_id}/reviews": {
@@ -428,7 +428,7 @@ export interface paths {
             cookie?: never;
         };
         /** Reviews */
-        get: operations["reviews_books__book_id__reviews_get"];
+        get: operations["reviews_v2_books__book_id__reviews_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -446,10 +446,10 @@ export interface paths {
         };
         get?: never;
         /** Review */
-        put: operations["review_books__book_id__review_put"];
+        put: operations["review_v2_books__book_id__review_put"];
         post?: never;
         /** Delete Review */
-        delete: operations["delete_review_books__book_id__review_delete"];
+        delete: operations["delete_review_v2_books__book_id__review_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -463,7 +463,7 @@ export interface paths {
             cookie?: never;
         };
         /** Progress */
-        get: operations["progress_me_progress_get"];
+        get: operations["progress_v2_me_progress_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -481,7 +481,7 @@ export interface paths {
         };
         get?: never;
         /** Progress Update */
-        put: operations["progress_update_me_progress__book_id__put"];
+        put: operations["progress_update_v2_me_progress__book_id__put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -499,7 +499,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Start */
-        post: operations["start_me_sessions__book_id__post"];
+        post: operations["start_v2_me_sessions__book_id__post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -515,7 +515,7 @@ export interface paths {
         };
         get?: never;
         /** Finish */
-        put: operations["finish_me_sessions__session_id__end_put"];
+        put: operations["finish_v2_me_sessions__session_id__end_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -531,7 +531,7 @@ export interface paths {
             cookie?: never;
         };
         /** Points */
-        get: operations["points_me_points_get"];
+        get: operations["points_v2_me_points_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -548,7 +548,7 @@ export interface paths {
             cookie?: never;
         };
         /** Dashboard */
-        get: operations["dashboard_me_dashboard_get"];
+        get: operations["dashboard_v2_me_dashboard_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -565,7 +565,7 @@ export interface paths {
             cookie?: never;
         };
         /** Sessions */
-        get: operations["sessions_me_sessions_get"];
+        get: operations["sessions_v2_me_sessions_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -582,7 +582,7 @@ export interface paths {
             cookie?: never;
         };
         /** List Authors */
-        get: operations["list_authors_authors_get"];
+        get: operations["list_authors_v2_authors_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -601,7 +601,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Create Autor */
-        post: operations["create_autor_admin_authors_post"];
+        post: operations["create_autor_v2_admin_authors_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -622,7 +622,7 @@ export interface paths {
         options?: never;
         head?: never;
         /** Edit Autor */
-        patch: operations["edit_autor_admin_authors__item_id__patch"];
+        patch: operations["edit_autor_v2_admin_authors__item_id__patch"];
         trace?: never;
     };
     "/genres": {
@@ -633,7 +633,7 @@ export interface paths {
             cookie?: never;
         };
         /** List Genres */
-        get: operations["list_genres_genres_get"];
+        get: operations["list_genres_v2_genres_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -652,7 +652,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Create Genero */
-        post: operations["create_genero_admin_genres_post"];
+        post: operations["create_genero_v2_admin_genres_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -673,7 +673,7 @@ export interface paths {
         options?: never;
         head?: never;
         /** Edit Genero */
-        patch: operations["edit_genero_admin_genres__item_id__patch"];
+        patch: operations["edit_genero_v2_admin_genres__item_id__patch"];
         trace?: never;
     };
     "/plans": {
@@ -684,7 +684,7 @@ export interface paths {
             cookie?: never;
         };
         /** List Plans */
-        get: operations["list_plans_plans_get"];
+        get: operations["list_plans_v2_plans_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -701,10 +701,10 @@ export interface paths {
             cookie?: never;
         };
         /** All Plans */
-        get: operations["all_plans_admin_plans_get"];
+        get: operations["all_plans_v2_admin_plans_get"];
         put?: never;
         /** Create Plano */
-        post: operations["create_plano_admin_plans_post"];
+        post: operations["create_plano_v2_admin_plans_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -725,7 +725,7 @@ export interface paths {
         options?: never;
         head?: never;
         /** Edit Plano */
-        patch: operations["edit_plano_admin_plans__item_id__patch"];
+        patch: operations["edit_plano_v2_admin_plans__item_id__patch"];
         trace?: never;
     };
     "/levels": {
@@ -736,7 +736,7 @@ export interface paths {
             cookie?: never;
         };
         /** List Levels */
-        get: operations["list_levels_levels_get"];
+        get: operations["list_levels_v2_levels_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -755,7 +755,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Create Nivel */
-        post: operations["create_nivel_admin_levels_post"];
+        post: operations["create_nivel_v2_admin_levels_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -776,7 +776,7 @@ export interface paths {
         options?: never;
         head?: never;
         /** Edit Nivel */
-        patch: operations["edit_nivel_admin_levels__item_id__patch"];
+        patch: operations["edit_nivel_v2_admin_levels__item_id__patch"];
         trace?: never;
     };
     "/assets": {
@@ -787,7 +787,7 @@ export interface paths {
             cookie?: never;
         };
         /** List Assets */
-        get: operations["list_assets_assets_get"];
+        get: operations["list_assets_v2_assets_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -806,7 +806,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Create Asset Perfil */
-        post: operations["create_asset_perfil_admin_assets_post"];
+        post: operations["create_asset_perfil_v2_admin_assets_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -827,7 +827,7 @@ export interface paths {
         options?: never;
         head?: never;
         /** Edit Asset Perfil */
-        patch: operations["edit_asset_perfil_admin_assets__item_id__patch"];
+        patch: operations["edit_asset_perfil_v2_admin_assets__item_id__patch"];
         trace?: never;
     };
 }
@@ -1012,8 +1012,8 @@ export interface components {
             /** Is Removida */
             is_removida: boolean;
         };
-        /** Body_upload_books__book_id__content_put */
-        Body_upload_books__book_id__content_put: {
+        /** Body_upload_v2_books__book_id__content_put */
+        Body_upload_v2_books__book_id__content_put: {
             /** File */
             file: string;
         };
@@ -1596,7 +1596,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    register_user_register_post: {
+    register_user_v2_register_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1629,7 +1629,7 @@ export interface operations {
             };
         };
     };
-    login_user_login_post: {
+    login_user_v2_login_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1662,7 +1662,7 @@ export interface operations {
             };
         };
     };
-    get_current_user_profile_me_get: {
+    get_current_user_profile_v2_me_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1682,7 +1682,7 @@ export interface operations {
             };
         };
     };
-    health_health_get: {
+    health_v2_health_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1704,7 +1704,7 @@ export interface operations {
             };
         };
     };
-    profile_me_profile_get: {
+    profile_v2_me_profile_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1724,7 +1724,7 @@ export interface operations {
             };
         };
     };
-    update_profile_me_profile_patch: {
+    update_profile_v2_me_profile_patch: {
         parameters: {
             query?: never;
             header?: never;
@@ -1757,7 +1757,7 @@ export interface operations {
             };
         };
     };
-    billing_config_billing_config_get: {
+    billing_config_v2_billing_config_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1779,7 +1779,7 @@ export interface operations {
             };
         };
     };
-    subscriptions_me_subscriptions_get: {
+    subscriptions_v2_me_subscriptions_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1799,7 +1799,7 @@ export interface operations {
             };
         };
     };
-    payments_me_payments_get: {
+    payments_v2_me_payments_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1819,7 +1819,7 @@ export interface operations {
             };
         };
     };
-    checkout_me_checkout_post: {
+    checkout_v2_me_checkout_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1852,7 +1852,7 @@ export interface operations {
             };
         };
     };
-    cancel_me_subscriptions__sub_id__delete: {
+    cancel_v2_me_subscriptions__sub_id__delete: {
         parameters: {
             query?: never;
             header?: never;
@@ -1883,7 +1883,7 @@ export interface operations {
             };
         };
     };
-    public_profile_profiles__user_id__get: {
+    public_profile_v2_profiles__user_id__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1914,7 +1914,7 @@ export interface operations {
             };
         };
     };
-    users_admin_users_get: {
+    users_v2_admin_users_get: {
         parameters: {
             query?: {
                 limit?: number;
@@ -1946,7 +1946,7 @@ export interface operations {
             };
         };
     };
-    books_admin_books_get: {
+    books_v2_admin_books_get: {
         parameters: {
             query?: {
                 limit?: number;
@@ -1978,7 +1978,7 @@ export interface operations {
             };
         };
     };
-    reviews_admin_reviews_get: {
+    reviews_v2_admin_reviews_get: {
         parameters: {
             query?: {
                 limit?: number;
@@ -2010,7 +2010,7 @@ export interface operations {
             };
         };
     };
-    logs_admin_actions_get: {
+    logs_v2_admin_actions_get: {
         parameters: {
             query?: {
                 limit?: number;
@@ -2042,7 +2042,7 @@ export interface operations {
             };
         };
     };
-    moderate_admin_actions_post: {
+    moderate_v2_admin_actions_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -2075,7 +2075,7 @@ export interface operations {
             };
         };
     };
-    report_admin_dashboard_get: {
+    report_v2_admin_dashboard_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2095,7 +2095,7 @@ export interface operations {
             };
         };
     };
-    catalog_books_get: {
+    catalog_v2_books_get: {
         parameters: {
             query?: {
                 q?: string;
@@ -2130,7 +2130,7 @@ export interface operations {
             };
         };
     };
-    create_books_post: {
+    create_v2_books_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -2163,7 +2163,7 @@ export interface operations {
             };
         };
     };
-    detail_books__book_id__get: {
+    detail_v2_books__book_id__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2194,7 +2194,7 @@ export interface operations {
             };
         };
     };
-    replace_books__book_id__put: {
+    replace_v2_books__book_id__put: {
         parameters: {
             query?: never;
             header?: never;
@@ -2229,7 +2229,7 @@ export interface operations {
             };
         };
     };
-    my_books_me_books_get: {
+    my_books_v2_me_books_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2249,7 +2249,7 @@ export interface operations {
             };
         };
     };
-    content_books__book_id__content_get: {
+    content_v2_books__book_id__content_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2280,7 +2280,7 @@ export interface operations {
             };
         };
     };
-    upload_books__book_id__content_put: {
+    upload_v2_books__book_id__content_put: {
         parameters: {
             query?: never;
             header?: never;
@@ -2291,7 +2291,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "multipart/form-data": components["schemas"]["Body_upload_books__book_id__content_put"];
+                "multipart/form-data": components["schemas"]["Body_upload_v2_books__book_id__content_put"];
             };
         };
         responses: {
@@ -2313,7 +2313,7 @@ export interface operations {
             };
         };
     };
-    lists_me_lists_get: {
+    lists_v2_me_lists_get: {
         parameters: {
             query?: {
                 tipo?: ("favorito" | "ler_depois") | null;
@@ -2344,7 +2344,7 @@ export interface operations {
             };
         };
     };
-    bookmark_me_lists__tipo___book_id__put: {
+    bookmark_v2_me_lists__tipo___book_id__put: {
         parameters: {
             query?: never;
             header?: never;
@@ -2376,7 +2376,7 @@ export interface operations {
             };
         };
     };
-    unbookmark_me_lists__tipo___book_id__delete: {
+    unbookmark_v2_me_lists__tipo___book_id__delete: {
         parameters: {
             query?: never;
             header?: never;
@@ -2406,7 +2406,7 @@ export interface operations {
             };
         };
     };
-    notes_me_notes_get: {
+    notes_v2_me_notes_get: {
         parameters: {
             query?: {
                 book_id?: number | null;
@@ -2437,7 +2437,7 @@ export interface operations {
             };
         };
     };
-    note_me_notes_post: {
+    note_v2_me_notes_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -2470,7 +2470,7 @@ export interface operations {
             };
         };
     };
-    delete_note_me_notes__note_id__delete: {
+    delete_note_v2_me_notes__note_id__delete: {
         parameters: {
             query?: never;
             header?: never;
@@ -2499,7 +2499,7 @@ export interface operations {
             };
         };
     };
-    edit_note_me_notes__note_id__patch: {
+    edit_note_v2_me_notes__note_id__patch: {
         parameters: {
             query?: never;
             header?: never;
@@ -2534,7 +2534,7 @@ export interface operations {
             };
         };
     };
-    reviews_books__book_id__reviews_get: {
+    reviews_v2_books__book_id__reviews_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2565,7 +2565,7 @@ export interface operations {
             };
         };
     };
-    review_books__book_id__review_put: {
+    review_v2_books__book_id__review_put: {
         parameters: {
             query?: never;
             header?: never;
@@ -2600,7 +2600,7 @@ export interface operations {
             };
         };
     };
-    delete_review_books__book_id__review_delete: {
+    delete_review_v2_books__book_id__review_delete: {
         parameters: {
             query?: never;
             header?: never;
@@ -2629,7 +2629,7 @@ export interface operations {
             };
         };
     };
-    progress_me_progress_get: {
+    progress_v2_me_progress_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2649,7 +2649,7 @@ export interface operations {
             };
         };
     };
-    progress_update_me_progress__book_id__put: {
+    progress_update_v2_me_progress__book_id__put: {
         parameters: {
             query?: never;
             header?: never;
@@ -2684,7 +2684,7 @@ export interface operations {
             };
         };
     };
-    start_me_sessions__book_id__post: {
+    start_v2_me_sessions__book_id__post: {
         parameters: {
             query?: never;
             header?: never;
@@ -2715,7 +2715,7 @@ export interface operations {
             };
         };
     };
-    finish_me_sessions__session_id__end_put: {
+    finish_v2_me_sessions__session_id__end_put: {
         parameters: {
             query?: never;
             header?: never;
@@ -2750,7 +2750,7 @@ export interface operations {
             };
         };
     };
-    points_me_points_get: {
+    points_v2_me_points_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2770,7 +2770,7 @@ export interface operations {
             };
         };
     };
-    dashboard_me_dashboard_get: {
+    dashboard_v2_me_dashboard_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2790,7 +2790,7 @@ export interface operations {
             };
         };
     };
-    sessions_me_sessions_get: {
+    sessions_v2_me_sessions_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2810,7 +2810,7 @@ export interface operations {
             };
         };
     };
-    list_authors_authors_get: {
+    list_authors_v2_authors_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2830,7 +2830,7 @@ export interface operations {
             };
         };
     };
-    create_autor_admin_authors_post: {
+    create_autor_v2_admin_authors_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -2863,7 +2863,7 @@ export interface operations {
             };
         };
     };
-    edit_autor_admin_authors__item_id__patch: {
+    edit_autor_v2_admin_authors__item_id__patch: {
         parameters: {
             query?: never;
             header?: never;
@@ -2898,7 +2898,7 @@ export interface operations {
             };
         };
     };
-    list_genres_genres_get: {
+    list_genres_v2_genres_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2918,7 +2918,7 @@ export interface operations {
             };
         };
     };
-    create_genero_admin_genres_post: {
+    create_genero_v2_admin_genres_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -2951,7 +2951,7 @@ export interface operations {
             };
         };
     };
-    edit_genero_admin_genres__item_id__patch: {
+    edit_genero_v2_admin_genres__item_id__patch: {
         parameters: {
             query?: never;
             header?: never;
@@ -2986,7 +2986,7 @@ export interface operations {
             };
         };
     };
-    list_plans_plans_get: {
+    list_plans_v2_plans_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -3006,7 +3006,7 @@ export interface operations {
             };
         };
     };
-    all_plans_admin_plans_get: {
+    all_plans_v2_admin_plans_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -3026,7 +3026,7 @@ export interface operations {
             };
         };
     };
-    create_plano_admin_plans_post: {
+    create_plano_v2_admin_plans_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -3059,7 +3059,7 @@ export interface operations {
             };
         };
     };
-    edit_plano_admin_plans__item_id__patch: {
+    edit_plano_v2_admin_plans__item_id__patch: {
         parameters: {
             query?: never;
             header?: never;
@@ -3094,7 +3094,7 @@ export interface operations {
             };
         };
     };
-    list_levels_levels_get: {
+    list_levels_v2_levels_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -3114,7 +3114,7 @@ export interface operations {
             };
         };
     };
-    create_nivel_admin_levels_post: {
+    create_nivel_v2_admin_levels_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -3147,7 +3147,7 @@ export interface operations {
             };
         };
     };
-    edit_nivel_admin_levels__item_id__patch: {
+    edit_nivel_v2_admin_levels__item_id__patch: {
         parameters: {
             query?: never;
             header?: never;
@@ -3182,7 +3182,7 @@ export interface operations {
             };
         };
     };
-    list_assets_assets_get: {
+    list_assets_v2_assets_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -3202,7 +3202,7 @@ export interface operations {
             };
         };
     };
-    create_asset_perfil_admin_assets_post: {
+    create_asset_perfil_v2_admin_assets_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -3235,7 +3235,7 @@ export interface operations {
             };
         };
     };
-    edit_asset_perfil_admin_assets__item_id__patch: {
+    edit_asset_perfil_v2_admin_assets__item_id__patch: {
         parameters: {
             query?: never;
             header?: never;

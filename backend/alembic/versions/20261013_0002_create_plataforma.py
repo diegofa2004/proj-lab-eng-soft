@@ -272,11 +272,27 @@ CREATE TABLE plataforma.atividade_admin (
 )
 """)
     op.execute("""
-        INSERT INTO plataforma.usuario(id_usuario, nome_perfil, email, senha_hash)
-        OVERRIDING SYSTEM VALUE SELECT id, username, lower(trim(email)), password_hash FROM public.users;
-        SELECT setval(pg_get_serial_sequence('plataforma.usuario','id_usuario'),
-            GREATEST(COALESCE(MAX(id_usuario), 0), 1), COALESCE(MAX(id_usuario), 0) >= 1)
-            FROM plataforma.usuario;
+        CREATE TABLE plataforma.usuario_legado_pendente (
+            id_legado INTEGER PRIMARY KEY,
+            nome_perfil VARCHAR(50) NOT NULL,
+            email VARCHAR(320) NOT NULL,
+            senha_hash VARCHAR(255) NOT NULL
+        );
+        INSERT INTO plataforma.usuario_legado_pendente(id_legado, nome_perfil, email, senha_hash)
+        SELECT id, username, email, password_hash FROM public.users;
+        WITH candidates AS (
+            SELECT *, row_number() OVER (PARTITION BY lower(btrim(email)) ORDER BY id_legado) AS rank
+            FROM plataforma.usuario_legado_pendente
+        )
+        INSERT INTO plataforma.usuario(nome_perfil, email, senha_hash)
+        SELECT nome_perfil, lower(btrim(email)), senha_hash FROM candidates
+        WHERE rank = 1 AND length(lower(btrim(email))) <= 254
+          AND position('@' IN lower(btrim(email))) > 1
+          AND btrim(nome_perfil) <> '' AND btrim(senha_hash) <> ''
+        ON CONFLICT DO NOTHING;
+        DELETE FROM plataforma.usuario_legado_pendente a USING plataforma.usuario u
+        WHERE a.nome_perfil = u.nome_perfil AND lower(btrim(a.email)) = u.email
+          AND a.senha_hash = u.senha_hash;
         DROP TABLE public.users;
     """)
     op.execute(

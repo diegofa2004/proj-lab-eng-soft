@@ -1,12 +1,22 @@
-from typing import Annotated
+from typing import Annotated, ClassVar
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 
 class PublicSchema(BaseModel):
     """Base for response contracts backed by SQLAlchemy models."""
 
     model_config = ConfigDict(from_attributes=True)
+    non_nullable_fields: ClassVar[frozenset[str]] = frozenset()
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_null_for_required_columns(cls, data: object) -> object:
+        if isinstance(data, dict) and cls.non_nullable_fields.intersection(
+            key for key, value in data.items() if value is None
+        ):
+            raise ValueError("A required field cannot be null")
+        return data
 
 
 PositiveId = Annotated[int, Field(gt=0)]

@@ -16,6 +16,7 @@ class AssetPerfilCreate(PublicSchema):
 
 
 class AssetPerfilUpdate(PublicSchema):
+    non_nullable_fields = frozenset({"nome", "arquivo", "exige_premium"})
     nome: MediumName | None = None
     arquivo: str | None = Field(default=None, min_length=1)
     exige_premium: bool | None = None

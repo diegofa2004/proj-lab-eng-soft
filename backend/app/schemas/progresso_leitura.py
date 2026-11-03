@@ -13,6 +13,7 @@ class ProgressoLeituraCreate(PublicSchema):
 
 
 class ProgressoLeituraUpdate(PublicSchema):
+    non_nullable_fields = frozenset({"paginas_distintas_lidas"})
     ultima_posicao: str | None = None
     paginas_distintas_lidas: int | None = Field(default=None, ge=0)
     concluido_em: datetime | None = None

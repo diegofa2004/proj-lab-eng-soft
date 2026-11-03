@@ -2,18 +2,19 @@ from datetime import datetime
 
 from pydantic import Field
 
-from app.schemas.common import PositiveId, PublicSchema
+from app.schemas.common import NonEmptyText, PositiveId, PublicSchema
 
 
 class AvaliacaoCreate(PublicSchema):
     id_livro: PositiveId
     nota: int = Field(ge=1, le=5)
-    texto_revisao: str | None = Field(default=None, min_length=1)
+    texto_revisao: NonEmptyText | None = None
 
 
 class AvaliacaoUpdate(PublicSchema):
+    non_nullable_fields = frozenset({"nota"})
     nota: int | None = Field(default=None, ge=1, le=5)
-    texto_revisao: str | None = Field(default=None, min_length=1)
+    texto_revisao: NonEmptyText | None = None
 
 
 class AvaliacaoPublic(PublicSchema):

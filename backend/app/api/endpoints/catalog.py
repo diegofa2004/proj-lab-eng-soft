@@ -1,3 +1,4 @@
+import subprocess
 from datetime import date
 from pathlib import Path
 from typing import Annotated
@@ -6,11 +7,20 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
-from sqlalchemy import delete, select, text
+from sqlalchemy import delete, func, select, text
 
 from app.api.platform import DB, Limit, Offset, Reader, profile_stats, require, save
 from app.core.deps import optional_reader
-from app.db.base import AcessoLivro, AtividadeAdmin, Autor, Genero, Livro, LivroAutor, LivroGenero
+from app.db.base import (
+    AcessoLivro,
+    AtividadeAdmin,
+    Autor,
+    Genero,
+    Livro,
+    LivroAutor,
+    LivroGenero,
+    ProgressoLeitura,
+)
 from app.models.user import User
 from app.schemas.autor import AutorPublic
 from app.schemas.common import BookTitle, PositiveId
@@ -22,11 +32,61 @@ CONTENT = Path("content")
 MAX_BYTES = 20 * 1024 * 1024
 
 
+def pdf_page_count(path: Path) -> int:
+    try:
+        result = subprocess.run(
+            ["pdfinfo", str(path)], capture_output=True, text=True, timeout=10, check=False
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise HTTPException(422, "PDF could not be validated") from exc
+    if result.returncode == 0:
+        for line in result.stdout.splitlines():
+            if line.startswith("Pages:"):
+                pages = line.partition(":")[2].strip()
+                if pages.isdigit() and int(pages) > 0:
+                    return int(pages)
+    raise HTTPException(422, "Invalid PDF")
+
+
+def validate_page_count(db, row, total_pages: int) -> None:
+    max_read = (
+        db.scalar(
+            select(func.max(ProgressoLeitura.paginas_distintas_lidas)).where(
+                ProgressoLeitura.id_livro == row.id_livro
+            )
+        )
+        or 0
+    )
+    if total_pages < max_read:
+        raise HTTPException(422, "Page count cannot be below recorded reading progress")
+    if (
+        total_pages != row.total_paginas
+        and db.scalar(
+            select(ProgressoLeitura.id_progresso)
+            .where(
+                ProgressoLeitura.id_livro == row.id_livro,
+                ProgressoLeitura.concluido_em.is_not(None),
+            )
+            .limit(1)
+        )
+        is not None
+    ):
+        raise HTTPException(409, "Page count cannot change after a completed reading")
+
+
+def require_publication_ready(row, total_pages: int) -> None:
+    path = CONTENT / f"{row.id_livro}.pdf"
+    if not path.is_file():
+        raise HTTPException(409, "Upload a PDF before publishing")
+    if pdf_page_count(path) != total_pages:
+        raise HTTPException(422, "PDF page count differs from book metadata")
+
+
 class BookInput(BaseModel):
     titulo: BookTitle
     descricao: str = ""
     data_publicacao: date
-    total_paginas: int = Field(gt=0)
+    total_paginas: int = Field(gt=0, le=2147483647)
     autores: list[PositiveId] = Field(default_factory=list)
     generos: list[PositiveId] = Field(default_factory=list)
     status_publicacao: StatusPublicacao = "rascunho"
@@ -119,8 +179,9 @@ def owned_book(db, user, book_id):
 
 
 def metadata(db, row, data):
-    if data.status_publicacao == "publicado" and not (CONTENT / f"{row.id_livro}.pdf").is_file():
-        raise HTTPException(409, "Upload a PDF before publishing")
+    validate_page_count(db, row, data.total_paginas)
+    if data.status_publicacao == "publicado":
+        require_publication_ready(row, data.total_paginas)
     for key, value in data.model_dump(exclude={"autores", "generos"}).items():
         setattr(row, key, value)
     for model, through, key, ids in [
@@ -168,7 +229,7 @@ def replace(book_id: int, data: BookInput, db: DB, user: Reader):
 
 @router.put("/books/{book_id}/content", status_code=204)
 def upload(book_id: int, db: DB, user: Reader, file: UploadFile = File()):
-    owned_book(db, user, book_id)
+    row = owned_book(db, user, book_id)
     grant_publish(db, user)
     CONTENT.mkdir(exist_ok=True)
     tmp = CONTENT / uuid4().hex
@@ -184,6 +245,8 @@ def upload(book_id: int, db: DB, user: Reader, file: UploadFile = File()):
                 out.write(chunk)
         if not count:
             raise HTTPException(422, "Empty file")
+        if pdf_page_count(tmp) != row.total_paginas:
+            raise HTTPException(422, "PDF page count differs from book metadata")
         tmp.replace(CONTENT / f"{book_id}.pdf")
     finally:
         tmp.unlink(missing_ok=True)

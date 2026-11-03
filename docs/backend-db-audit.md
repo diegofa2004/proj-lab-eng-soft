@@ -46,3 +46,33 @@ Base analisada: `main` em `3cc148a`. Os problemas de API foram reproduzidos em b
 ## JWT no Compose
 
 O problema anterior de startup por segredo JWT foi corrigido depois desta auditoria: o Compose de desenvolvimento deixou de exigir `infra/.env.local`, gera um segredo aleatório em volume persistente no primeiro início e permite que processos de `docker compose exec` leiam a mesma chave. O valor do segredo não é registrado neste documento.
+
+## Correções aplicadas em 2026-11-03
+
+| Item | Correção |
+|---|---|
+| 1 | A revisão `0003` importou o usuário remanescente e removeu `public.users`. No banco de desenvolvimento: 5 usuários atuais, 0 pendentes em `plataforma.usuario_legado_pendente`. |
+| 2 | Alembic compara o schema `plataforma` com `include_schemas=True`; `alembic check` passou no banco de desenvolvimento. |
+| 3–4 | A migração preserva e-mails conflitantes ou longos em `usuario_legado_pendente`. Em teste sintético: 1 usuário importado, 2 pendentes, nenhum registro perdido. |
+| 5 | Os 24 índices de desempenho da revisão `0002` foram declarados no metadata SQLAlchemy. |
+| 6 | Notas com texto em branco recebem 422 nas duas versões da API. |
+| 7 | Os schemas PATCH rejeitam `null` explícito para colunas obrigatórias, preservando `null` nos campos que aceitam remoção. |
+| 8 | Revisões só com espaços recebem 422; a rota antiga não confunde qualquer conflito de integridade com avaliação duplicada. |
+| 9 | `paginas_distintas_lidas: null` recebe 422. |
+| 10 | `total_paginas` respeita o limite de `INTEGER` do PostgreSQL em criação e alteração. |
+| 11 | `POST /books` rejeita origem de catálogo e publicador diferente do autenticado. |
+| 12–14 | As duas versões usam a mesma regra de progresso: conclusão é calculada pelo servidor após acesso autenticado ao PDF e alcance do total de páginas; o ponto é concedido uma vez. A rota antiga não aceita alteração direta de `concluido_em`. |
+| 15 | Alterar `total_paginas` não pode reduzir abaixo do progresso ou mudar o total depois de leitura concluída, inclusive pela API v2. |
+| 16 | `POST /books` cria rascunho, rejeita caminho de PDF informado pelo cliente e exige upload antes de publicar. As rotas de administração também verificam o arquivo. |
+| 17 | Upload usa `pdfinfo` para validar o PDF e conferir a quantidade real de páginas. |
+| 18 | `GET /books/{id}/read` retorna metadados sem criar acesso. O acesso é registrado na rota de conteúdo. |
+| 19 | A rota administrativa antiga protege contas de administrador contra bloqueio. |
+| 20 | O cliente não escolhe dias de penalidade. O servidor atualiza `ultima_atividade` em acessos autenticados e calcula dias inativos no primeiro acesso após o intervalo. |
+| 21 | `sort=rating` usa a média das avaliações não moderadas; `sort=popularity` usa a contagem de acessos. |
+
+Durante a verificação final, apareceram mais dois problemas:
+
+22. Faltava a restrição `UNIQUE(nome_perfil)` no banco de desenvolvimento, embora constasse no ORM e na migração original. A revisão `0004` a restaurou; não havia nomes duplicados.
+23. O Compose de desenvolvimento não persistia `/app/content`. O volume `books-dev` foi adicionado e confirmado no contêiner recriado.
+
+Verificações: 25 testes rápidos e 4 testes de integração em PostgreSQL temporário passaram; a migração do zero e a migração com colisões legadas passaram; `alembic check` não detectou diferenças no banco de desenvolvimento; backend e banco estão saudáveis. Um backup pré-migração foi salvo em `/tmp/livrusp-before-20261103.dump` com permissão `600` e formato verificado por `pg_restore -l`.

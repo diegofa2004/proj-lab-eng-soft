@@ -1,11 +1,13 @@
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.endpoints.catalog import grant_publish
+from app.api.platform import lock_reader, save
+from app.api.reading_progress import apply_reading_progress
 from app.core.deps import get_current_user
 from app.db.session import get_db
 from app.models.acesso_livro import AcessoLivro
@@ -68,15 +70,35 @@ def search_books(
     if publication_date:
         query = query.where(Livro.data_publicacao == publication_date)
     if author:
-        query = query.join(LivroAutor, LivroAutor.id_livro == Livro.id_livro).join(Autor, Autor.id_autor == LivroAutor.id_autor).where(Autor.nome.ilike(f"%{author}%"))
+        query = query.where(
+            Livro.id_livro.in_(
+                select(LivroAutor.id_livro).join(Autor).where(Autor.nome.ilike(f"%{author}%"))
+            )
+        )
     if genre:
-        query = query.join(LivroGenero, LivroGenero.id_livro == Livro.id_livro).join(Genero, Genero.id_genero == LivroGenero.id_genero).where(Genero.nome.ilike(f"%{genre}%"))
-    if author or genre:
-        query = query.distinct()
+        query = query.where(
+            Livro.id_livro.in_(
+                select(LivroGenero.id_livro).join(Genero).where(Genero.nome.ilike(f"%{genre}%"))
+            )
+        )
     if sort == "popularity":
-        query = query.order_by(Livro.criado_em.desc())
+        count = (
+            select(func.count(AcessoLivro.id_acesso))
+            .where(AcessoLivro.id_livro == Livro.id_livro)
+            .correlate(Livro)
+            .scalar_subquery()
+        )
+        query = query.order_by(count.desc(), Livro.id_livro.desc())
+    elif sort == "rating":
+        average = (
+            select(func.avg(Avaliacao.nota))
+            .where(Avaliacao.id_livro == Livro.id_livro, Avaliacao.is_removida.is_(False))
+            .correlate(Livro)
+            .scalar_subquery()
+        )
+        query = query.order_by(func.coalesce(average, 0).desc(), Livro.id_livro.desc())
     else:
-        query = query.order_by(Livro.data_publicacao.desc())
+        query = query.order_by(Livro.data_publicacao.desc(), Livro.id_livro.desc())
     return list(db.scalars(query).all())
 
 
@@ -92,17 +114,23 @@ def publish_book(
     user: User = Depends(get_current_user),
 ) -> Livro:
     grant_publish(db, user)
+    if payload.id_publicador is not None and payload.id_publicador != user.id:
+        raise HTTPException(status_code=422, detail="Publisher must be the authenticated user")
+    if payload.arquivo_conteudo is not None:
+        raise HTTPException(status_code=422, detail="Upload content through /v2/books/{id}/content")
     book = Livro(
         titulo=payload.titulo,
         descricao=payload.descricao,
         data_publicacao=payload.data_publicacao,
-        arquivo_conteudo=payload.arquivo_conteudo,
+        arquivo_conteudo="pending",
         total_paginas=payload.total_paginas,
         origem="usuario",
-        status_publicacao="publicado",
+        status_publicacao="rascunho",
         id_publicador=user.id,
     )
     db.add(book)
+    db.flush()
+    book.arquivo_conteudo = f"/v2/books/{book.id_livro}/content"
     db.commit()
     db.refresh(book)
     return book
@@ -114,19 +142,22 @@ def read_book(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ) -> Livro:
-    book = get_public_book(db, book_id)
-    db.add(AcessoLivro(id_livro=book.id_livro, id_usuario=user.id))
-    db.commit()
-    return book
+    return get_public_book(db, book_id)
 
 
 @router.get("/{book_id}/reviews", response_model=list[AvaliacaoPublic])
 def get_reviews(book_id: int, db: Session = Depends(get_db)) -> list[Avaliacao]:
     get_public_book(db, book_id)
-    return list(db.scalars(select(Avaliacao).where(Avaliacao.id_livro == book_id, Avaliacao.is_removida.is_(False))).all())
+    return list(
+        db.scalars(
+            select(Avaliacao).where(Avaliacao.id_livro == book_id, Avaliacao.is_removida.is_(False))
+        ).all()
+    )
 
 
-@router.post("/{book_id}/reviews", response_model=AvaliacaoPublic, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{book_id}/reviews", response_model=AvaliacaoPublic, status_code=status.HTTP_201_CREATED
+)
 def create_review(
     book_id: int,
     payload: AvaliacaoCreate,
@@ -134,13 +165,17 @@ def create_review(
     user: User = Depends(get_current_user),
 ) -> Avaliacao:
     get_public_book(db, book_id)
-    review = Avaliacao(id_usuario=user.id, id_livro=book_id, nota=payload.nota, texto_revisao=payload.texto_revisao)
+    review = Avaliacao(
+        id_usuario=user.id, id_livro=book_id, nota=payload.nota, texto_revisao=payload.texto_revisao
+    )
     db.add(review)
     try:
         db.commit()
     except IntegrityError as error:
         db.rollback()
-        raise HTTPException(status_code=409, detail="You have already reviewed this book") from error
+        raise HTTPException(
+            status_code=409, detail="Review already exists or conflicts with book constraints"
+        ) from error
     db.refresh(review)
     return review
 
@@ -162,13 +197,25 @@ def delete_review(
 
 
 @users_router.get("/favorites", response_model=list[ItemListaPublic])
-def get_favorites(db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> list[ItemLista]:
-    return list(db.scalars(select(ItemLista).where(ItemLista.id_usuario == user.id, ItemLista.tipo == "favorito")).all())
+def get_favorites(
+    db: Session = Depends(get_db), user: User = Depends(get_current_user)
+) -> list[ItemLista]:
+    return list(
+        db.scalars(
+            select(ItemLista).where(ItemLista.id_usuario == user.id, ItemLista.tipo == "favorito")
+        ).all()
+    )
 
 
 @users_router.get("/to-read", response_model=list[ItemListaPublic])
-def get_to_read(db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> list[ItemLista]:
-    return list(db.scalars(select(ItemLista).where(ItemLista.id_usuario == user.id, ItemLista.tipo == "ler_depois")).all())
+def get_to_read(
+    db: Session = Depends(get_db), user: User = Depends(get_current_user)
+) -> list[ItemLista]:
+    return list(
+        db.scalars(
+            select(ItemLista).where(ItemLista.id_usuario == user.id, ItemLista.tipo == "ler_depois")
+        ).all()
+    )
 
 
 @users_router.post("/lists", response_model=ItemListaPublic, status_code=status.HTTP_201_CREATED)
@@ -198,7 +245,13 @@ def remove_from_list(
 ) -> dict[str, str]:
     if list_type not in {"favorito", "ler_depois"}:
         raise HTTPException(status_code=422, detail="Invalid list type")
-    result = db.execute(delete(ItemLista).where(ItemLista.id_usuario == user.id, ItemLista.id_livro == book_id, ItemLista.tipo == list_type))
+    result = db.execute(
+        delete(ItemLista).where(
+            ItemLista.id_usuario == user.id,
+            ItemLista.id_livro == book_id,
+            ItemLista.tipo == list_type,
+        )
+    )
     if result.rowcount == 0:
         raise HTTPException(status_code=404, detail="List item not found")
     db.commit()
@@ -206,7 +259,9 @@ def remove_from_list(
 
 
 @users_router.get("/notes", response_model=list[NotaPessoalPublic])
-def get_notes(db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> list[NotaPessoal]:
+def get_notes(
+    db: Session = Depends(get_db), user: User = Depends(get_current_user)
+) -> list[NotaPessoal]:
     return list(db.scalars(select(NotaPessoal).where(NotaPessoal.id_usuario == user.id)).all())
 
 
@@ -231,7 +286,9 @@ def update_note(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ) -> NotaPessoal:
-    note = db.scalar(select(NotaPessoal).where(NotaPessoal.id_nota == note_id, NotaPessoal.id_usuario == user.id))
+    note = db.scalar(
+        select(NotaPessoal).where(NotaPessoal.id_nota == note_id, NotaPessoal.id_usuario == user.id)
+    )
     if note is None:
         raise HTTPException(status_code=404, detail="Note not found")
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -242,8 +299,12 @@ def update_note(
 
 
 @notes_router.delete("/{note_id}")
-def delete_note(note_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> dict[str, str]:
-    note = db.scalar(select(NotaPessoal).where(NotaPessoal.id_nota == note_id, NotaPessoal.id_usuario == user.id))
+def delete_note(
+    note_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)
+) -> dict[str, str]:
+    note = db.scalar(
+        select(NotaPessoal).where(NotaPessoal.id_nota == note_id, NotaPessoal.id_usuario == user.id)
+    )
     if note is None:
         raise HTTPException(status_code=404, detail="Note not found")
     db.delete(note)
@@ -252,8 +313,14 @@ def delete_note(note_id: int, db: Session = Depends(get_db), user: User = Depend
 
 
 @router.get("/{book_id}/progress", response_model=ProgressoLeituraPublic)
-def get_progress(book_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> ProgressoLeitura:
-    progress = db.scalar(select(ProgressoLeitura).where(ProgressoLeitura.id_livro == book_id, ProgressoLeitura.id_usuario == user.id))
+def get_progress(
+    book_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)
+) -> ProgressoLeitura:
+    progress = db.scalar(
+        select(ProgressoLeitura).where(
+            ProgressoLeitura.id_livro == book_id, ProgressoLeitura.id_usuario == user.id
+        )
+    )
     if progress is None:
         raise HTTPException(status_code=404, detail="Reading progress not found")
     return progress
@@ -267,15 +334,24 @@ def update_progress(
     user: User = Depends(get_current_user),
 ) -> ProgressoLeitura:
     book = get_public_book(db, book_id)
-    progress = db.scalar(select(ProgressoLeitura).where(ProgressoLeitura.id_livro == book_id, ProgressoLeitura.id_usuario == user.id))
-    if progress is None:
-        progress = ProgressoLeitura(id_livro=book_id, id_usuario=user.id)
-        db.add(progress)
+    if "concluido_em" in payload.model_fields_set:
+        raise HTTPException(
+            status_code=422, detail="Completion is calculated from reading progress"
+        )
+    lock_reader(db, user)
+    progress = db.scalar(
+        select(ProgressoLeitura).where(
+            ProgressoLeitura.id_livro == book_id, ProgressoLeitura.id_usuario == user.id
+        )
+    )
     values = payload.model_dump(exclude_unset=True)
-    if "paginas_distintas_lidas" in values and values["paginas_distintas_lidas"] > book.total_paginas:
-        raise HTTPException(status_code=422, detail="Pages read cannot exceed the book page count")
-    for key, value in values.items():
-        setattr(progress, key, value)
-    db.commit()
-    db.refresh(progress)
-    return progress
+    progress = apply_reading_progress(
+        db,
+        user,
+        book,
+        progress,
+        values.get("paginas_distintas_lidas"),
+        values.get("ultima_posicao"),
+        set_position="ultima_posicao" in values,
+    )
+    return save(db, progress)

@@ -26,7 +26,10 @@ class AtividadeAdmin(Base):
             "OR (tipo_acao = 'moderar_avaliacao' AND id_avaliacao_alvo IS NOT NULL)",
             name="ck_atividade_admin_alvo_tipo",
         ),
-        {"schema": SCHEMA},
+        {
+            "schema": SCHEMA,
+            "comment": "Backend grava acao e alteracao na mesma transacao; preservar logs",
+        },
     )
 
     id_log: Mapped[int] = primary_key_column()

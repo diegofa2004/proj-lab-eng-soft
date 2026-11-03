@@ -18,6 +18,7 @@ class PlanoCreate(PublicSchema):
 
 
 class PlanoUpdate(PublicSchema):
+    non_nullable_fields = frozenset({"nome", "preco", "moeda", "periodicidade", "ativo"})
     nome: MediumName | None = None
     preco: Decimal | None = Field(default=None, ge=0, max_digits=12, decimal_places=2)
     moeda: Moeda | None = None

@@ -1,18 +1,17 @@
 from datetime import datetime
 
-from pydantic import Field
-
-from app.schemas.common import PositiveId, PublicSchema
+from app.schemas.common import NonEmptyText, PositiveId, PublicSchema
 
 
 class NotaPessoalCreate(PublicSchema):
     id_livro: PositiveId
-    texto: str = Field(min_length=1)
+    texto: NonEmptyText
     localizacao: str | None = None
 
 
 class NotaPessoalUpdate(PublicSchema):
-    texto: str | None = Field(default=None, min_length=1)
+    non_nullable_fields = frozenset({"texto"})
+    texto: NonEmptyText | None = None
     localizacao: str | None = None
 
 

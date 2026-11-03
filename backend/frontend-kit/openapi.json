@@ -2,9 +2,14 @@
   "openapi": "3.1.0",
   "info": {
     "title": "LivrUSP API",
+    "description": "LivrUSP backend API.",
     "version": "0.1.0"
   },
-  "servers": [{"url": "/v2"}],
+  "servers": [
+    {
+      "url": "/v2"
+    }
+  ],
   "paths": {
     "/register": {
       "post": {
@@ -12,7 +17,7 @@
           "auth"
         ],
         "summary": "Register User",
-        "operationId": "register_user_register_post",
+        "operationId": "register_user_v2_register_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -53,7 +58,7 @@
           "auth"
         ],
         "summary": "Login User",
-        "operationId": "login_user_login_post",
+        "operationId": "login_user_v2_login_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -94,7 +99,7 @@
           "auth"
         ],
         "summary": "Get Current User Profile",
-        "operationId": "get_current_user_profile_me_get",
+        "operationId": "get_current_user_profile_v2_me_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -120,7 +125,7 @@
           "health"
         ],
         "summary": "Health",
-        "operationId": "health_health_get",
+        "operationId": "health_v2_health_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -131,7 +136,7 @@
                     "type": "string"
                   },
                   "type": "object",
-                  "title": "Response Health Health Get"
+                  "title": "Response Health V2 Health Get"
                 }
               }
             }
@@ -145,7 +150,7 @@
           "Account"
         ],
         "summary": "Profile",
-        "operationId": "profile_me_profile_get",
+        "operationId": "profile_v2_me_profile_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -169,7 +174,7 @@
           "Account"
         ],
         "summary": "Update Profile",
-        "operationId": "update_profile_me_profile_patch",
+        "operationId": "update_profile_v2_me_profile_patch",
         "requestBody": {
           "content": {
             "application/json": {
@@ -215,7 +220,7 @@
           "Account"
         ],
         "summary": "Billing Config",
-        "operationId": "billing_config_billing_config_get",
+        "operationId": "billing_config_v2_billing_config_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -226,7 +231,7 @@
                     "type": "boolean"
                   },
                   "type": "object",
-                  "title": "Response Billing Config Billing Config Get"
+                  "title": "Response Billing Config V2 Billing Config Get"
                 }
               }
             }
@@ -240,7 +245,7 @@
           "Account"
         ],
         "summary": "Subscriptions",
-        "operationId": "subscriptions_me_subscriptions_get",
+        "operationId": "subscriptions_v2_me_subscriptions_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -251,7 +256,7 @@
                     "$ref": "#/components/schemas/AssinaturaPublic"
                   },
                   "type": "array",
-                  "title": "Response Subscriptions Me Subscriptions Get"
+                  "title": "Response Subscriptions V2 Me Subscriptions Get"
                 }
               }
             }
@@ -270,7 +275,7 @@
           "Account"
         ],
         "summary": "Payments",
-        "operationId": "payments_me_payments_get",
+        "operationId": "payments_v2_me_payments_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -281,7 +286,7 @@
                     "$ref": "#/components/schemas/PagamentoPublic"
                   },
                   "type": "array",
-                  "title": "Response Payments Me Payments Get"
+                  "title": "Response Payments V2 Me Payments Get"
                 }
               }
             }
@@ -300,7 +305,7 @@
           "Account"
         ],
         "summary": "Checkout",
-        "operationId": "checkout_me_checkout_post",
+        "operationId": "checkout_v2_me_checkout_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -346,7 +351,7 @@
           "Account"
         ],
         "summary": "Cancel",
-        "operationId": "cancel_me_subscriptions__sub_id__delete",
+        "operationId": "cancel_v2_me_subscriptions__sub_id__delete",
         "security": [
           {
             "HTTPBearer": []
@@ -393,7 +398,7 @@
           "Account"
         ],
         "summary": "Public Profile",
-        "operationId": "public_profile_profiles__user_id__get",
+        "operationId": "public_profile_v2_profiles__user_id__get",
         "parameters": [
           {
             "name": "user_id",
@@ -435,7 +440,7 @@
           "Administration"
         ],
         "summary": "Users",
-        "operationId": "users_admin_users_get",
+        "operationId": "users_v2_admin_users_get",
         "security": [
           {
             "HTTPBearer": []
@@ -476,7 +481,7 @@
                   "items": {
                     "$ref": "#/components/schemas/AdminUser"
                   },
-                  "title": "Response Users Admin Users Get"
+                  "title": "Response Users V2 Admin Users Get"
                 }
               }
             }
@@ -500,7 +505,7 @@
           "Administration"
         ],
         "summary": "Books",
-        "operationId": "books_admin_books_get",
+        "operationId": "books_v2_admin_books_get",
         "security": [
           {
             "HTTPBearer": []
@@ -541,7 +546,7 @@
                   "items": {
                     "$ref": "#/components/schemas/LivroPublic"
                   },
-                  "title": "Response Books Admin Books Get"
+                  "title": "Response Books V2 Admin Books Get"
                 }
               }
             }
@@ -565,7 +570,7 @@
           "Administration"
         ],
         "summary": "Reviews",
-        "operationId": "reviews_admin_reviews_get",
+        "operationId": "reviews_v2_admin_reviews_get",
         "security": [
           {
             "HTTPBearer": []
@@ -606,7 +611,7 @@
                   "items": {
                     "$ref": "#/components/schemas/AvaliacaoPublic"
                   },
-                  "title": "Response Reviews Admin Reviews Get"
+                  "title": "Response Reviews V2 Admin Reviews Get"
                 }
               }
             }
@@ -630,7 +635,7 @@
           "Administration"
         ],
         "summary": "Logs",
-        "operationId": "logs_admin_actions_get",
+        "operationId": "logs_v2_admin_actions_get",
         "security": [
           {
             "HTTPBearer": []
@@ -671,7 +676,7 @@
                   "items": {
                     "$ref": "#/components/schemas/AtividadeAdminPublic"
                   },
-                  "title": "Response Logs Admin Actions Get"
+                  "title": "Response Logs V2 Admin Actions Get"
                 }
               }
             }
@@ -693,7 +698,7 @@
           "Administration"
         ],
         "summary": "Moderate",
-        "operationId": "moderate_admin_actions_post",
+        "operationId": "moderate_v2_admin_actions_post",
         "security": [
           {
             "HTTPBearer": []
@@ -739,7 +744,7 @@
           "Administration"
         ],
         "summary": "Report",
-        "operationId": "report_admin_dashboard_get",
+        "operationId": "report_v2_admin_dashboard_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -765,7 +770,7 @@
           "Catalog"
         ],
         "summary": "Catalog",
-        "operationId": "catalog_books_get",
+        "operationId": "catalog_v2_books_get",
         "parameters": [
           {
             "name": "q",
@@ -843,7 +848,7 @@
                   "items": {
                     "$ref": "#/components/schemas/CatalogBook"
                   },
-                  "title": "Response Catalog Books Get"
+                  "title": "Response Catalog V2 Books Get"
                 }
               }
             }
@@ -865,7 +870,7 @@
           "Catalog"
         ],
         "summary": "Create",
-        "operationId": "create_books_post",
+        "operationId": "create_v2_books_post",
         "security": [
           {
             "HTTPBearer": []
@@ -911,7 +916,7 @@
           "Catalog"
         ],
         "summary": "Detail",
-        "operationId": "detail_books__book_id__get",
+        "operationId": "detail_v2_books__book_id__get",
         "parameters": [
           {
             "name": "book_id",
@@ -951,7 +956,7 @@
           "Catalog"
         ],
         "summary": "Replace",
-        "operationId": "replace_books__book_id__put",
+        "operationId": "replace_v2_books__book_id__put",
         "security": [
           {
             "HTTPBearer": []
@@ -1008,7 +1013,7 @@
           "Catalog"
         ],
         "summary": "My Books",
-        "operationId": "my_books_me_books_get",
+        "operationId": "my_books_v2_me_books_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1019,7 +1024,7 @@
                     "$ref": "#/components/schemas/LivroPublic"
                   },
                   "type": "array",
-                  "title": "Response My Books Me Books Get"
+                  "title": "Response My Books V2 Me Books Get"
                 }
               }
             }
@@ -1038,7 +1043,7 @@
           "Catalog"
         ],
         "summary": "Upload",
-        "operationId": "upload_books__book_id__content_put",
+        "operationId": "upload_v2_books__book_id__content_put",
         "security": [
           {
             "HTTPBearer": []
@@ -1060,7 +1065,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Body_upload_books__book_id__content_put"
+                "$ref": "#/components/schemas/Body_upload_v2_books__book_id__content_put"
               }
             }
           }
@@ -1086,7 +1091,7 @@
           "Catalog"
         ],
         "summary": "Content",
-        "operationId": "content_books__book_id__content_get",
+        "operationId": "content_v2_books__book_id__content_get",
         "security": [
           {
             "HTTPBearer": []
@@ -1130,7 +1135,7 @@
           "Reading"
         ],
         "summary": "Lists",
-        "operationId": "lists_me_lists_get",
+        "operationId": "lists_v2_me_lists_get",
         "security": [
           {
             "HTTPBearer": []
@@ -1168,7 +1173,7 @@
                   "items": {
                     "$ref": "#/components/schemas/ItemListaPublic"
                   },
-                  "title": "Response Lists Me Lists Get"
+                  "title": "Response Lists V2 Me Lists Get"
                 }
               }
             }
@@ -1192,7 +1197,7 @@
           "Reading"
         ],
         "summary": "Bookmark",
-        "operationId": "bookmark_me_lists__tipo___book_id__put",
+        "operationId": "bookmark_v2_me_lists__tipo___book_id__put",
         "security": [
           {
             "HTTPBearer": []
@@ -1250,7 +1255,7 @@
           "Reading"
         ],
         "summary": "Unbookmark",
-        "operationId": "unbookmark_me_lists__tipo___book_id__delete",
+        "operationId": "unbookmark_v2_me_lists__tipo___book_id__delete",
         "security": [
           {
             "HTTPBearer": []
@@ -1303,7 +1308,7 @@
           "Reading"
         ],
         "summary": "Notes",
-        "operationId": "notes_me_notes_get",
+        "operationId": "notes_v2_me_notes_get",
         "security": [
           {
             "HTTPBearer": []
@@ -1337,7 +1342,7 @@
                   "items": {
                     "$ref": "#/components/schemas/NotaPessoalPublic"
                   },
-                  "title": "Response Notes Me Notes Get"
+                  "title": "Response Notes V2 Me Notes Get"
                 }
               }
             }
@@ -1359,7 +1364,7 @@
           "Reading"
         ],
         "summary": "Note",
-        "operationId": "note_me_notes_post",
+        "operationId": "note_v2_me_notes_post",
         "security": [
           {
             "HTTPBearer": []
@@ -1405,7 +1410,7 @@
           "Reading"
         ],
         "summary": "Edit Note",
-        "operationId": "edit_note_me_notes__note_id__patch",
+        "operationId": "edit_note_v2_me_notes__note_id__patch",
         "security": [
           {
             "HTTPBearer": []
@@ -1460,7 +1465,7 @@
           "Reading"
         ],
         "summary": "Delete Note",
-        "operationId": "delete_note_me_notes__note_id__delete",
+        "operationId": "delete_note_v2_me_notes__note_id__delete",
         "security": [
           {
             "HTTPBearer": []
@@ -1500,7 +1505,7 @@
           "Reading"
         ],
         "summary": "Reviews",
-        "operationId": "reviews_books__book_id__reviews_get",
+        "operationId": "reviews_v2_books__book_id__reviews_get",
         "parameters": [
           {
             "name": "book_id",
@@ -1522,7 +1527,7 @@
                   "items": {
                     "$ref": "#/components/schemas/AvaliacaoPublic"
                   },
-                  "title": "Response Reviews Books  Book Id  Reviews Get"
+                  "title": "Response Reviews V2 Books  Book Id  Reviews Get"
                 }
               }
             }
@@ -1546,7 +1551,7 @@
           "Reading"
         ],
         "summary": "Review",
-        "operationId": "review_books__book_id__review_put",
+        "operationId": "review_v2_books__book_id__review_put",
         "security": [
           {
             "HTTPBearer": []
@@ -1601,7 +1606,7 @@
           "Reading"
         ],
         "summary": "Delete Review",
-        "operationId": "delete_review_books__book_id__review_delete",
+        "operationId": "delete_review_v2_books__book_id__review_delete",
         "security": [
           {
             "HTTPBearer": []
@@ -1641,7 +1646,7 @@
           "Reading"
         ],
         "summary": "Progress",
-        "operationId": "progress_me_progress_get",
+        "operationId": "progress_v2_me_progress_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1652,7 +1657,7 @@
                     "$ref": "#/components/schemas/ProgressoLeituraPublic"
                   },
                   "type": "array",
-                  "title": "Response Progress Me Progress Get"
+                  "title": "Response Progress V2 Me Progress Get"
                 }
               }
             }
@@ -1671,7 +1676,7 @@
           "Reading"
         ],
         "summary": "Progress Update",
-        "operationId": "progress_update_me_progress__book_id__put",
+        "operationId": "progress_update_v2_me_progress__book_id__put",
         "security": [
           {
             "HTTPBearer": []
@@ -1728,7 +1733,7 @@
           "Reading"
         ],
         "summary": "Start",
-        "operationId": "start_me_sessions__book_id__post",
+        "operationId": "start_v2_me_sessions__book_id__post",
         "security": [
           {
             "HTTPBearer": []
@@ -1775,7 +1780,7 @@
           "Reading"
         ],
         "summary": "Finish",
-        "operationId": "finish_me_sessions__session_id__end_put",
+        "operationId": "finish_v2_me_sessions__session_id__end_put",
         "security": [
           {
             "HTTPBearer": []
@@ -1832,7 +1837,7 @@
           "Reading"
         ],
         "summary": "Points",
-        "operationId": "points_me_points_get",
+        "operationId": "points_v2_me_points_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1843,7 +1848,7 @@
                     "$ref": "#/components/schemas/MovimentoPontosPublic"
                   },
                   "type": "array",
-                  "title": "Response Points Me Points Get"
+                  "title": "Response Points V2 Me Points Get"
                 }
               }
             }
@@ -1862,7 +1867,7 @@
           "Reading"
         ],
         "summary": "Dashboard",
-        "operationId": "dashboard_me_dashboard_get",
+        "operationId": "dashboard_v2_me_dashboard_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1888,7 +1893,7 @@
           "Reading"
         ],
         "summary": "Sessions",
-        "operationId": "sessions_me_sessions_get",
+        "operationId": "sessions_v2_me_sessions_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1899,7 +1904,7 @@
                     "$ref": "#/components/schemas/SessaoLeituraPublic"
                   },
                   "type": "array",
-                  "title": "Response Sessions Me Sessions Get"
+                  "title": "Response Sessions V2 Me Sessions Get"
                 }
               }
             }
@@ -1918,7 +1923,7 @@
           "Reference data"
         ],
         "summary": "List Authors",
-        "operationId": "list_authors_authors_get",
+        "operationId": "list_authors_v2_authors_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1929,7 +1934,7 @@
                     "$ref": "#/components/schemas/AutorPublic"
                   },
                   "type": "array",
-                  "title": "Response List Authors Authors Get"
+                  "title": "Response List Authors V2 Authors Get"
                 }
               }
             }
@@ -1943,7 +1948,7 @@
           "Reference data"
         ],
         "summary": "Create Autor",
-        "operationId": "create_autor_admin_authors_post",
+        "operationId": "create_autor_v2_admin_authors_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1989,7 +1994,7 @@
           "Reference data"
         ],
         "summary": "Edit Autor",
-        "operationId": "edit_autor_admin_authors__item_id__patch",
+        "operationId": "edit_autor_v2_admin_authors__item_id__patch",
         "security": [
           {
             "HTTPBearer": []
@@ -2046,7 +2051,7 @@
           "Reference data"
         ],
         "summary": "List Genres",
-        "operationId": "list_genres_genres_get",
+        "operationId": "list_genres_v2_genres_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2057,7 +2062,7 @@
                     "$ref": "#/components/schemas/GeneroPublic"
                   },
                   "type": "array",
-                  "title": "Response List Genres Genres Get"
+                  "title": "Response List Genres V2 Genres Get"
                 }
               }
             }
@@ -2071,7 +2076,7 @@
           "Reference data"
         ],
         "summary": "Create Genero",
-        "operationId": "create_genero_admin_genres_post",
+        "operationId": "create_genero_v2_admin_genres_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2117,7 +2122,7 @@
           "Reference data"
         ],
         "summary": "Edit Genero",
-        "operationId": "edit_genero_admin_genres__item_id__patch",
+        "operationId": "edit_genero_v2_admin_genres__item_id__patch",
         "security": [
           {
             "HTTPBearer": []
@@ -2174,7 +2179,7 @@
           "Reference data"
         ],
         "summary": "List Plans",
-        "operationId": "list_plans_plans_get",
+        "operationId": "list_plans_v2_plans_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2185,7 +2190,7 @@
                     "$ref": "#/components/schemas/PlanoPublic"
                   },
                   "type": "array",
-                  "title": "Response List Plans Plans Get"
+                  "title": "Response List Plans V2 Plans Get"
                 }
               }
             }
@@ -2199,7 +2204,7 @@
           "Reference data"
         ],
         "summary": "All Plans",
-        "operationId": "all_plans_admin_plans_get",
+        "operationId": "all_plans_v2_admin_plans_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2210,7 +2215,7 @@
                     "$ref": "#/components/schemas/PlanoPublic"
                   },
                   "type": "array",
-                  "title": "Response All Plans Admin Plans Get"
+                  "title": "Response All Plans V2 Admin Plans Get"
                 }
               }
             }
@@ -2227,7 +2232,7 @@
           "Reference data"
         ],
         "summary": "Create Plano",
-        "operationId": "create_plano_admin_plans_post",
+        "operationId": "create_plano_v2_admin_plans_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2273,7 +2278,7 @@
           "Reference data"
         ],
         "summary": "Edit Plano",
-        "operationId": "edit_plano_admin_plans__item_id__patch",
+        "operationId": "edit_plano_v2_admin_plans__item_id__patch",
         "security": [
           {
             "HTTPBearer": []
@@ -2330,7 +2335,7 @@
           "Reference data"
         ],
         "summary": "List Levels",
-        "operationId": "list_levels_levels_get",
+        "operationId": "list_levels_v2_levels_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2341,7 +2346,7 @@
                     "$ref": "#/components/schemas/NivelPublic"
                   },
                   "type": "array",
-                  "title": "Response List Levels Levels Get"
+                  "title": "Response List Levels V2 Levels Get"
                 }
               }
             }
@@ -2355,7 +2360,7 @@
           "Reference data"
         ],
         "summary": "Create Nivel",
-        "operationId": "create_nivel_admin_levels_post",
+        "operationId": "create_nivel_v2_admin_levels_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2401,7 +2406,7 @@
           "Reference data"
         ],
         "summary": "Edit Nivel",
-        "operationId": "edit_nivel_admin_levels__item_id__patch",
+        "operationId": "edit_nivel_v2_admin_levels__item_id__patch",
         "security": [
           {
             "HTTPBearer": []
@@ -2458,7 +2463,7 @@
           "Reference data"
         ],
         "summary": "List Assets",
-        "operationId": "list_assets_assets_get",
+        "operationId": "list_assets_v2_assets_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2469,7 +2474,7 @@
                     "$ref": "#/components/schemas/AssetPerfilPublic"
                   },
                   "type": "array",
-                  "title": "Response List Assets Assets Get"
+                  "title": "Response List Assets V2 Assets Get"
                 }
               }
             }
@@ -2483,7 +2488,7 @@
           "Reference data"
         ],
         "summary": "Create Asset Perfil",
-        "operationId": "create_asset_perfil_admin_assets_post",
+        "operationId": "create_asset_perfil_v2_admin_assets_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2529,7 +2534,7 @@
           "Reference data"
         ],
         "summary": "Edit Asset Perfil",
-        "operationId": "edit_asset_perfil_admin_assets__item_id__patch",
+        "operationId": "edit_asset_perfil_v2_admin_assets__item_id__patch",
         "security": [
           {
             "HTTPBearer": []
@@ -3116,7 +3121,7 @@
         ],
         "title": "AvaliacaoPublic"
       },
-      "Body_upload_books__book_id__content_put": {
+      "Body_upload_v2_books__book_id__content_put": {
         "properties": {
           "file": {
             "type": "string",
@@ -3128,7 +3133,7 @@
         "required": [
           "file"
         ],
-        "title": "Body_upload_books__book_id__content_put"
+        "title": "Body_upload_v2_books__book_id__content_put"
       },
       "BookInput": {
         "properties": {
@@ -3150,6 +3155,7 @@
           },
           "total_paginas": {
             "type": "integer",
+            "maximum": 2147483647.0,
             "exclusiveMinimum": 0.0,
             "title": "Total Paginas"
           },
@@ -4315,6 +4321,7 @@
           },
           "paginas_distintas_lidas": {
             "type": "integer",
+            "maximum": 2147483647.0,
             "minimum": 0.0,
             "title": "Paginas Distintas Lidas"
           }
@@ -4476,7 +4483,8 @@
           "texto_revisao": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "minLength": 1
               },
               {
                 "type": "null"

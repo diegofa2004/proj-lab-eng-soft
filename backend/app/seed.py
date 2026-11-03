@@ -37,7 +37,9 @@ def seed():
             Plano, dict(preco=9.90, moeda="BRL", periodicidade="mensal"), nome="Premium demo"
         )
         get_or_create(Nivel, dict(permite_publicar=True, nome="Autor"), pontos_minimos=5)
-        get_or_create(AssetPerfil, dict(arquivo="/v2/demo/avatar.svg"), tipo="avatar", nome="Leitor")
+        get_or_create(
+            AssetPerfil, dict(arquivo="/v2/demo/avatar.svg"), tipo="avatar", nome="Leitor"
+        )
         author = get_or_create(Autor, nome="Equipe LivrUSP")
         genre = get_or_create(Genero, nome="Introdução")
         row = get_or_create(

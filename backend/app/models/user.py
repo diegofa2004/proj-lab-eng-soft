@@ -31,7 +31,10 @@ class User(Base):
         CheckConstraint("trim(senha_hash) <> ''", name="ck_usuario_senha_hash"),
         UniqueConstraint("email"),
         UniqueConstraint("nome_perfil"),
-        {"schema": SCHEMA},
+        {
+            "schema": SCHEMA,
+            "comment": "senha_hash e gerado pelo backend; nunca armazenar senha em texto puro",
+        },
     )
 
     id: Mapped[int] = mapped_column(
