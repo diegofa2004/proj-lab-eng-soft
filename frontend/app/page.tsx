@@ -1,9 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { getOptionalCurrentUser, getSignedHomeData } from "@/app/lib/books";
 import { LivruspFooterLogo, LivruspHeaderLogo } from "@/components/home/livrusp-logos";
+import HeroBookStack from "@/components/home/hero-book-stack";
 import SignedHomePage from "@/components/home/signed-home-page";
 
 type BenefitItem = {
@@ -161,15 +161,7 @@ export default async function Home() {
             </h1>
 
             <div className="mt-8 sm:mt-12">
-              <Image
-                alt="Featured books on LivrUSP including works by Stephen King, Margaret Atwood, Antoine de Saint-Exupéry, and Fernando Morais"
-                className="mx-auto h-auto w-full rounded-[28px]"
-                height={504}
-                priority
-                src="/hero-books.png"
-                unoptimized
-                width={1188}
-              />
+              <HeroBookStack />
             </div>
           </section>
 
