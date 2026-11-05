@@ -37,12 +37,16 @@ services:
       - .env.dev
     environment:
       DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-login}:${POSTGRES_PASSWORD:-senha}@db:5432/${POSTGRES_DB:-pcs3443}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-}
+      JWT_SECRET_KEY_FILE: /run/livrusp-dev/jwt-secret
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
       - ../backend/app:/app/app
       - ../backend/alembic:/app/alembic
       - ../backend/alembic.ini:/app/alembic.ini
+      - books-dev:/app/content
+      - jwt-secret-dev:/run/livrusp-dev
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
       interval: 5s
@@ -71,3 +75,5 @@ services:
 
 volumes:
   pgdata-dev:
+  books-dev:
+  jwt-secret-dev:

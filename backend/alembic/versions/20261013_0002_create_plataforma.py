@@ -12,62 +12,289 @@ from collections.abc import Sequence
 import sqlalchemy as sa
 
 from alembic import op
-from app.models.acesso_livro import AcessoLivro
-from app.models.asset_perfil import AssetPerfil
-from app.models.assinatura import Assinatura
-from app.models.atividade_admin import AtividadeAdmin
-from app.models.autor import Autor
-from app.models.avaliacao import Avaliacao
-from app.models.common import SCHEMA
-from app.models.genero import Genero
-from app.models.item_lista import ItemLista
-from app.models.livro import Livro
-from app.models.livro_autor import LivroAutor
-from app.models.livro_genero import LivroGenero
-from app.models.movimento_pontos import MovimentoPontos
-from app.models.nivel import Nivel
-from app.models.nota_pessoal import NotaPessoal
-from app.models.pagamento import Pagamento
-from app.models.plano import Plano
-from app.models.progresso_leitura import ProgressoLeitura
-from app.models.sessao_leitura import SessaoLeitura
-from app.models.user import User
 
 revision: str = "20261013_0002"
 down_revision: str | Sequence[str] | None = "20260921_0001"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
-TABLES = (
-    Nivel.__table__,
-    AssetPerfil.__table__,
-    User.__table__,
-    Autor.__table__,
-    Genero.__table__,
-    Livro.__table__,
-    LivroAutor.__table__,
-    LivroGenero.__table__,
-    Avaliacao.__table__,
-    ItemLista.__table__,
-    NotaPessoal.__table__,
-    ProgressoLeitura.__table__,
-    SessaoLeitura.__table__,
-    AcessoLivro.__table__,
-    Plano.__table__,
-    Assinatura.__table__,
-    Pagamento.__table__,
-    MovimentoPontos.__table__,
-    AtividadeAdmin.__table__,
-)
+SCHEMA = "plataforma"
 
 
 def upgrade() -> None:
-    bind = op.get_bind()
     op.execute(sa.schema.CreateSchema(SCHEMA))
-    op.execute(sa.text("DROP TABLE IF EXISTS public.users"))
-    for table in TABLES:
-        table.create(bind)
-
+    op.execute("""
+CREATE TABLE plataforma.nivel (
+	id_nivel BIGINT GENERATED ALWAYS AS IDENTITY,
+	nome VARCHAR(80) NOT NULL,
+	pontos_minimos BIGINT NOT NULL,
+	permite_publicar BOOLEAN DEFAULT false NOT NULL,
+	PRIMARY KEY (id_nivel),
+	CONSTRAINT ck_nivel_pontos_minimos CHECK (pontos_minimos >= 0),
+	UNIQUE (nome),
+	UNIQUE (pontos_minimos)
+);
+CREATE TABLE plataforma.asset_perfil (
+	id_asset BIGINT GENERATED ALWAYS AS IDENTITY,
+	tipo VARCHAR(10) NOT NULL,
+	nome VARCHAR(100) NOT NULL,
+	arquivo TEXT NOT NULL,
+	exige_premium BOOLEAN DEFAULT false NOT NULL,
+	id_nivel_minimo BIGINT,
+	PRIMARY KEY (id_asset),
+	CONSTRAINT ck_asset_perfil_tipo CHECK (tipo IN ('avatar', 'icone')),
+	UNIQUE (tipo, nome),
+	FOREIGN KEY(id_nivel_minimo) REFERENCES plataforma.nivel (id_nivel) ON DELETE RESTRICT
+);
+CREATE TABLE plataforma.usuario (
+	id_usuario BIGINT GENERATED ALWAYS AS IDENTITY,
+	nome_perfil VARCHAR(100) NOT NULL,
+	email VARCHAR(254) NOT NULL,
+	senha_hash TEXT NOT NULL,
+	biografia TEXT DEFAULT '' NOT NULL,
+	is_admin BOOLEAN DEFAULT false NOT NULL,
+	status_bloqueado BOOLEAN DEFAULT false NOT NULL,
+	ultima_atividade TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	id_avatar BIGINT,
+	id_icone BIGINT,
+	PRIMARY KEY (id_usuario),
+	CONSTRAINT ck_usuario_nome_perfil CHECK (trim(nome_perfil) <> ''),
+	CONSTRAINT ck_usuario_email_normalizado CHECK (email = lower(btrim(email)) AND position('@' IN email) > 1),
+	CONSTRAINT ck_usuario_senha_hash CHECK (trim(senha_hash) <> ''),
+	UNIQUE (email),
+	UNIQUE (nome_perfil),
+	FOREIGN KEY(id_avatar) REFERENCES plataforma.asset_perfil (id_asset) ON DELETE RESTRICT,
+	FOREIGN KEY(id_icone) REFERENCES plataforma.asset_perfil (id_asset) ON DELETE RESTRICT
+);
+CREATE TABLE plataforma.autor (
+	id_autor BIGINT GENERATED ALWAYS AS IDENTITY,
+	nome VARCHAR(200) NOT NULL,
+	PRIMARY KEY (id_autor),
+	CONSTRAINT ck_autor_nome CHECK (btrim(nome) <> '')
+);
+CREATE TABLE plataforma.genero (
+	id_genero BIGINT GENERATED ALWAYS AS IDENTITY,
+	nome VARCHAR(100) NOT NULL,
+	PRIMARY KEY (id_genero),
+	CONSTRAINT ck_genero_nome CHECK (btrim(nome) <> '')
+);
+CREATE UNIQUE INDEX genero_nome_ci ON plataforma.genero (lower(nome));
+CREATE TABLE plataforma.livro (
+	id_livro BIGINT GENERATED ALWAYS AS IDENTITY,
+	titulo VARCHAR(300) NOT NULL,
+	descricao TEXT DEFAULT '' NOT NULL,
+	data_publicacao DATE NOT NULL,
+	arquivo_conteudo TEXT NOT NULL,
+	total_paginas INTEGER NOT NULL,
+	origem VARCHAR(10) NOT NULL,
+	status_publicacao VARCHAR(15) DEFAULT 'rascunho' NOT NULL,
+	status_bloqueado BOOLEAN DEFAULT false NOT NULL,
+	id_publicador BIGINT,
+	criado_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	PRIMARY KEY (id_livro),
+	CONSTRAINT ck_livro_titulo CHECK (btrim(titulo) <> ''),
+	CONSTRAINT ck_livro_total_paginas CHECK (total_paginas > 0),
+	CONSTRAINT ck_livro_origem CHECK (origem IN ('catalogo', 'usuario')),
+	CONSTRAINT ck_livro_status_publicacao CHECK (status_publicacao IN ('rascunho', 'publicado', 'arquivado')),
+	CONSTRAINT ck_livro_publicador CHECK (origem <> 'usuario' OR id_publicador IS NOT NULL),
+	FOREIGN KEY(id_publicador) REFERENCES plataforma.usuario (id_usuario) ON DELETE RESTRICT
+);
+CREATE TABLE plataforma.livro_autor (
+	id_livro BIGINT NOT NULL,
+	id_autor BIGINT NOT NULL,
+	PRIMARY KEY (id_livro, id_autor),
+	FOREIGN KEY(id_livro) REFERENCES plataforma.livro (id_livro) ON DELETE CASCADE,
+	FOREIGN KEY(id_autor) REFERENCES plataforma.autor (id_autor) ON DELETE RESTRICT
+);
+CREATE TABLE plataforma.livro_genero (
+	id_livro BIGINT NOT NULL,
+	id_genero BIGINT NOT NULL,
+	PRIMARY KEY (id_livro, id_genero),
+	FOREIGN KEY(id_livro) REFERENCES plataforma.livro (id_livro) ON DELETE CASCADE,
+	FOREIGN KEY(id_genero) REFERENCES plataforma.genero (id_genero) ON DELETE RESTRICT
+);
+CREATE TABLE plataforma.avaliacao (
+	id_avaliacao BIGINT GENERATED ALWAYS AS IDENTITY,
+	id_usuario BIGINT NOT NULL,
+	id_livro BIGINT NOT NULL,
+	nota SMALLINT NOT NULL,
+	texto_revisao TEXT,
+	data_hora TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	is_removida BOOLEAN DEFAULT false NOT NULL,
+	PRIMARY KEY (id_avaliacao),
+	CONSTRAINT ck_avaliacao_nota CHECK (nota BETWEEN 1 AND 5),
+	CONSTRAINT ck_avaliacao_texto_revisao CHECK (texto_revisao IS NULL OR btrim(texto_revisao) <> ''),
+	UNIQUE (id_usuario, id_livro),
+	FOREIGN KEY(id_usuario) REFERENCES plataforma.usuario (id_usuario) ON DELETE RESTRICT,
+	FOREIGN KEY(id_livro) REFERENCES plataforma.livro (id_livro) ON DELETE RESTRICT
+);
+CREATE TABLE plataforma.item_lista (
+	id_item BIGINT GENERATED ALWAYS AS IDENTITY,
+	id_usuario BIGINT NOT NULL,
+	id_livro BIGINT NOT NULL,
+	tipo VARCHAR(12) NOT NULL,
+	data_adicao TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	PRIMARY KEY (id_item),
+	CONSTRAINT ck_item_lista_tipo CHECK (tipo IN ('favorito', 'ler_depois')),
+	UNIQUE (id_usuario, id_livro, tipo),
+	FOREIGN KEY(id_usuario) REFERENCES plataforma.usuario (id_usuario) ON DELETE RESTRICT,
+	FOREIGN KEY(id_livro) REFERENCES plataforma.livro (id_livro) ON DELETE RESTRICT
+);
+CREATE TABLE plataforma.nota_pessoal (
+	id_nota BIGINT GENERATED ALWAYS AS IDENTITY,
+	id_usuario BIGINT NOT NULL,
+	id_livro BIGINT NOT NULL,
+	texto TEXT NOT NULL,
+	localizacao TEXT,
+	data_criacao TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	data_atualizacao TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	PRIMARY KEY (id_nota),
+	CONSTRAINT ck_nota_pessoal_texto CHECK (btrim(texto) <> ''),
+	FOREIGN KEY(id_usuario) REFERENCES plataforma.usuario (id_usuario) ON DELETE RESTRICT,
+	FOREIGN KEY(id_livro) REFERENCES plataforma.livro (id_livro) ON DELETE RESTRICT
+);
+CREATE TABLE plataforma.progresso_leitura (
+	id_progresso BIGINT GENERATED ALWAYS AS IDENTITY,
+	id_usuario BIGINT NOT NULL,
+	id_livro BIGINT NOT NULL,
+	ultima_posicao TEXT,
+	paginas_distintas_lidas INTEGER DEFAULT 0 NOT NULL,
+	concluido_em TIMESTAMP WITH TIME ZONE,
+	PRIMARY KEY (id_progresso),
+	CONSTRAINT ck_progresso_paginas CHECK (paginas_distintas_lidas >= 0),
+	UNIQUE (id_usuario, id_livro),
+	FOREIGN KEY(id_usuario) REFERENCES plataforma.usuario (id_usuario) ON DELETE RESTRICT,
+	FOREIGN KEY(id_livro) REFERENCES plataforma.livro (id_livro) ON DELETE RESTRICT
+);
+CREATE TABLE plataforma.sessao_leitura (
+	id_sessao BIGINT GENERATED ALWAYS AS IDENTITY,
+	id_usuario BIGINT NOT NULL,
+	id_livro BIGINT NOT NULL,
+	inicio TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	fim TIMESTAMP WITH TIME ZONE,
+	tempo_ativo_segundos BIGINT DEFAULT 0 NOT NULL,
+	PRIMARY KEY (id_sessao),
+	CONSTRAINT ck_sessao_tempo_ativo CHECK (tempo_ativo_segundos >= 0),
+	CONSTRAINT ck_sessao_periodo CHECK (fim IS NULL OR fim >= inicio),
+	FOREIGN KEY(id_usuario) REFERENCES plataforma.usuario (id_usuario) ON DELETE RESTRICT,
+	FOREIGN KEY(id_livro) REFERENCES plataforma.livro (id_livro) ON DELETE RESTRICT
+);
+CREATE TABLE plataforma.acesso_livro (
+	id_acesso BIGINT GENERATED ALWAYS AS IDENTITY,
+	id_usuario BIGINT,
+	id_livro BIGINT NOT NULL,
+	data_hora TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	PRIMARY KEY (id_acesso),
+	FOREIGN KEY(id_usuario) REFERENCES plataforma.usuario (id_usuario) ON DELETE RESTRICT,
+	FOREIGN KEY(id_livro) REFERENCES plataforma.livro (id_livro) ON DELETE RESTRICT
+);
+CREATE TABLE plataforma.plano (
+	id_plano BIGINT GENERATED ALWAYS AS IDENTITY,
+	nome VARCHAR(100) NOT NULL,
+	preco NUMERIC(12, 2) NOT NULL,
+	moeda VARCHAR(3) DEFAULT 'BRL' NOT NULL,
+	periodicidade VARCHAR(10) NOT NULL,
+	ativo BOOLEAN DEFAULT true NOT NULL,
+	PRIMARY KEY (id_plano),
+	CONSTRAINT ck_plano_preco CHECK (preco >= 0),
+	CONSTRAINT ck_plano_periodicidade CHECK (periodicidade IN ('mensal', 'anual')),
+	UNIQUE (nome)
+);
+CREATE TABLE plataforma.assinatura (
+	id_assinatura BIGINT GENERATED ALWAYS AS IDENTITY,
+	id_usuario BIGINT NOT NULL,
+	id_plano BIGINT NOT NULL,
+	status VARCHAR(12) DEFAULT 'pendente' NOT NULL,
+	inicio TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	fim TIMESTAMP WITH TIME ZONE,
+	referencia_provedor TEXT,
+	PRIMARY KEY (id_assinatura),
+	CONSTRAINT ck_assinatura_status CHECK (status IN ('pendente', 'ativa', 'cancelada', 'expirada')),
+	CONSTRAINT ck_assinatura_periodo CHECK (fim IS NULL OR fim > inicio),
+	CONSTRAINT ck_assinatura_ativa_fim CHECK (status <> 'ativa' OR fim IS NOT NULL),
+	UNIQUE (referencia_provedor),
+	FOREIGN KEY(id_usuario) REFERENCES plataforma.usuario (id_usuario) ON DELETE RESTRICT,
+	FOREIGN KEY(id_plano) REFERENCES plataforma.plano (id_plano) ON DELETE RESTRICT
+);
+CREATE UNIQUE INDEX assinatura_ativa_usuario ON plataforma.assinatura (id_usuario) WHERE status = 'ativa';
+CREATE TABLE plataforma.pagamento (
+	id_pagamento BIGINT GENERATED ALWAYS AS IDENTITY,
+	id_assinatura BIGINT NOT NULL,
+	valor NUMERIC(12, 2) NOT NULL,
+	moeda VARCHAR(3) DEFAULT 'BRL' NOT NULL,
+	status VARCHAR(12) DEFAULT 'pendente' NOT NULL,
+	data_hora TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	referencia_provedor TEXT,
+	PRIMARY KEY (id_pagamento),
+	CONSTRAINT ck_pagamento_valor CHECK (valor >= 0),
+	CONSTRAINT ck_pagamento_status CHECK (status IN ('pendente', 'aprovado', 'recusado', 'estornado')),
+	UNIQUE (referencia_provedor),
+	FOREIGN KEY(id_assinatura) REFERENCES plataforma.assinatura (id_assinatura) ON DELETE RESTRICT
+);
+CREATE TABLE plataforma.movimento_pontos (
+	id_movimento BIGINT GENERATED ALWAYS AS IDENTITY,
+	id_usuario BIGINT NOT NULL,
+	id_livro BIGINT,
+	quantidade BIGINT NOT NULL,
+	motivo VARCHAR(15) NOT NULL,
+	data_hora TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	data_referencia DATE,
+	chave_evento TEXT NOT NULL,
+	PRIMARY KEY (id_movimento),
+	CONSTRAINT ck_movimento_quantidade CHECK (quantidade <> 0),
+	CONSTRAINT ck_movimento_motivo CHECK (motivo IN ('leitura', 'inatividade', 'ajuste')),
+	CONSTRAINT ck_movimento_leitura CHECK (motivo <> 'leitura' OR (id_livro IS NOT NULL AND quantidade > 0)),
+	CONSTRAINT ck_movimento_inatividade CHECK (motivo <> 'inatividade' OR (id_livro IS NULL AND quantidade < 0 AND data_referencia IS NOT NULL)),
+	UNIQUE (chave_evento),
+	FOREIGN KEY(id_usuario) REFERENCES plataforma.usuario (id_usuario) ON DELETE RESTRICT,
+	FOREIGN KEY(id_livro) REFERENCES plataforma.livro (id_livro) ON DELETE RESTRICT
+);
+CREATE UNIQUE INDEX pontos_deducao_diaria ON plataforma.movimento_pontos (id_usuario, data_referencia) WHERE motivo = 'inatividade';
+CREATE UNIQUE INDEX pontos_recompensa_unica ON plataforma.movimento_pontos (id_usuario, id_livro) WHERE motivo = 'leitura';
+CREATE TABLE plataforma.atividade_admin (
+	id_log BIGINT GENERATED ALWAYS AS IDENTITY,
+	id_admin BIGINT NOT NULL,
+	id_usuario_alvo BIGINT,
+	id_livro_alvo BIGINT,
+	id_avaliacao_alvo BIGINT,
+	tipo_acao VARCHAR(30) NOT NULL,
+	descricao TEXT NOT NULL,
+	data_hora TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	PRIMARY KEY (id_log),
+	CONSTRAINT ck_atividade_admin_tipo CHECK (tipo_acao IN ('bloquear_usuario', 'desbloquear_usuario', 'bloquear_livro', 'desbloquear_livro', 'moderar_avaliacao', 'editar_livro')),
+	CONSTRAINT ck_atividade_admin_um_alvo CHECK (num_nonnulls(id_usuario_alvo, id_livro_alvo, id_avaliacao_alvo) = 1),
+	CONSTRAINT ck_atividade_admin_alvo_tipo CHECK ((tipo_acao IN ('bloquear_usuario', 'desbloquear_usuario') AND id_usuario_alvo IS NOT NULL) OR (tipo_acao IN ('bloquear_livro', 'desbloquear_livro', 'editar_livro') AND id_livro_alvo IS NOT NULL) OR (tipo_acao = 'moderar_avaliacao' AND id_avaliacao_alvo IS NOT NULL)),
+	FOREIGN KEY(id_admin) REFERENCES plataforma.usuario (id_usuario) ON DELETE RESTRICT,
+	FOREIGN KEY(id_usuario_alvo) REFERENCES plataforma.usuario (id_usuario) ON DELETE RESTRICT,
+	FOREIGN KEY(id_livro_alvo) REFERENCES plataforma.livro (id_livro) ON DELETE RESTRICT,
+	FOREIGN KEY(id_avaliacao_alvo) REFERENCES plataforma.avaliacao (id_avaliacao) ON DELETE RESTRICT
+)
+""")
+    op.execute("""
+        CREATE TABLE plataforma.usuario_legado_pendente (
+            id_legado INTEGER PRIMARY KEY,
+            nome_perfil VARCHAR(50) NOT NULL,
+            email VARCHAR(320) NOT NULL,
+            senha_hash VARCHAR(255) NOT NULL
+        );
+        INSERT INTO plataforma.usuario_legado_pendente(id_legado, nome_perfil, email, senha_hash)
+        SELECT id, username, email, password_hash FROM public.users;
+        WITH candidates AS (
+            SELECT *, row_number() OVER (PARTITION BY lower(btrim(email)) ORDER BY id_legado) AS rank
+            FROM plataforma.usuario_legado_pendente
+        )
+        INSERT INTO plataforma.usuario(nome_perfil, email, senha_hash)
+        SELECT nome_perfil, lower(btrim(email)), senha_hash FROM candidates
+        WHERE rank = 1 AND length(lower(btrim(email))) <= 254
+          AND position('@' IN lower(btrim(email))) > 1
+          AND btrim(nome_perfil) <> '' AND btrim(senha_hash) <> ''
+        ON CONFLICT DO NOTHING;
+        DELETE FROM plataforma.usuario_legado_pendente a USING plataforma.usuario u
+        WHERE a.nome_perfil = u.nome_perfil AND lower(btrim(a.email)) = u.email
+          AND a.senha_hash = u.senha_hash;
+        DROP TABLE public.users;
+    """)
     op.execute(
         """
         CREATE FUNCTION plataforma.validar_assets_usuario() RETURNS trigger LANGUAGE plpgsql AS $$
@@ -213,14 +440,4 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute(sa.text(f"DROP SCHEMA IF EXISTS {SCHEMA} CASCADE"))
-    op.create_table(
-        "users",
-        sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("username", sa.String(length=50), nullable=False),
-        sa.Column("email", sa.String(length=320), nullable=False),
-        sa.Column("password_hash", sa.String(length=255), nullable=False),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("email"),
-        sa.UniqueConstraint("username"),
-    )
+    raise RuntimeError("Irreversible platform migration. Restore a PostgreSQL backup to roll back.")

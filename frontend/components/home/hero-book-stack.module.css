@@ -1,0 +1,148 @@
+.stage {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: clamp(270px, 42vw, 504px);
+}
+
+.stage::before {
+  position: absolute;
+  inset: 25% 0 0;
+  border-radius: 28px;
+  background: #1e2e4f;
+  content: "";
+}
+
+.book {
+  position: absolute;
+  bottom: var(--bottom);
+  left: var(--left);
+  z-index: var(--layer);
+  display: block;
+  width: 20%;
+  transform-origin: center bottom;
+  animation: bookEnter 850ms cubic-bezier(0.2, 0.8, 0.2, 1) var(--delay) both;
+}
+
+.cover {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid #1e2e4f22;
+  box-shadow: 0 20px 28px #0c193c66;
+  animation: bookFloat 4s ease-in-out calc(var(--delay) + 850ms) infinite;
+}
+
+.it {
+  --left: 2%;
+  --bottom: 8%;
+  --angle: -11deg;
+  --delay: 0ms;
+  --layer: 1;
+}
+
+.testaments {
+  --left: 21%;
+  --bottom: 14%;
+  --angle: -5deg;
+  --delay: 100ms;
+  --layer: 2;
+}
+
+.prince {
+  --left: 40%;
+  --bottom: 18%;
+  --angle: 0deg;
+  --delay: 200ms;
+  --layer: 3;
+}
+
+.fahrenheit {
+  --left: 59%;
+  --bottom: 14%;
+  --angle: 6deg;
+  --delay: 300ms;
+  --layer: 4;
+}
+
+.lula {
+  --left: 78%;
+  --bottom: 8%;
+  --angle: 11deg;
+  --delay: 400ms;
+  --layer: 5;
+}
+
+@keyframes bookEnter {
+  from {
+    opacity: 0;
+    transform: translateY(72px) rotate(var(--angle)) scale(0.8);
+  }
+
+  65% {
+    opacity: 1;
+    transform: translateY(-20px) rotate(var(--angle)) scale(1.03);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(var(--angle)) scale(1);
+  }
+}
+
+@keyframes bookFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@media (max-width: 640px) {
+  .stage {
+    height: clamp(190px, 50vw, 260px);
+  }
+
+  .stage::before {
+    inset: 30% 0 0;
+    border-radius: 20px;
+  }
+
+  .book {
+    width: 22%;
+  }
+
+  .it {
+    --left: 1%;
+  }
+
+  .testaments {
+    --left: 20%;
+  }
+
+  .prince {
+    --left: 39%;
+  }
+
+  .fahrenheit {
+    --left: 58%;
+  }
+
+  .lula {
+    --left: 77%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book,
+  .cover {
+    animation: none;
+  }
+
+  .book {
+    transform: rotate(var(--angle));
+  }
+}

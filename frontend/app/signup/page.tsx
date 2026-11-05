@@ -1,13 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { type SyntheticEvent, useState } from "react";
+
+import { AuthShell } from "@/components/auth/auth-shell";
+import styles from "@/components/auth/auth.module.css";
 
 type FormStatus = "idle" | "submitting" | "success" | "error";
 
 export default function SignupPage() {
   const [formStatus, setFormStatus] = useState<FormStatus>("idle");
   const [message, setMessage] = useState("");
+  const router = useRouter();
 
   async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -15,127 +20,174 @@ export default function SignupPage() {
 
     if (!form.checkValidity()) {
       setFormStatus("error");
-      setMessage("Please correct the highlighted fields.");
+      setMessage("Please check the fields above.");
       form.reportValidity();
+      return;
+    }
+
+    const formData = new FormData(form);
+    const password = String(formData.get("password") ?? "");
+    const confirmation = String(formData.get("confirmPassword") ?? "");
+    const confirmationInput = form.elements.namedItem("confirmPassword") as HTMLInputElement | null;
+
+    if (password !== confirmation) {
+      confirmationInput?.setCustomValidity("Passwords do not match.");
+      confirmationInput?.reportValidity();
+      setFormStatus("error");
+      setMessage("Passwords do not match.");
+      return;
+    }
+
+    if (new TextEncoder().encode(password).length > 72) {
+      setFormStatus("error");
+      setMessage("Password must be at most 72 bytes long.");
       return;
     }
 
     setFormStatus("submitting");
     setMessage("");
+    let accountCreated = false;
 
     try {
-      const formData = new FormData(form);
       const response = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           username: formData.get("username"),
           email: formData.get("email"),
-          password: formData.get("password"),
+          password,
         }),
       });
-      const data = (await response.json()) as { detail?: string; username?: string };
+      const data = (await response.json()) as { detail?: unknown; username?: string };
 
       if (!response.ok) {
         setFormStatus("error");
-        setMessage(data.detail ?? "Account creation failed. Please try again.");
+        setMessage(typeof data.detail === "string" ? data.detail : "Account creation failed. Please try again.");
         return;
+      }
+
+      accountCreated = true;
+      const loginResponse = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: data.username ?? formData.get("username"),
+          password,
+        }),
+      });
+
+      if (!loginResponse.ok) {
+        throw new Error("Automatic sign-in failed.");
       }
 
       form.reset();
       setFormStatus("success");
-      setMessage(`Account created for ${data.username}. You can now sign in.`);
+      setMessage("Account created. Welcome to livrUSP!");
+      router.replace("/home");
+      router.refresh();
     } catch {
-      setFormStatus("error");
-      setMessage("Unable to reach the authentication service. Please try again.");
+      if (accountCreated) {
+        form.reset();
+        setFormStatus("success");
+        setMessage("Your account was created, but automatic sign-in failed. Please use Sign in below.");
+      } else {
+        setFormStatus("error");
+        setMessage("Unable to reach the authentication service. Please try again.");
+      }
     }
   }
 
   const isSubmitting = formStatus === "submitting";
+  const isComplete = formStatus === "success";
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-10 text-slate-900">
-      <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">LivrUSP</p>
-        <h1 className="mt-4 text-3xl font-bold tracking-tight">Create your account</h1>
-        <p className="mt-3 text-slate-600">Start following the books you love.</p>
+    <AuthShell mode="signup">
+      <section className={styles.formPanel} aria-labelledby="signup-heading">
+        <p className={styles.formEyebrow}>YOUR ACCOUNT / 02</p>
+        <h2 className={styles.formTitle} id="signup-heading">Create an account</h2>
+        <p className={styles.formDescription}>Start your own collection of stories.</p>
 
-        <form className="mt-8 space-y-5" noValidate onSubmit={handleSubmit}>
-          <div>
-            <label className="block text-sm font-medium text-slate-700" htmlFor="username">
-              Username
-            </label>
+        <form className={styles.form} noValidate onSubmit={handleSubmit}>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="username">Username</label>
             <input
               autoComplete="username"
-              className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none transition focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200"
+              className={styles.input}
               id="username"
-              maxLength={50}
+              maxLength={100}
               minLength={3}
               name="username"
+              placeholder="Choose a username"
               required
               type="text"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700" htmlFor="email">
-              Email
-            </label>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="email">Email</label>
             <input
               autoComplete="email"
-              className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none transition focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200"
+              className={styles.input}
               id="email"
-              maxLength={320}
+              maxLength={254}
               name="email"
+              placeholder="you@example.com"
               required
               type="email"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700" htmlFor="password">
-              Password
-            </label>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="password">Password</label>
             <input
               autoComplete="new-password"
-              className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none transition focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200"
+              className={styles.input}
               id="password"
               maxLength={72}
               minLength={8}
               name="password"
+              placeholder="Create a password"
               required
               type="password"
             />
-            <p className="mt-2 text-sm text-slate-500">Use 8 to 72 characters.</p>
+            <p className={styles.hint}>Use 8 to 72 characters.</p>
           </div>
 
-          <button
-            className="w-full rounded-lg bg-indigo-600 px-4 py-3 font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-400"
-            disabled={isSubmitting}
-            type="submit"
-          >
-            {isSubmitting ? "Creating account..." : "Sign up"}
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="confirmPassword">Confirm password</label>
+            <input
+              autoComplete="new-password"
+              className={styles.input}
+              id="confirmPassword"
+              maxLength={72}
+              minLength={8}
+              name="confirmPassword"
+              onChange={(event) => event.currentTarget.setCustomValidity("")}
+              placeholder="Repeat your password"
+              required
+              type="password"
+            />
+          </div>
+
+          <button className={styles.submitButton} disabled={isSubmitting || isComplete} type="submit">
+            {isSubmitting ? "Creating account..." : isComplete ? "Account created" : "Create account"}
+            {!isSubmitting && !isComplete && <span aria-hidden="true">↗</span>}
           </button>
 
           <p
             aria-live="polite"
-            className={`text-sm ${formStatus === "error" ? "text-red-600" : "text-emerald-600"}`}
-            role="status"
+            className={`${styles.formMessage} ${formStatus === "error" ? styles.error : styles.success}`}
+            role={formStatus === "error" ? "alert" : "status"}
           >
             {message}
           </p>
         </form>
 
-        <p className="mt-6 text-sm text-slate-600">
+        <p className={styles.switchText}>
           Already have an account?{" "}
-          <Link className="font-semibold text-indigo-600 hover:text-indigo-700" href="/login">
-            Sign in
-          </Link>
+          <Link className={styles.textLink} href="/login">Sign in</Link>
         </p>
-        <Link className="mt-5 inline-block font-semibold text-indigo-600 hover:text-indigo-700" href="/">
-          Back to home
-        </Link>
       </section>
-    </main>
+    </AuthShell>
   );
 }

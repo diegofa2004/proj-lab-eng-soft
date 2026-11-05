@@ -21,7 +21,10 @@ class ProgressoLeitura(Base):
     __table_args__ = (
         CheckConstraint("paginas_distintas_lidas >= 0", name="ck_progresso_paginas"),
         UniqueConstraint("id_usuario", "id_livro"),
-        {"schema": SCHEMA},
+        {
+            "schema": SCHEMA,
+            "comment": "Unico por usuario/livro; backend valida paginas contra total_paginas",
+        },
     )
 
     id_progresso: Mapped[int] = primary_key_column()

@@ -1,4 +1,7 @@
-FROM python:3.14-slim AS base
+FROM python:3.12-slim AS base
+
+RUN apt-get update && apt-get install -y --no-install-recommends poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
@@ -18,8 +21,10 @@ FROM base AS development
 COPY requirements-dev.txt ./
 COPY pyproject.toml ./
 COPY tests ./tests
+COPY integration ./integration
+COPY dev-entrypoint.sh ./
 RUN python -m pip install --no-cache-dir -r requirements-dev.txt
-CMD ["sh", "-c", "alembic upgrade head && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"]
+CMD ["sh", "./dev-entrypoint.sh"]
 
 FROM base AS production
 CMD ["sh", "-c", "alembic upgrade head && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"]

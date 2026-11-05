@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, record_activity
 from app.core.security import create_access_token, get_password_hash, verify_password
 from app.db.session import get_db
 from app.models.user import User
@@ -55,6 +55,9 @@ def login_user(data: UserLogin, db: Session = Depends(get_db)) -> LoginResponse:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password.",
         )
+    if user.is_blocked:
+        raise HTTPException(403, "Account blocked.")
+    record_activity(db, user)
     return LoginResponse(access_token=create_access_token(user.id), user=user)
 
 

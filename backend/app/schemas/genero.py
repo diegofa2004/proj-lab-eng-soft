@@ -6,6 +6,7 @@ class GeneroCreate(PublicSchema):
 
 
 class GeneroUpdate(PublicSchema):
+    non_nullable_fields = frozenset({"nome"})
     nome: MediumName | None = None
 
 

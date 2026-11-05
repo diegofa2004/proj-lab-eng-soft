@@ -352,7 +352,7 @@ export default function SignedHomePage({ data }: { data: SignedHomeData }) {
                 <LivruspFooterLogo />
               </Link>
               <span className="font-mono text-[11px] text-[#556B45]">
-                © livrUSP. &nbsp; 2025
+                © livrUSP. &nbsp; {new Date().getFullYear()}
               </span>
             </div>
 

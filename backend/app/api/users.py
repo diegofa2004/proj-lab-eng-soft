@@ -1,0 +1,136 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
+
+from app.api.endpoints.account import purchase_plan
+from app.api.platform import profile_stats
+from app.core.deps import get_current_user
+from app.db.session import get_db
+from app.models.livro import Livro
+from app.models.movimento_pontos import MovimentoPontos
+from app.models.nivel import Nivel
+from app.models.plano import Plano
+from app.models.progresso_leitura import ProgressoLeitura
+from app.models.sessao_leitura import SessaoLeitura
+from app.models.user import User
+from app.schemas.livro import LivroPublic
+
+router = APIRouter(prefix="/users/me", tags=["users"])
+content_router = APIRouter(prefix="/content", tags=["content"])
+premium_router = APIRouter(prefix="/premium", tags=["premium"])
+
+
+def user_points(db: Session, user_id: int) -> int:
+    return int(
+        db.scalar(
+            select(func.coalesce(func.sum(MovimentoPontos.quantidade), 0)).where(
+                MovimentoPontos.id_usuario == user_id
+            )
+        )
+        or 0
+    )
+
+
+@router.get("/dashboard")
+def dashboard(db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> dict:
+    completed = (
+        db.scalar(
+            select(func.count())
+            .select_from(ProgressoLeitura)
+            .where(
+                ProgressoLeitura.id_usuario == user.id, ProgressoLeitura.concluido_em.is_not(None)
+            )
+        )
+        or 0
+    )
+    pages = (
+        db.scalar(
+            select(func.coalesce(func.sum(ProgressoLeitura.paginas_distintas_lidas), 0)).where(
+                ProgressoLeitura.id_usuario == user.id
+            )
+        )
+        or 0
+    )
+    seconds = (
+        db.scalar(
+            select(func.coalesce(func.sum(SessaoLeitura.tempo_ativo_segundos), 0)).where(
+                SessaoLeitura.id_usuario == user.id
+            )
+        )
+        or 0
+    )
+    return {"books_read": completed, "pages_read": pages, "active_seconds": seconds}
+
+
+@router.get("/points")
+def points(db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> dict:
+    total = user_points(db, user.id)
+    level = db.scalar(
+        select(Nivel)
+        .where(Nivel.pontos_minimos <= max(total, 0))
+        .order_by(Nivel.pontos_minimos.desc())
+        .limit(1)
+    )
+    return {
+        "points": total,
+        "level": level.nome if level else None,
+        "publisher": bool(level and level.permite_publicar),
+    }
+
+
+@router.post("/inactivity")
+def inactivity(
+    days: int | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)
+) -> dict:
+    if days is not None:
+        raise HTTPException(status_code=422, detail="Inactivity days are calculated by the server")
+    return points(db, user)
+
+
+@router.get("/suggestions", response_model=list[LivroPublic])
+def suggestions(
+    db: Session = Depends(get_db), user: User = Depends(get_current_user)
+) -> list[Livro]:
+    return list(
+        db.scalars(
+            select(Livro)
+            .where(Livro.status_publicacao == "publicado", Livro.status_bloqueado.is_(False))
+            .order_by(Livro.criado_em.desc())
+            .limit(20)
+        ).all()
+    )
+
+
+@router.post("/subscription")
+def subscribe(
+    db: Session = Depends(get_db), user: User = Depends(get_current_user)
+) -> dict[str, str]:
+    result = purchase_plan(db, user, None)
+    plan = db.get(Plano, result["subscription"].id_plano)
+    return {"status": "active", "plan": plan.nome}
+
+
+@premium_router.get("/discover", response_model=list[LivroPublic])
+def discover(db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> list[Livro]:
+    if not profile_stats(db, user)["is_premium"]:
+        raise HTTPException(status_code=403, detail="Premium subscription required")
+    return list(
+        db.scalars(
+            select(Livro).where(
+                Livro.status_publicacao == "publicado", Livro.status_bloqueado.is_(False)
+            )
+        ).all()
+    )
+
+
+@content_router.get("/user-created", response_model=list[LivroPublic])
+def user_created_content(db: Session = Depends(get_db)) -> list[Livro]:
+    return list(
+        db.scalars(
+            select(Livro).where(
+                Livro.origem == "usuario",
+                Livro.status_publicacao == "publicado",
+                Livro.status_bloqueado.is_(False),
+            )
+        ).all()
+    )

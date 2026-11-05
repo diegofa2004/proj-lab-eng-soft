@@ -10,6 +10,7 @@ class NivelCreate(PublicSchema):
 
 
 class NivelUpdate(PublicSchema):
+    non_nullable_fields = frozenset({"nome", "pontos_minimos", "permite_publicar"})
     nome: ShortName | None = None
     pontos_minimos: int | None = Field(default=None, ge=0)
     permite_publicar: bool | None = None

@@ -6,6 +6,7 @@ class AutorCreate(PublicSchema):
 
 
 class AutorUpdate(PublicSchema):
+    non_nullable_fields = frozenset({"nome"})
     nome: AuthorName | None = None
 
 

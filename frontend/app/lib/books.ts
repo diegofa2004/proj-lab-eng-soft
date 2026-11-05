@@ -797,12 +797,18 @@ export async function getSignedHomeData(
   const myStoryIds: number[] = [];
   if (v2MyBooksResponse.ok && Array.isArray(v2MyBooksResponse.data)) {
     for (const book of v2MyBooksResponse.data) {
-      myStoryIds.push(book.id_livro);
+      if (book.status_publicacao === "publicado" && !book.status_bloqueado) {
+        myStoryIds.push(book.id_livro);
+      }
     }
   }
   if (currentUser) {
     for (const book of bookMap.values()) {
-      if (book.id_publicador === currentUser.id) {
+      if (
+        book.id_publicador === currentUser.id &&
+        book.status_publicacao === "publicado" &&
+        !book.status_bloqueado
+      ) {
         myStoryIds.push(book.id_livro);
       }
     }
@@ -821,7 +827,9 @@ export async function getSignedHomeData(
   const toBeRead = await resolveBooksByIds(toReadIds, bookMap);
 
   // Reviews across catalog books -> My Reviews & Socials
-  const allCatalogBooks = Array.from(bookMap.values());
+  const allCatalogBooks = Array.from(bookMap.values()).filter(
+    (book) => book.status_publicacao === "publicado" && !book.status_bloqueado,
+  );
   const reviewsByBook = await Promise.all(
     allCatalogBooks.map(async (book) => ({
       book,

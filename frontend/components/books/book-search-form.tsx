@@ -101,7 +101,7 @@ export default function BookSearchForm({
               id="book-search-query"
               maxLength={200}
               name="q"
-              placeholder="Search by title or description"
+              placeholder="Search by title"
               type="search"
             />
           </div>

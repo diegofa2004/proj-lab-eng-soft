@@ -11,8 +11,11 @@ From the `proj-lab-eng-soft` root directory, run:
 docker compose up --build
 ```
 
-The root file includes `infra/docker-compose.dev.yml` and uses `infra/.env.dev`
-to provide configuration variables.
+The root file includes `infra/docker-compose.dev.yml`. On first startup, the
+backend generates a private JWT key in the `jwt-secret-dev` Docker volume.
+The key survives container restarts and `docker compose down`; no local env
+file or manual setup is needed. To override it, set `JWT_SECRET_KEY` in your
+shell before running Compose.
 
 | Service | Local address |
 | --- | --- |

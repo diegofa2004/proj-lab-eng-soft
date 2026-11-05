@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field
 
 from app.schemas.common import BookTitle, PositiveId, PublicSchema
 
@@ -13,24 +13,29 @@ class LivroCreate(PublicSchema):
     titulo: BookTitle
     descricao: str = ""
     data_publicacao: date
-    arquivo_conteudo: str = Field(min_length=1)
-    total_paginas: int = Field(gt=0)
-    origem: OrigemLivro
+    arquivo_conteudo: str | None = None
+    total_paginas: int = Field(gt=0, le=2147483647)
+    origem: Literal["usuario"] = "usuario"
     id_publicador: PositiveId | None = None
-
-    @model_validator(mode="after")
-    def exigir_publicador_de_usuario(self) -> "LivroCreate":
-        if self.origem == "usuario" and self.id_publicador is None:
-            raise ValueError("id_publicador is required when origem is usuario")
-        return self
 
 
 class LivroUpdate(PublicSchema):
+    non_nullable_fields = frozenset(
+        {
+            "titulo",
+            "descricao",
+            "data_publicacao",
+            "arquivo_conteudo",
+            "total_paginas",
+            "status_publicacao",
+            "status_bloqueado",
+        }
+    )
     titulo: BookTitle | None = None
     descricao: str | None = None
     data_publicacao: date | None = None
     arquivo_conteudo: str | None = Field(default=None, min_length=1)
-    total_paginas: int | None = Field(default=None, gt=0)
+    total_paginas: int | None = Field(default=None, gt=0, le=2147483647)
     status_publicacao: StatusPublicacao | None = None
     status_bloqueado: bool | None = None
 

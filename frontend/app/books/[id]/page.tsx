@@ -9,6 +9,7 @@ import {
 import BookDetailsCard from "@/components/books/book-details-card";
 import ReviewForm from "@/components/books/review-form";
 import ReviewList from "@/components/books/review-list";
+import { LivruspLogo } from "@/components/home/livrusp-logos";
 
 type BookDetailsPageProps = {
   params: Promise<{ id: string }>;
@@ -22,9 +23,7 @@ export default async function BookDetailsPage({ params }: BookDetailsPageProps) 
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-10 text-slate-900">
         <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">
-            LivrUSP
-          </p>
+          <LivruspLogo className="block h-6 w-auto" />
           <h1 className="mt-4 text-2xl font-bold tracking-tight">Invalid book link</h1>
           <p className="mt-3 text-sm text-slate-600">
             The book identifier in the URL is not valid.
@@ -50,9 +49,7 @@ export default async function BookDetailsPage({ params }: BookDetailsPageProps) 
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-10 text-slate-900">
         <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">
-            LivrUSP
-          </p>
+          <LivruspLogo className="block h-6 w-auto" />
           <h1 className="mt-4 text-2xl font-bold tracking-tight">Book not found</h1>
           <p className="mt-3 text-sm text-slate-600">
             This book does not exist or is no longer available in the public catalog.
@@ -74,9 +71,7 @@ export default async function BookDetailsPage({ params }: BookDetailsPageProps) 
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-10 text-slate-900">
         <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">
-            LivrUSP
-          </p>
+          <LivruspLogo className="block h-6 w-auto" />
           <h1 className="mt-4 text-2xl font-bold tracking-tight">Catalog unavailable</h1>
           <p className="mt-3 text-sm text-slate-600">{bookResult.detail}</p>
           <div className="mt-6 flex flex-wrap gap-4 text-sm">
@@ -100,10 +95,10 @@ export default async function BookDetailsPage({ params }: BookDetailsPageProps) 
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Link
-              className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600 hover:text-indigo-700"
+              className="inline-flex items-center hover:opacity-70"
               href="/"
             >
-              LivrUSP
+              <LivruspLogo className="block h-5 w-auto" />
             </Link>
             <span aria-hidden="true" className="text-slate-300">
               /

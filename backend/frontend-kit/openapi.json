@@ -1,0 +1,4709 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "LivrUSP API",
+    "description": "LivrUSP backend API.",
+    "version": "0.1.0"
+  },
+  "servers": [
+    {
+      "url": "/v2"
+    }
+  ],
+  "paths": {
+    "/register": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Register User",
+        "operationId": "register_user_v2_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login User",
+        "operationId": "login_user_v2_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserLogin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Get Current User Profile",
+        "operationId": "get_current_user_profile_v2_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPublic"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health",
+        "operationId": "health_v2_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health V2 Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/profile": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Profile",
+        "operationId": "profile_v2_me_profile_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Update Profile",
+        "operationId": "update_profile_v2_me_profile_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileEdit"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/billing/config": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Billing Config",
+        "operationId": "billing_config_v2_billing_config_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "type": "object",
+                  "title": "Response Billing Config V2 Billing Config Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/subscriptions": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Subscriptions",
+        "operationId": "subscriptions_v2_me_subscriptions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AssinaturaPublic"
+                  },
+                  "type": "array",
+                  "title": "Response Subscriptions V2 Me Subscriptions Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/me/payments": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Payments",
+        "operationId": "payments_v2_me_payments_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PagamentoPublic"
+                  },
+                  "type": "array",
+                  "title": "Response Payments V2 Me Payments Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/me/checkout": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Checkout",
+        "operationId": "checkout_v2_me_checkout_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Checkout"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/me/subscriptions/{sub_id}": {
+      "delete": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Cancel",
+        "operationId": "cancel_v2_me_subscriptions__sub_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sub_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Sub Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssinaturaPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profiles/{user_id}": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Public Profile",
+        "operationId": "public_profile_v2_profiles__user_id__get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProfile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Users",
+        "operationId": "users_v2_admin_users_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminUser"
+                  },
+                  "title": "Response Users V2 Admin Users Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/books": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Books",
+        "operationId": "books_v2_admin_books_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LivroPublic"
+                  },
+                  "title": "Response Books V2 Admin Books Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/reviews": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Reviews",
+        "operationId": "reviews_v2_admin_reviews_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AvaliacaoPublic"
+                  },
+                  "title": "Response Reviews V2 Admin Reviews Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/actions": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Logs",
+        "operationId": "logs_v2_admin_actions_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AtividadeAdminPublic"
+                  },
+                  "title": "Response Logs V2 Admin Actions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Moderate",
+        "operationId": "moderate_v2_admin_actions_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AtividadeAdminCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AtividadeAdminPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/dashboard": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Report",
+        "operationId": "report_v2_admin_dashboard_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Report"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/books": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Catalog",
+        "operationId": "catalog_v2_books_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Q"
+            }
+          },
+          {
+            "name": "genre",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Genre"
+            }
+          },
+          {
+            "name": "author",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Author"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 24,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogBook"
+                  },
+                  "title": "Response Catalog V2 Books Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Create",
+        "operationId": "create_v2_books_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LivroPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/books/{book_id}": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Detail",
+        "operationId": "detail_v2_books__book_id__get",
+        "parameters": [
+          {
+            "name": "book_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Book Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Detail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Replace",
+        "operationId": "replace_v2_books__book_id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "book_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Book Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LivroPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/books": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "My Books",
+        "operationId": "my_books_v2_me_books_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LivroPublic"
+                  },
+                  "type": "array",
+                  "title": "Response My Books V2 Me Books Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/books/{book_id}/content": {
+      "put": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Upload",
+        "operationId": "upload_v2_books__book_id__content_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "book_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Book Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_v2_books__book_id__content_put"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Content",
+        "operationId": "content_v2_books__book_id__content_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "book_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Book Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/pdf": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/lists": {
+      "get": {
+        "tags": [
+          "Reading"
+        ],
+        "summary": "Lists",
+        "operationId": "lists_v2_me_lists_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "favorito",
+                    "ler_depois"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tipo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ItemListaPublic"
+                  },
+                  "title": "Response Lists V2 Me Lists Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/lists/{tipo}/{book_id}": {
+      "put": {
+        "tags": [
+          "Reading"
+        ],
+        "summary": "Bookmark",
+        "operationId": "bookmark_v2_me_lists__tipo___book_id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "favorito",
+                "ler_depois"
+              ],
+              "type": "string",
+              "title": "Tipo"
+            }
+          },
+          {
+            "name": "book_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Book Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemListaPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Reading"
+        ],
+        "summary": "Unbookmark",
+        "operationId": "unbookmark_v2_me_lists__tipo___book_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "favorito",
+                "ler_depois"
+              ],
+              "type": "string",
+              "title": "Tipo"
+            }
+          },
+          {
+            "name": "book_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Book Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/notes": {
+      "get": {
+        "tags": [
+          "Reading"
+        ],
+        "summary": "Notes",
+        "operationId": "notes_v2_me_notes_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "book_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Book Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotaPessoalPublic"
+                  },
+                  "title": "Response Notes V2 Me Notes Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Reading"
+        ],
+        "summary": "Note",
+        "operationId": "note_v2_me_notes_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotaPessoalCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotaPessoalPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/notes/{note_id}": {
+      "patch": {
+        "tags": [
+          "Reading"
+        ],
+        "summary": "Edit Note",
+        "operationId": "edit_note_v2_me_notes__note_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Note Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotaPessoalUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotaPessoalPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Reading"
+        ],
+        "summary": "Delete Note",
+        "operationId": "delete_note_v2_me_notes__note_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Note Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/books/{book_id}/reviews": {
+      "get": {
+        "tags": [
+          "Reading"
+        ],
+        "summary": "Reviews",
+        "operationId": "reviews_v2_books__book_id__reviews_get",
+        "parameters": [
+          {
+            "name": "book_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Book Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AvaliacaoPublic"
+                  },
+                  "title": "Response Reviews V2 Books  Book Id  Reviews Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/books/{book_id}/review": {
+      "put": {
+        "tags": [
+          "Reading"
+        ],
+        "summary": "Review",
+        "operationId": "review_v2_books__book_id__review_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "book_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Book Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Review"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvaliacaoPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Reading"
+        ],
+        "summary": "Delete Review",
+        "operationId": "delete_review_v2_books__book_id__review_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "book_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Book Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/progress": {
+      "get": {
+        "tags": [
+          "Reading"
+        ],
+        "summary": "Progress",
+        "operationId": "progress_v2_me_progress_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProgressoLeituraPublic"
+                  },
+                  "type": "array",
+                  "title": "Response Progress V2 Me Progress Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/me/progress/{book_id}": {
+      "put": {
+        "tags": [
+          "Reading"
+        ],
+        "summary": "Progress Update",
+        "operationId": "progress_update_v2_me_progress__book_id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "book_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Book Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Progress"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgressoLeituraPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/sessions/{book_id}": {
+      "post": {
+        "tags": [
+          "Reading"
+        ],
+        "summary": "Start",
+        "operationId": "start_v2_me_sessions__book_id__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "book_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Book Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessaoLeituraPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/sessions/{session_id}/end": {
+      "put": {
+        "tags": [
+          "Reading"
+        ],
+        "summary": "Finish",
+        "operationId": "finish_v2_me_sessions__session_id__end_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionEnd"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessaoLeituraPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/points": {
+      "get": {
+        "tags": [
+          "Reading"
+        ],
+        "summary": "Points",
+        "operationId": "points_v2_me_points_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MovimentoPontosPublic"
+                  },
+                  "type": "array",
+                  "title": "Response Points V2 Me Points Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/me/dashboard": {
+      "get": {
+        "tags": [
+          "Reading"
+        ],
+        "summary": "Dashboard",
+        "operationId": "dashboard_v2_me_dashboard_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dashboard"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/me/sessions": {
+      "get": {
+        "tags": [
+          "Reading"
+        ],
+        "summary": "Sessions",
+        "operationId": "sessions_v2_me_sessions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SessaoLeituraPublic"
+                  },
+                  "type": "array",
+                  "title": "Response Sessions V2 Me Sessions Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/authors": {
+      "get": {
+        "tags": [
+          "Reference data"
+        ],
+        "summary": "List Authors",
+        "operationId": "list_authors_v2_authors_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AutorPublic"
+                  },
+                  "type": "array",
+                  "title": "Response List Authors V2 Authors Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/authors": {
+      "post": {
+        "tags": [
+          "Reference data"
+        ],
+        "summary": "Create Autor",
+        "operationId": "create_autor_v2_admin_authors_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutorCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutorPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/admin/authors/{item_id}": {
+      "patch": {
+        "tags": [
+          "Reference data"
+        ],
+        "summary": "Edit Autor",
+        "operationId": "edit_autor_v2_admin_authors__item_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutorUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutorPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/genres": {
+      "get": {
+        "tags": [
+          "Reference data"
+        ],
+        "summary": "List Genres",
+        "operationId": "list_genres_v2_genres_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GeneroPublic"
+                  },
+                  "type": "array",
+                  "title": "Response List Genres V2 Genres Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/genres": {
+      "post": {
+        "tags": [
+          "Reference data"
+        ],
+        "summary": "Create Genero",
+        "operationId": "create_genero_v2_admin_genres_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GeneroCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneroPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/admin/genres/{item_id}": {
+      "patch": {
+        "tags": [
+          "Reference data"
+        ],
+        "summary": "Edit Genero",
+        "operationId": "edit_genero_v2_admin_genres__item_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GeneroUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneroPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/plans": {
+      "get": {
+        "tags": [
+          "Reference data"
+        ],
+        "summary": "List Plans",
+        "operationId": "list_plans_v2_plans_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlanoPublic"
+                  },
+                  "type": "array",
+                  "title": "Response List Plans V2 Plans Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/plans": {
+      "get": {
+        "tags": [
+          "Reference data"
+        ],
+        "summary": "All Plans",
+        "operationId": "all_plans_v2_admin_plans_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlanoPublic"
+                  },
+                  "type": "array",
+                  "title": "Response All Plans V2 Admin Plans Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Reference data"
+        ],
+        "summary": "Create Plano",
+        "operationId": "create_plano_v2_admin_plans_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanoCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanoPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/admin/plans/{item_id}": {
+      "patch": {
+        "tags": [
+          "Reference data"
+        ],
+        "summary": "Edit Plano",
+        "operationId": "edit_plano_v2_admin_plans__item_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanoUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanoPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/levels": {
+      "get": {
+        "tags": [
+          "Reference data"
+        ],
+        "summary": "List Levels",
+        "operationId": "list_levels_v2_levels_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NivelPublic"
+                  },
+                  "type": "array",
+                  "title": "Response List Levels V2 Levels Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/levels": {
+      "post": {
+        "tags": [
+          "Reference data"
+        ],
+        "summary": "Create Nivel",
+        "operationId": "create_nivel_v2_admin_levels_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NivelCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NivelPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/admin/levels/{item_id}": {
+      "patch": {
+        "tags": [
+          "Reference data"
+        ],
+        "summary": "Edit Nivel",
+        "operationId": "edit_nivel_v2_admin_levels__item_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NivelUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NivelPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets": {
+      "get": {
+        "tags": [
+          "Reference data"
+        ],
+        "summary": "List Assets",
+        "operationId": "list_assets_v2_assets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AssetPerfilPublic"
+                  },
+                  "type": "array",
+                  "title": "Response List Assets V2 Assets Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/assets": {
+      "post": {
+        "tags": [
+          "Reference data"
+        ],
+        "summary": "Create Asset Perfil",
+        "operationId": "create_asset_perfil_v2_admin_assets_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetPerfilCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetPerfilPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/admin/assets/{item_id}": {
+      "patch": {
+        "tags": [
+          "Reference data"
+        ],
+        "summary": "Edit Asset Perfil",
+        "operationId": "edit_asset_perfil_v2_admin_assets__item_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetPerfilUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetPerfilPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AccessBook": {
+        "properties": {
+          "id_livro": {
+            "type": "integer",
+            "title": "Id Livro"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "acessos": {
+            "type": "integer",
+            "title": "Acessos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_livro",
+          "titulo",
+          "acessos"
+        ],
+        "title": "AccessBook"
+      },
+      "AccessGenre": {
+        "properties": {
+          "id_genero": {
+            "type": "integer",
+            "title": "Id Genero"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "acessos": {
+            "type": "integer",
+            "title": "Acessos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_genero",
+          "nome",
+          "acessos"
+        ],
+        "title": "AccessGenre"
+      },
+      "AdminUser": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "is_blocked": {
+            "type": "boolean",
+            "title": "Is Blocked"
+          },
+          "is_admin": {
+            "type": "boolean",
+            "title": "Is Admin"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "username",
+          "is_blocked",
+          "is_admin"
+        ],
+        "title": "AdminUser"
+      },
+      "AssetPerfilCreate": {
+        "properties": {
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "avatar",
+              "icone"
+            ],
+            "title": "Tipo"
+          },
+          "nome": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Nome"
+          },
+          "arquivo": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Arquivo"
+          },
+          "exige_premium": {
+            "type": "boolean",
+            "title": "Exige Premium",
+            "default": false
+          },
+          "id_nivel_minimo": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Nivel Minimo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tipo",
+          "nome",
+          "arquivo"
+        ],
+        "title": "AssetPerfilCreate"
+      },
+      "AssetPerfilPublic": {
+        "properties": {
+          "id_asset": {
+            "type": "integer",
+            "title": "Id Asset"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "avatar",
+              "icone"
+            ],
+            "title": "Tipo"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "arquivo": {
+            "type": "string",
+            "title": "Arquivo"
+          },
+          "exige_premium": {
+            "type": "boolean",
+            "title": "Exige Premium"
+          },
+          "id_nivel_minimo": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Nivel Minimo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_asset",
+          "tipo",
+          "nome",
+          "arquivo",
+          "exige_premium",
+          "id_nivel_minimo"
+        ],
+        "title": "AssetPerfilPublic"
+      },
+      "AssetPerfilUpdate": {
+        "properties": {
+          "nome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome"
+          },
+          "arquivo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Arquivo"
+          },
+          "exige_premium": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exige Premium"
+          },
+          "id_nivel_minimo": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Nivel Minimo"
+          }
+        },
+        "type": "object",
+        "title": "AssetPerfilUpdate"
+      },
+      "AssinaturaPublic": {
+        "properties": {
+          "id_assinatura": {
+            "type": "integer",
+            "title": "Id Assinatura"
+          },
+          "id_usuario": {
+            "type": "integer",
+            "title": "Id Usuario"
+          },
+          "id_plano": {
+            "type": "integer",
+            "title": "Id Plano"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pendente",
+              "ativa",
+              "cancelada",
+              "expirada"
+            ],
+            "title": "Status"
+          },
+          "inicio": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Inicio"
+          },
+          "fim": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fim"
+          },
+          "referencia_provedor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referencia Provedor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_assinatura",
+          "id_usuario",
+          "id_plano",
+          "status",
+          "inicio",
+          "fim",
+          "referencia_provedor"
+        ],
+        "title": "AssinaturaPublic"
+      },
+      "AtividadeAdminCreate": {
+        "properties": {
+          "tipo_acao": {
+            "type": "string",
+            "enum": [
+              "bloquear_usuario",
+              "desbloquear_usuario",
+              "bloquear_livro",
+              "desbloquear_livro",
+              "moderar_avaliacao",
+              "editar_livro"
+            ],
+            "title": "Tipo Acao"
+          },
+          "descricao": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Descricao"
+          },
+          "id_usuario_alvo": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Usuario Alvo"
+          },
+          "id_livro_alvo": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Livro Alvo"
+          },
+          "id_avaliacao_alvo": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Avaliacao Alvo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tipo_acao",
+          "descricao"
+        ],
+        "title": "AtividadeAdminCreate"
+      },
+      "AtividadeAdminPublic": {
+        "properties": {
+          "id_log": {
+            "type": "integer",
+            "title": "Id Log"
+          },
+          "id_admin": {
+            "type": "integer",
+            "title": "Id Admin"
+          },
+          "id_usuario_alvo": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Usuario Alvo"
+          },
+          "id_livro_alvo": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Livro Alvo"
+          },
+          "id_avaliacao_alvo": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Avaliacao Alvo"
+          },
+          "tipo_acao": {
+            "type": "string",
+            "enum": [
+              "bloquear_usuario",
+              "desbloquear_usuario",
+              "bloquear_livro",
+              "desbloquear_livro",
+              "moderar_avaliacao",
+              "editar_livro"
+            ],
+            "title": "Tipo Acao"
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descricao"
+          },
+          "data_hora": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Hora"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_log",
+          "id_admin",
+          "id_usuario_alvo",
+          "id_livro_alvo",
+          "id_avaliacao_alvo",
+          "tipo_acao",
+          "descricao",
+          "data_hora"
+        ],
+        "title": "AtividadeAdminPublic"
+      },
+      "AutorCreate": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Nome"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome"
+        ],
+        "title": "AutorCreate"
+      },
+      "AutorPublic": {
+        "properties": {
+          "id_autor": {
+            "type": "integer",
+            "title": "Id Autor"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_autor",
+          "nome"
+        ],
+        "title": "AutorPublic"
+      },
+      "AutorUpdate": {
+        "properties": {
+          "nome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome"
+          }
+        },
+        "type": "object",
+        "title": "AutorUpdate"
+      },
+      "AvaliacaoPublic": {
+        "properties": {
+          "id_avaliacao": {
+            "type": "integer",
+            "title": "Id Avaliacao"
+          },
+          "id_usuario": {
+            "type": "integer",
+            "title": "Id Usuario"
+          },
+          "id_livro": {
+            "type": "integer",
+            "title": "Id Livro"
+          },
+          "nota": {
+            "type": "integer",
+            "title": "Nota"
+          },
+          "texto_revisao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Texto Revisao"
+          },
+          "data_hora": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Hora"
+          },
+          "is_removida": {
+            "type": "boolean",
+            "title": "Is Removida"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_avaliacao",
+          "id_usuario",
+          "id_livro",
+          "nota",
+          "texto_revisao",
+          "data_hora",
+          "is_removida"
+        ],
+        "title": "AvaliacaoPublic"
+      },
+      "Body_upload_v2_books__book_id__content_put": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_v2_books__book_id__content_put"
+      },
+      "BookInput": {
+        "properties": {
+          "titulo": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Titulo"
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descricao",
+            "default": ""
+          },
+          "data_publicacao": {
+            "type": "string",
+            "format": "date",
+            "title": "Data Publicacao"
+          },
+          "total_paginas": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Total Paginas"
+          },
+          "autores": {
+            "items": {
+              "type": "integer",
+              "exclusiveMinimum": 0.0
+            },
+            "type": "array",
+            "title": "Autores"
+          },
+          "generos": {
+            "items": {
+              "type": "integer",
+              "exclusiveMinimum": 0.0
+            },
+            "type": "array",
+            "title": "Generos"
+          },
+          "status_publicacao": {
+            "type": "string",
+            "enum": [
+              "rascunho",
+              "publicado",
+              "arquivado"
+            ],
+            "title": "Status Publicacao",
+            "default": "rascunho"
+          }
+        },
+        "type": "object",
+        "required": [
+          "titulo",
+          "data_publicacao",
+          "total_paginas"
+        ],
+        "title": "BookInput"
+      },
+      "CatalogBook": {
+        "properties": {
+          "id_livro": {
+            "type": "integer",
+            "title": "Id Livro"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descricao"
+          },
+          "data_publicacao": {
+            "type": "string",
+            "format": "date",
+            "title": "Data Publicacao"
+          },
+          "arquivo_conteudo": {
+            "type": "string",
+            "title": "Arquivo Conteudo"
+          },
+          "total_paginas": {
+            "type": "integer",
+            "title": "Total Paginas"
+          },
+          "origem": {
+            "type": "string",
+            "enum": [
+              "catalogo",
+              "usuario"
+            ],
+            "title": "Origem"
+          },
+          "status_publicacao": {
+            "type": "string",
+            "enum": [
+              "rascunho",
+              "publicado",
+              "arquivado"
+            ],
+            "title": "Status Publicacao"
+          },
+          "status_bloqueado": {
+            "type": "boolean",
+            "title": "Status Bloqueado"
+          },
+          "id_publicador": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Publicador"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "nota_media": {
+            "type": "number",
+            "title": "Nota Media"
+          },
+          "total_avaliacoes": {
+            "type": "integer",
+            "title": "Total Avaliacoes"
+          },
+          "total_acessos": {
+            "type": "integer",
+            "title": "Total Acessos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_livro",
+          "titulo",
+          "descricao",
+          "data_publicacao",
+          "arquivo_conteudo",
+          "total_paginas",
+          "origem",
+          "status_publicacao",
+          "status_bloqueado",
+          "id_publicador",
+          "criado_em",
+          "nota_media",
+          "total_avaliacoes",
+          "total_acessos"
+        ],
+        "title": "CatalogBook"
+      },
+      "Checkout": {
+        "properties": {
+          "id_plano": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Id Plano"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_plano"
+        ],
+        "title": "Checkout"
+      },
+      "CheckoutResult": {
+        "properties": {
+          "subscription": {
+            "$ref": "#/components/schemas/AssinaturaPublic"
+          },
+          "payment": {
+            "$ref": "#/components/schemas/PagamentoPublic"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subscription",
+          "payment"
+        ],
+        "title": "CheckoutResult"
+      },
+      "Dashboard": {
+        "properties": {
+          "id_usuario": {
+            "type": "integer",
+            "title": "Id Usuario"
+          },
+          "livros_concluidos": {
+            "type": "integer",
+            "title": "Livros Concluidos"
+          },
+          "paginas_lidas": {
+            "type": "integer",
+            "title": "Paginas Lidas"
+          },
+          "tempo_ativo_segundos": {
+            "type": "integer",
+            "title": "Tempo Ativo Segundos"
+          },
+          "generos_lidos": {
+            "type": "integer",
+            "title": "Generos Lidos"
+          },
+          "autores_lidos": {
+            "type": "integer",
+            "title": "Autores Lidos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_usuario",
+          "livros_concluidos",
+          "paginas_lidas",
+          "tempo_ativo_segundos",
+          "generos_lidos",
+          "autores_lidos"
+        ],
+        "title": "Dashboard"
+      },
+      "Detail": {
+        "properties": {
+          "id_livro": {
+            "type": "integer",
+            "title": "Id Livro"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descricao"
+          },
+          "data_publicacao": {
+            "type": "string",
+            "format": "date",
+            "title": "Data Publicacao"
+          },
+          "arquivo_conteudo": {
+            "type": "string",
+            "title": "Arquivo Conteudo"
+          },
+          "total_paginas": {
+            "type": "integer",
+            "title": "Total Paginas"
+          },
+          "origem": {
+            "type": "string",
+            "enum": [
+              "catalogo",
+              "usuario"
+            ],
+            "title": "Origem"
+          },
+          "status_publicacao": {
+            "type": "string",
+            "enum": [
+              "rascunho",
+              "publicado",
+              "arquivado"
+            ],
+            "title": "Status Publicacao"
+          },
+          "status_bloqueado": {
+            "type": "boolean",
+            "title": "Status Bloqueado"
+          },
+          "id_publicador": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Publicador"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "nota_media": {
+            "type": "number",
+            "title": "Nota Media"
+          },
+          "total_avaliacoes": {
+            "type": "integer",
+            "title": "Total Avaliacoes"
+          },
+          "total_acessos": {
+            "type": "integer",
+            "title": "Total Acessos"
+          },
+          "autores": {
+            "items": {
+              "$ref": "#/components/schemas/AutorPublic"
+            },
+            "type": "array",
+            "title": "Autores"
+          },
+          "generos": {
+            "items": {
+              "$ref": "#/components/schemas/GeneroPublic"
+            },
+            "type": "array",
+            "title": "Generos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_livro",
+          "titulo",
+          "descricao",
+          "data_publicacao",
+          "arquivo_conteudo",
+          "total_paginas",
+          "origem",
+          "status_publicacao",
+          "status_bloqueado",
+          "id_publicador",
+          "criado_em",
+          "nota_media",
+          "total_avaliacoes",
+          "total_acessos",
+          "autores",
+          "generos"
+        ],
+        "title": "Detail"
+      },
+      "GeneroCreate": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Nome"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome"
+        ],
+        "title": "GeneroCreate"
+      },
+      "GeneroPublic": {
+        "properties": {
+          "id_genero": {
+            "type": "integer",
+            "title": "Id Genero"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_genero",
+          "nome"
+        ],
+        "title": "GeneroPublic"
+      },
+      "GeneroUpdate": {
+        "properties": {
+          "nome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome"
+          }
+        },
+        "type": "object",
+        "title": "GeneroUpdate"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ItemListaPublic": {
+        "properties": {
+          "id_item": {
+            "type": "integer",
+            "title": "Id Item"
+          },
+          "id_usuario": {
+            "type": "integer",
+            "title": "Id Usuario"
+          },
+          "id_livro": {
+            "type": "integer",
+            "title": "Id Livro"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "favorito",
+              "ler_depois"
+            ],
+            "title": "Tipo"
+          },
+          "data_adicao": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Adicao"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_item",
+          "id_usuario",
+          "id_livro",
+          "tipo",
+          "data_adicao"
+        ],
+        "title": "ItemListaPublic"
+      },
+      "LivroPublic": {
+        "properties": {
+          "id_livro": {
+            "type": "integer",
+            "title": "Id Livro"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descricao"
+          },
+          "data_publicacao": {
+            "type": "string",
+            "format": "date",
+            "title": "Data Publicacao"
+          },
+          "arquivo_conteudo": {
+            "type": "string",
+            "title": "Arquivo Conteudo"
+          },
+          "total_paginas": {
+            "type": "integer",
+            "title": "Total Paginas"
+          },
+          "origem": {
+            "type": "string",
+            "enum": [
+              "catalogo",
+              "usuario"
+            ],
+            "title": "Origem"
+          },
+          "status_publicacao": {
+            "type": "string",
+            "enum": [
+              "rascunho",
+              "publicado",
+              "arquivado"
+            ],
+            "title": "Status Publicacao"
+          },
+          "status_bloqueado": {
+            "type": "boolean",
+            "title": "Status Bloqueado"
+          },
+          "id_publicador": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Publicador"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_livro",
+          "titulo",
+          "descricao",
+          "data_publicacao",
+          "arquivo_conteudo",
+          "total_paginas",
+          "origem",
+          "status_publicacao",
+          "status_bloqueado",
+          "id_publicador",
+          "criado_em"
+        ],
+        "title": "LivroPublic"
+      },
+      "LoginResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserPublic"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "user"
+        ],
+        "title": "LoginResponse"
+      },
+      "MovimentoPontosPublic": {
+        "properties": {
+          "id_movimento": {
+            "type": "integer",
+            "title": "Id Movimento"
+          },
+          "id_usuario": {
+            "type": "integer",
+            "title": "Id Usuario"
+          },
+          "id_livro": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Livro"
+          },
+          "quantidade": {
+            "type": "integer",
+            "title": "Quantidade"
+          },
+          "motivo": {
+            "type": "string",
+            "enum": [
+              "leitura",
+              "inatividade",
+              "ajuste"
+            ],
+            "title": "Motivo"
+          },
+          "data_hora": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Hora"
+          },
+          "data_referencia": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Referencia"
+          },
+          "chave_evento": {
+            "type": "string",
+            "title": "Chave Evento"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_movimento",
+          "id_usuario",
+          "id_livro",
+          "quantidade",
+          "motivo",
+          "data_hora",
+          "data_referencia",
+          "chave_evento"
+        ],
+        "title": "MovimentoPontosPublic"
+      },
+      "NivelCreate": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Nome"
+          },
+          "pontos_minimos": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Pontos Minimos"
+          },
+          "permite_publicar": {
+            "type": "boolean",
+            "title": "Permite Publicar",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome",
+          "pontos_minimos"
+        ],
+        "title": "NivelCreate"
+      },
+      "NivelPublic": {
+        "properties": {
+          "id_nivel": {
+            "type": "integer",
+            "title": "Id Nivel"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "pontos_minimos": {
+            "type": "integer",
+            "title": "Pontos Minimos"
+          },
+          "permite_publicar": {
+            "type": "boolean",
+            "title": "Permite Publicar"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_nivel",
+          "nome",
+          "pontos_minimos",
+          "permite_publicar"
+        ],
+        "title": "NivelPublic"
+      },
+      "NivelUpdate": {
+        "properties": {
+          "nome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome"
+          },
+          "pontos_minimos": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pontos Minimos"
+          },
+          "permite_publicar": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permite Publicar"
+          }
+        },
+        "type": "object",
+        "title": "NivelUpdate"
+      },
+      "NotaPessoalCreate": {
+        "properties": {
+          "id_livro": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Id Livro"
+          },
+          "texto": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Texto"
+          },
+          "localizacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Localizacao"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_livro",
+          "texto"
+        ],
+        "title": "NotaPessoalCreate"
+      },
+      "NotaPessoalPublic": {
+        "properties": {
+          "id_nota": {
+            "type": "integer",
+            "title": "Id Nota"
+          },
+          "id_usuario": {
+            "type": "integer",
+            "title": "Id Usuario"
+          },
+          "id_livro": {
+            "type": "integer",
+            "title": "Id Livro"
+          },
+          "texto": {
+            "type": "string",
+            "title": "Texto"
+          },
+          "localizacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Localizacao"
+          },
+          "data_criacao": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Criacao"
+          },
+          "data_atualizacao": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Atualizacao"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_nota",
+          "id_usuario",
+          "id_livro",
+          "texto",
+          "localizacao",
+          "data_criacao",
+          "data_atualizacao"
+        ],
+        "title": "NotaPessoalPublic"
+      },
+      "NotaPessoalUpdate": {
+        "properties": {
+          "texto": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Texto"
+          },
+          "localizacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Localizacao"
+          }
+        },
+        "type": "object",
+        "title": "NotaPessoalUpdate"
+      },
+      "PagamentoPublic": {
+        "properties": {
+          "id_pagamento": {
+            "type": "integer",
+            "title": "Id Pagamento"
+          },
+          "id_assinatura": {
+            "type": "integer",
+            "title": "Id Assinatura"
+          },
+          "valor": {
+            "type": "string",
+            "title": "Valor"
+          },
+          "moeda": {
+            "type": "string",
+            "title": "Moeda"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pendente",
+              "aprovado",
+              "recusado",
+              "estornado"
+            ],
+            "title": "Status"
+          },
+          "data_hora": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Hora"
+          },
+          "referencia_provedor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referencia Provedor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_pagamento",
+          "id_assinatura",
+          "valor",
+          "moeda",
+          "status",
+          "data_hora",
+          "referencia_provedor"
+        ],
+        "title": "PagamentoPublic"
+      },
+      "PlanoCreate": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Nome"
+          },
+          "preco": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Preco"
+          },
+          "moeda": {
+            "type": "string",
+            "maxLength": 3,
+            "minLength": 3,
+            "title": "Moeda",
+            "default": "BRL"
+          },
+          "periodicidade": {
+            "type": "string",
+            "enum": [
+              "mensal",
+              "anual"
+            ],
+            "title": "Periodicidade"
+          },
+          "ativo": {
+            "type": "boolean",
+            "title": "Ativo",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome",
+          "preco",
+          "periodicidade"
+        ],
+        "title": "PlanoCreate"
+      },
+      "PlanoPublic": {
+        "properties": {
+          "id_plano": {
+            "type": "integer",
+            "title": "Id Plano"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "preco": {
+            "type": "string",
+            "title": "Preco"
+          },
+          "moeda": {
+            "type": "string",
+            "title": "Moeda"
+          },
+          "periodicidade": {
+            "type": "string",
+            "enum": [
+              "mensal",
+              "anual"
+            ],
+            "title": "Periodicidade"
+          },
+          "ativo": {
+            "type": "boolean",
+            "title": "Ativo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_plano",
+          "nome",
+          "preco",
+          "moeda",
+          "periodicidade",
+          "ativo"
+        ],
+        "title": "PlanoPublic"
+      },
+      "PlanoUpdate": {
+        "properties": {
+          "nome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome"
+          },
+          "preco": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preco"
+          },
+          "moeda": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 3,
+                "minLength": 3
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Moeda"
+          },
+          "periodicidade": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "mensal",
+                  "anual"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Periodicidade"
+          },
+          "ativo": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ativo"
+          }
+        },
+        "type": "object",
+        "title": "PlanoUpdate"
+      },
+      "Profile": {
+        "properties": {
+          "id_usuario": {
+            "type": "integer",
+            "title": "Id Usuario"
+          },
+          "nome_perfil": {
+            "type": "string",
+            "title": "Nome Perfil"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "biografia": {
+            "type": "string",
+            "title": "Biografia"
+          },
+          "id_avatar": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Avatar"
+          },
+          "id_icone": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Icone"
+          },
+          "is_admin": {
+            "type": "boolean",
+            "title": "Is Admin"
+          },
+          "pontos_leitura": {
+            "type": "integer",
+            "title": "Pontos Leitura"
+          },
+          "id_nivel": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Nivel"
+          },
+          "nivel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nivel"
+          },
+          "is_premium": {
+            "type": "boolean",
+            "title": "Is Premium"
+          },
+          "pode_publicar": {
+            "type": "boolean",
+            "title": "Pode Publicar"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_usuario",
+          "nome_perfil",
+          "email",
+          "biografia",
+          "id_avatar",
+          "id_icone",
+          "is_admin",
+          "pontos_leitura",
+          "id_nivel",
+          "nivel",
+          "is_premium",
+          "pode_publicar"
+        ],
+        "title": "Profile"
+      },
+      "ProfileEdit": {
+        "properties": {
+          "biografia": {
+            "type": "string",
+            "maxLength": 5000,
+            "title": "Biografia",
+            "default": ""
+          },
+          "id_avatar": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Avatar"
+          },
+          "id_icone": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Icone"
+          }
+        },
+        "type": "object",
+        "title": "ProfileEdit"
+      },
+      "Progress": {
+        "properties": {
+          "ultima_posicao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ultima Posicao"
+          },
+          "paginas_distintas_lidas": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Paginas Distintas Lidas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "paginas_distintas_lidas"
+        ],
+        "title": "Progress"
+      },
+      "ProgressoLeituraPublic": {
+        "properties": {
+          "id_progresso": {
+            "type": "integer",
+            "title": "Id Progresso"
+          },
+          "id_usuario": {
+            "type": "integer",
+            "title": "Id Usuario"
+          },
+          "id_livro": {
+            "type": "integer",
+            "title": "Id Livro"
+          },
+          "ultima_posicao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ultima Posicao"
+          },
+          "paginas_distintas_lidas": {
+            "type": "integer",
+            "title": "Paginas Distintas Lidas"
+          },
+          "concluido_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Concluido Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_progresso",
+          "id_usuario",
+          "id_livro",
+          "ultima_posicao",
+          "paginas_distintas_lidas",
+          "concluido_em"
+        ],
+        "title": "ProgressoLeituraPublic"
+      },
+      "PublicProfile": {
+        "properties": {
+          "id_usuario": {
+            "type": "integer",
+            "title": "Id Usuario"
+          },
+          "nome_perfil": {
+            "type": "string",
+            "title": "Nome Perfil"
+          },
+          "biografia": {
+            "type": "string",
+            "title": "Biografia"
+          },
+          "id_avatar": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Avatar"
+          },
+          "id_icone": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Icone"
+          },
+          "nivel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nivel"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_usuario",
+          "nome_perfil",
+          "biografia",
+          "id_avatar",
+          "id_icone",
+          "nivel"
+        ],
+        "title": "PublicProfile"
+      },
+      "Report": {
+        "properties": {
+          "users": {
+            "$ref": "#/components/schemas/UsersReport"
+          },
+          "books": {
+            "items": {
+              "$ref": "#/components/schemas/AccessBook"
+            },
+            "type": "array",
+            "title": "Books"
+          },
+          "genres": {
+            "items": {
+              "$ref": "#/components/schemas/AccessGenre"
+            },
+            "type": "array",
+            "title": "Genres"
+          }
+        },
+        "type": "object",
+        "required": [
+          "users",
+          "books",
+          "genres"
+        ],
+        "title": "Report"
+      },
+      "Review": {
+        "properties": {
+          "nota": {
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Nota"
+          },
+          "texto_revisao": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Texto Revisao"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nota"
+        ],
+        "title": "Review"
+      },
+      "SessaoLeituraPublic": {
+        "properties": {
+          "id_sessao": {
+            "type": "integer",
+            "title": "Id Sessao"
+          },
+          "id_usuario": {
+            "type": "integer",
+            "title": "Id Usuario"
+          },
+          "id_livro": {
+            "type": "integer",
+            "title": "Id Livro"
+          },
+          "inicio": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Inicio"
+          },
+          "fim": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fim"
+          },
+          "tempo_ativo_segundos": {
+            "type": "integer",
+            "title": "Tempo Ativo Segundos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_sessao",
+          "id_usuario",
+          "id_livro",
+          "inicio",
+          "fim",
+          "tempo_ativo_segundos"
+        ],
+        "title": "SessaoLeituraPublic"
+      },
+      "SessionEnd": {
+        "properties": {
+          "tempo_ativo_segundos": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Tempo Ativo Segundos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tempo_ativo_segundos"
+        ],
+        "title": "SessionEnd"
+      },
+      "UserCreate": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 3,
+            "title": "Username"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 72,
+            "minLength": 8,
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "email",
+          "password"
+        ],
+        "title": "UserCreate"
+      },
+      "UserLogin": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 72,
+            "minLength": 1,
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "UserLogin"
+      },
+      "UserPublic": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "username",
+          "email"
+        ],
+        "title": "UserPublic"
+      },
+      "UsersReport": {
+        "properties": {
+          "total_usuarios": {
+            "type": "integer",
+            "title": "Total Usuarios"
+          },
+          "usuarios_nao_bloqueados": {
+            "type": "integer",
+            "title": "Usuarios Nao Bloqueados"
+          },
+          "usuarios_bloqueados": {
+            "type": "integer",
+            "title": "Usuarios Bloqueados"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_usuarios",
+          "usuarios_nao_bloqueados",
+          "usuarios_bloqueados"
+        ],
+        "title": "UsersReport"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

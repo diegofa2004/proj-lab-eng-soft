@@ -80,3 +80,25 @@ def test_register_rejects_invalid_data(client):
     response = register(client, username="ab", email="not-an-email", password="short")
 
     assert response.status_code == 422
+
+
+def test_password_limit_is_in_bytes(client):
+    assert register(client, password="é" * 37).status_code == 422
+    assert register(client, password="é" * 36).status_code == 201
+    assert (
+        client.post("/login", json={"username": "reader", "password": "é" * 37}).status_code == 422
+    )
+
+
+def test_expiration_claim_required(client):
+    import jwt
+
+    from app.core.config import settings
+
+    user = register(client).json()
+    token = jwt.encode(
+        {"sub": str(user["id"]), "type": "access"},
+        settings.JWT_SECRET_KEY,
+        algorithm=settings.JWT_ALGORITHM,
+    )
+    assert client.get("/me", headers={"Authorization": f"Bearer {token}"}).status_code == 401
