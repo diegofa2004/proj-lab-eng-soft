@@ -68,13 +68,19 @@ export type Genre = {
 export type BookSearchResult = Book & {
   autores?: Author[];
   generos?: Genre[];
+  nota_media?: number;
+  total_avaliacoes?: number;
+  total_acessos?: number;
+  rating?: number;
 };
 
 export const BOOK_SORT_OPTIONS = [
-  { value: "relevance", label: "Default order" },
-  { value: "title", label: "Title (A-Z)" },
+  { value: "relevance", label: "Most relevant" },
+  { value: "popularity", label: "Most popular" },
+  { value: "rating", label: "Highest rated" },
   { value: "newest", label: "Newest first" },
   { value: "oldest", label: "Oldest first" },
+  { value: "title", label: "Title (A-Z)" },
 ] as const;
 
 export type BookSortOption = (typeof BOOK_SORT_OPTIONS)[number]["value"];
@@ -87,11 +93,22 @@ export const BOOK_SOURCE_OPTIONS = [
 
 export type BookSourceFilter = (typeof BOOK_SOURCE_OPTIONS)[number]["value"];
 
+export const BOOK_RATING_FILTER_OPTIONS = [
+  { value: "all", label: "Any rating", minRating: 0 },
+  { value: "4", label: "4★ and above", minRating: 4 },
+  { value: "3", label: "3★ and above", minRating: 3 },
+  { value: "2", label: "2★ and above", minRating: 2 },
+  { value: "1", label: "1★ and above", minRating: 1 },
+] as const;
+
+export type BookRatingFilter = (typeof BOOK_RATING_FILTER_OPTIONS)[number]["value"];
+
 export type BookSearchFilters = {
   query: string;
   author: string;
   genre: string;
   source: BookSourceFilter;
+  minRating: BookRatingFilter;
   sort: BookSortOption;
   page: number;
 };
@@ -228,17 +245,47 @@ function isBookSourceFilter(value: string): value is BookSourceFilter {
   return BOOK_SOURCE_OPTIONS.some((option) => option.value === value);
 }
 
+function isBookRatingFilter(value: string): value is BookRatingFilter {
+  return BOOK_RATING_FILTER_OPTIONS.some((option) => option.value === value);
+}
+
+export function getBookAverageRating(book: BookSearchResult): number {
+  if (typeof book.nota_media === "number" && Number.isFinite(book.nota_media)) {
+    return book.nota_media;
+  }
+  if (typeof book.rating === "number" && Number.isFinite(book.rating)) {
+    return book.rating;
+  }
+  return 0;
+}
+
+export function getBookReviewCount(book: BookSearchResult): number {
+  return typeof book.total_avaliacoes === "number" && Number.isFinite(book.total_avaliacoes)
+    ? book.total_avaliacoes
+    : 0;
+}
+
+export function getBookPopularity(book: BookSearchResult): number {
+  return typeof book.total_acessos === "number" && Number.isFinite(book.total_acessos)
+    ? book.total_acessos
+    : 0;
+}
+
 /** Converts the page URL search params into normalized search filters. */
 export function parseBookSearchParams(searchParams: SearchParamsRecord): BookSearchFilters {
   const source = firstSearchParamValue(searchParams.source);
   const sort = firstSearchParamValue(searchParams.sort);
+  const minRating =
+    firstSearchParamValue(searchParams.min_rating) ||
+    firstSearchParamValue(searchParams.rating);
   const page = Number(firstSearchParamValue(searchParams.page));
 
   return {
-    query: firstSearchParamValue(searchParams.q),
+    query: firstSearchParamValue(searchParams.q) || firstSearchParamValue(searchParams.title),
     author: firstSearchParamValue(searchParams.author),
     genre: firstSearchParamValue(searchParams.genre),
     source: isBookSourceFilter(source) ? source : "all",
+    minRating: isBookRatingFilter(minRating) ? minRating : "all",
     sort: isBookSortOption(sort) ? sort : "relevance",
     page: Number.isInteger(page) && page > 0 ? page : 1,
   };
@@ -246,7 +293,12 @@ export function parseBookSearchParams(searchParams: SearchParamsRecord): BookSea
 
 export function hasActiveBookFilters(filters: BookSearchFilters): boolean {
   return Boolean(
-    filters.query || filters.author || filters.genre || filters.source !== "all",
+    filters.query ||
+      filters.author ||
+      filters.genre ||
+      filters.source !== "all" ||
+      filters.minRating !== "all" ||
+      filters.sort !== "relevance",
   );
 }
 
@@ -258,6 +310,7 @@ export function buildBookSearchQuery(filters: BookSearchFilters): URLSearchParam
   if (filters.author) params.set("author", filters.author);
   if (filters.genre) params.set("genre", filters.genre);
   if (filters.source !== "all") params.set("source", filters.source);
+  if (filters.minRating !== "all") params.set("min_rating", filters.minRating);
   if (filters.sort !== "relevance") params.set("sort", filters.sort);
   if (filters.page > 1) params.set("page", String(filters.page));
 
@@ -279,18 +332,141 @@ type PaginatedBooksResponse = {
   page_size?: number;
 };
 
-/** The current /books endpoint filters by title, author and genre and returns a list. */
+async function enrichBooksWithMetrics(
+  books: BookSearchResult[],
+  v2BooksMap: Map<number, BookSearchResult>,
+): Promise<BookSearchResult[]> {
+  const merged = books.map((book) => {
+    const v2Book = v2BooksMap.get(book.id_livro);
+    if (!v2Book) return book;
+    return {
+      ...v2Book,
+      ...book,
+      nota_media:
+        typeof book.nota_media === "number" ? book.nota_media : v2Book.nota_media,
+      total_avaliacoes:
+        typeof book.total_avaliacoes === "number"
+          ? book.total_avaliacoes
+          : v2Book.total_avaliacoes,
+      total_acessos:
+        typeof book.total_acessos === "number" ? book.total_acessos : v2Book.total_acessos,
+      autores: book.autores?.length ? book.autores : v2Book.autores,
+      generos: book.generos?.length ? book.generos : v2Book.generos,
+    };
+  });
+
+  const booksMissingRatings = merged.filter(
+    (book) => typeof book.nota_media !== "number" && typeof book.rating !== "number",
+  );
+
+  if (booksMissingRatings.length > 0 && booksMissingRatings.length <= 36) {
+    const reviewsEntries = await Promise.all(
+      booksMissingRatings.map(async (book) => {
+        const reviews = await getBookReviews(book.id_livro);
+        const count = reviews.length;
+        const avg =
+          count > 0
+            ? Number((reviews.reduce((sum, r) => sum + r.nota, 0) / count).toFixed(2))
+            : 0;
+        return [book.id_livro, { nota_media: avg, total_avaliacoes: count }] as const;
+      }),
+    );
+    const reviewsMap = new Map(reviewsEntries);
+
+    return merged.map((book) => {
+      const fallback = reviewsMap.get(book.id_livro);
+      if (!fallback) return book;
+      return {
+        ...book,
+        nota_media: fallback.nota_media,
+        total_avaliacoes: fallback.total_avaliacoes,
+      };
+    });
+  }
+
+  return merged;
+}
+
+function applyClientFiltersAndSort(
+  books: BookSearchResult[],
+  filters: BookSearchFilters,
+): BookSearchResult[] {
+  const minRatingValue = filters.minRating === "all" ? 0 : Number(filters.minRating);
+
+  const filtered = books.filter((book) => {
+    if (filters.source !== "all" && book.origem !== filters.source) {
+      return false;
+    }
+    if (minRatingValue > 0 && getBookAverageRating(book) < minRatingValue) {
+      return false;
+    }
+    return true;
+  });
+
+  if (filters.sort === "popularity") {
+    filtered.sort(
+      (a, b) =>
+        getBookPopularity(b) - getBookPopularity(a) ||
+        getBookAverageRating(b) - getBookAverageRating(a),
+    );
+  } else if (filters.sort === "rating") {
+    filtered.sort(
+      (a, b) =>
+        getBookAverageRating(b) - getBookAverageRating(a) ||
+        getBookReviewCount(b) - getBookReviewCount(a) ||
+        getBookPopularity(b) - getBookPopularity(a),
+    );
+  } else if (filters.sort === "title") {
+    filtered.sort((a, b) => a.titulo.localeCompare(b.titulo) || a.id_livro - b.id_livro);
+  } else if (filters.sort === "newest" || filters.sort === "oldest") {
+    const direction = filters.sort === "newest" ? -1 : 1;
+    filtered.sort(
+      (a, b) =>
+        direction * (Date.parse(a.data_publicacao) - Date.parse(b.data_publicacao)) ||
+        a.id_livro - b.id_livro,
+    );
+  } else if (filters.query) {
+    const query = filters.query.toLocaleLowerCase();
+    filtered.sort((a, b) => {
+      const aStarts = a.titulo.toLocaleLowerCase().startsWith(query) ? 0 : 1;
+      const bStarts = b.titulo.toLocaleLowerCase().startsWith(query) ? 0 : 1;
+      return aStarts - bStarts;
+    });
+  }
+
+  return filtered;
+}
+
+/**
+ * Searches the public catalog through `GET /books` and enriches results with
+ * popularity and rating metrics from `/v2/books` or book reviews when available.
+ */
 export async function searchBooks(filters: BookSearchFilters): Promise<BookSearchResponse> {
+  const backendUrl = getBackendUrl();
   const params = new URLSearchParams();
-  if (filters.query) params.set("title", filters.query);
+
+  if (filters.query) {
+    params.set("title", filters.query);
+    params.set("q", filters.query);
+  }
   if (filters.author) params.set("author", filters.author);
   if (filters.genre) params.set("genre", filters.genre);
+  if (filters.source !== "all") params.set("source", filters.source);
+  if (filters.minRating !== "all") params.set("min_rating", filters.minRating);
+  if (filters.sort === "popularity" || filters.sort === "rating") {
+    params.set("sort", filters.sort);
+  }
 
   try {
     const queryString = params.toString();
-    const response = await fetch(`${getBackendUrl()}/books${queryString ? `?${queryString}` : ""}`, {
-      cache: "no-store",
-    });
+    const [response, v2CatalogRes] = await Promise.all([
+      fetch(`${backendUrl}/books${queryString ? `?${queryString}` : ""}`, {
+        cache: "no-store",
+      }),
+      fetchJsonOrNull<BookSearchResult[] | PaginatedBooksResponse>(
+        `${backendUrl}/v2/books?limit=100`,
+      ),
+    ]);
 
     if (!response.ok) {
       const data = (await response.json().catch(() => null)) as { detail?: unknown } | null;
@@ -303,45 +479,44 @@ export async function searchBooks(filters: BookSearchFilters): Promise<BookSearc
       };
     }
 
+    const v2BooksMap = new Map<number, BookSearchResult>();
+    if (v2CatalogRes.ok) {
+      for (const item of extractBookList(v2CatalogRes.data)) {
+        if (item && typeof item.id_livro === "number") {
+          v2BooksMap.set(item.id_livro, item);
+        }
+      }
+    }
+
     const data = (await response.json()) as BookSearchResult[] | PaginatedBooksResponse;
 
     if (Array.isArray(data)) {
-      const books = data.filter(
-        (book) => filters.source === "all" || book.origem === filters.source,
-      );
-
-      if (filters.sort === "title") {
-        books.sort((a, b) => a.titulo.localeCompare(b.titulo) || a.id_livro - b.id_livro);
-      } else if (filters.sort === "newest" || filters.sort === "oldest") {
-        const direction = filters.sort === "newest" ? -1 : 1;
-        books.sort((a, b) =>
-          direction * (Date.parse(a.data_publicacao) - Date.parse(b.data_publicacao)) ||
-          a.id_livro - b.id_livro,
-        );
-      } else if (filters.query) {
-        const query = filters.query.toLocaleLowerCase();
-        books.sort((a, b) => {
-          const aStarts = a.titulo.toLocaleLowerCase().startsWith(query) ? 0 : 1;
-          const bStarts = b.titulo.toLocaleLowerCase().startsWith(query) ? 0 : 1;
-          return aStarts - bStarts;
-        });
-      }
-
+      const enriched = await enrichBooksWithMetrics(data, v2BooksMap);
+      const filteredBooks = applyClientFiltersAndSort(enriched, filters);
       const start = (filters.page - 1) * BOOK_SEARCH_PAGE_SIZE;
+
       return {
         status: "ok",
-        books: books.slice(start, start + BOOK_SEARCH_PAGE_SIZE),
-        total: books.length,
+        books: filteredBooks.slice(start, start + BOOK_SEARCH_PAGE_SIZE),
+        total: filteredBooks.length,
         page: filters.page,
         pageSize: BOOK_SEARCH_PAGE_SIZE,
       };
     }
 
     if (data && Array.isArray(data.items)) {
+      const enriched = await enrichBooksWithMetrics(data.items, v2BooksMap);
+      const filteredBooks = applyClientFiltersAndSort(enriched, filters);
+
       return {
         status: "ok",
-        books: data.items,
-        total: typeof data.total === "number" ? data.total : data.items.length,
+        books: filteredBooks,
+        total:
+          filters.minRating !== "all" || filters.source !== "all"
+            ? filteredBooks.length
+            : typeof data.total === "number"
+              ? data.total
+              : filteredBooks.length,
         page: typeof data.page === "number" ? data.page : filters.page,
         pageSize:
           typeof data.page_size === "number" && data.page_size > 0
@@ -364,22 +539,28 @@ export async function searchBooks(filters: BookSearchFilters): Promise<BookSearc
 
 /** Lists the genres used by the search filters. Returns an empty list on failure. */
 export async function getGenres(): Promise<Genre[]> {
-  try {
-    const response = await fetch(`${getBackendUrl()}/v2/genres`, {
-      cache: "no-store",
-    });
+  const backendUrl = getBackendUrl();
 
-    if (!response.ok) {
-      return [];
+  for (const endpoint of [`${backendUrl}/v2/genres`, `${backendUrl}/genres`]) {
+    try {
+      const response = await fetch(endpoint, {
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        continue;
+      }
+
+      const genres = (await response.json()) as Genre[];
+      if (Array.isArray(genres)) {
+        return [...genres].sort((a, b) => a.nome.localeCompare(b.nome));
+      }
+    } catch {
+      // Try next endpoint fallback
     }
-
-    const genres = (await response.json()) as Genre[];
-    return Array.isArray(genres)
-      ? [...genres].sort((a, b) => a.nome.localeCompare(b.nome))
-      : [];
-  } catch {
-    return [];
   }
+
+  return [];
 }
 
 export type ReadingProgressItem = {
