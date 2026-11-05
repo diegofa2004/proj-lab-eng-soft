@@ -2,8 +2,10 @@ import Form from "next/form";
 import Link from "next/link";
 
 import {
+  BOOK_RATING_FILTER_OPTIONS,
   BOOK_SORT_OPTIONS,
   BOOK_SOURCE_OPTIONS,
+  buildBookSearchHref,
   type BookSearchFilters,
   type Genre,
 } from "@/app/lib/books";
@@ -14,22 +16,62 @@ type BookSearchFormProps = {
   hasActiveFilters: boolean;
 };
 
-const labelClassName = "block text-sm font-medium text-slate-700";
+const labelClassName =
+  "block font-mono text-[11px] font-semibold uppercase tracking-wider text-[#556B45]";
 const fieldClassName =
-  "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200";
+  "mt-1.5 block w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-sm text-black shadow-2xs outline-none transition placeholder:text-black/40 hover:border-[#1E2E4F]/50 focus:border-[#1E2E4F] focus:ring-2 focus:ring-[#82A7D5]/50";
 
-export default function BookSearchForm({ filters, genres, hasActiveFilters }: BookSearchFormProps) {
+export default function BookSearchForm({
+  filters,
+  genres,
+  hasActiveFilters,
+}: BookSearchFormProps) {
   const genreIsListed = genres.some((genre) => genre.nome === filters.genre);
+
+  const quickFilters = [
+    {
+      label: "Most popular",
+      isActive: filters.sort === "popularity",
+      href: buildBookSearchHref(filters, {
+        sort: filters.sort === "popularity" ? "relevance" : "popularity",
+        page: 1,
+      }),
+    },
+    {
+      label: "Highest rated",
+      isActive: filters.sort === "rating",
+      href: buildBookSearchHref(filters, {
+        sort: filters.sort === "rating" ? "relevance" : "rating",
+        page: 1,
+      }),
+    },
+    {
+      label: "4★ and above",
+      isActive: filters.minRating === "4",
+      href: buildBookSearchHref(filters, {
+        minRating: filters.minRating === "4" ? "all" : "4",
+        page: 1,
+      }),
+    },
+    {
+      label: "3★ and above",
+      isActive: filters.minRating === "3",
+      href: buildBookSearchHref(filters, {
+        minRating: filters.minRating === "3" ? "all" : "3",
+        page: 1,
+      }),
+    },
+  ];
 
   return (
     <section
       aria-label="Search books"
-      className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200"
+      className="rounded-[28px] border border-black/10 bg-[#E6EBF5]/90 p-6 shadow-xs backdrop-blur-xs sm:p-8"
     >
       {/* The key remounts the form so the fields reflect the current URL after navigation. */}
       <Form
         action="/books"
-        className="space-y-5"
+        className="space-y-6"
         key={JSON.stringify({ ...filters, page: 1 })}
         role="search"
       >
@@ -37,10 +79,10 @@ export default function BookSearchForm({ filters, genres, hasActiveFilters }: Bo
           <label className={labelClassName} htmlFor="book-search-query">
             Search
           </label>
-          <div className="relative mt-1">
+          <div className="relative mt-1.5">
             <svg
               aria-hidden="true"
-              className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+              className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-[#1E2E4F]/60"
               fill="none"
               stroke="currentColor"
               strokeWidth={2}
@@ -54,7 +96,7 @@ export default function BookSearchForm({ filters, genres, hasActiveFilters }: Bo
             </svg>
             <input
               autoComplete="off"
-              className={`${fieldClassName} mt-0 py-2.5 pl-10 text-base`}
+              className={`${fieldClassName} mt-0 py-3 pl-11 text-base`}
               defaultValue={filters.query}
               id="book-search-query"
               maxLength={200}
@@ -65,7 +107,7 @@ export default function BookSearchForm({ filters, genres, hasActiveFilters }: Bo
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div>
             <label className={labelClassName} htmlFor="book-search-author">
               Author
@@ -136,6 +178,24 @@ export default function BookSearchForm({ filters, genres, hasActiveFilters }: Bo
           </div>
 
           <div>
+            <label className={labelClassName} htmlFor="book-search-min-rating">
+              Minimum rating
+            </label>
+            <select
+              className={fieldClassName}
+              defaultValue={filters.minRating}
+              id="book-search-min-rating"
+              name="min_rating"
+            >
+              {BOOK_RATING_FILTER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <label className={labelClassName} htmlFor="book-search-sort">
               Sort by
             </label>
@@ -154,21 +214,43 @@ export default function BookSearchForm({ filters, genres, hasActiveFilters }: Bo
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4">
-          <button
-            className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
-            type="submit"
-          >
-            Search
-          </button>
-          {hasActiveFilters ? (
-            <Link
-              className="text-sm font-semibold text-slate-600 hover:text-slate-900"
-              href="/books"
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-black/10 pt-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="mr-1 font-mono text-[11px] uppercase tracking-wider text-[#556B45]">
+              Quick filters:
+            </span>
+            {quickFilters.map((pill) => (
+              <Link
+                aria-current={pill.isActive ? "true" : undefined}
+                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                  pill.isActive
+                    ? "bg-[#1E2E4F] text-white shadow-2xs"
+                    : "border border-black/15 bg-white/80 text-[#1E2E4F] hover:border-[#1E2E4F] hover:bg-white"
+                }`}
+                href={pill.href}
+                key={pill.label}
+              >
+                {pill.label}
+              </Link>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            {hasActiveFilters ? (
+              <Link
+                className="rounded-full border border-black/15 bg-white/75 px-5 py-2.5 text-xs font-semibold text-[#1E2E4F] transition hover:border-[#1E2E4F] hover:bg-white sm:text-sm"
+                href="/books"
+              >
+                Clear filters
+              </Link>
+            ) : null}
+            <button
+              className="rounded-full bg-[#1E2E4F] px-7 py-2.5 text-xs font-semibold text-white transition hover:bg-[#15223B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E2E4F] focus-visible:ring-offset-2 sm:text-sm"
+              type="submit"
             >
-              Clear filters
-            </Link>
-          ) : null}
+              Search
+            </button>
+          </div>
         </div>
       </Form>
     </section>
