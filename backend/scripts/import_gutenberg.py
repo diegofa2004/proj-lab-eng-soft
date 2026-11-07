@@ -19,6 +19,7 @@ from sqlalchemy import select
 from app.api.endpoints.catalog import CONTENT, MAX_BYTES, validate_epub
 from app.db.base import Autor, Genero, Livro, LivroAutor, LivroGenero
 from app.db.session import SessionLocal
+from app.gutenberg_metadata import fetch_gutenberg_synopsis
 
 GUTENDEX_URL = "https://gutendex.com/books"
 GUTENBERG_HOSTS = {"gutenberg.org", "www.gutenberg.org"}
@@ -37,16 +38,9 @@ def gutenberg_epub_url(book: dict) -> str | None:
     return url
 
 
-def source_marker(book_id: int) -> str:
-    return f"Project Gutenberg ebook #{book_id}"
-
-
 def already_imported(book_id: int) -> bool:
     with SessionLocal() as db:
-        return (
-            db.scalar(select(Livro.id_livro).where(Livro.descricao.contains(source_marker(book_id))))
-            is not None
-        )
+        return db.scalar(select(Livro.id_livro).where(Livro.gutenberg_id == book_id)) is not None
 
 
 def download_epub(url: str, user_agent: str) -> Path:
@@ -99,11 +93,8 @@ def import_book(book: dict, epub: Path, catalog_date: date, max_genres: int) -> 
         with SessionLocal.begin() as db:
             row = Livro(
                 titulo=title,
-                descricao=(
-                    f"Fonte: {source_marker(book_id)}. Disponibilizado pelo Project Gutenberg "
-                    f"em domínio público ou sob os seus termos de uso. "
-                    f"https://www.gutenberg.org/ebooks/{book_id}"
-                ),
+                descricao=str(book.get("description") or "").strip(),
+                gutenberg_id=book_id,
                 data_publicacao=catalog_date,
                 arquivo_conteudo="pending",
                 # EPUB é refluível; esta é uma unidade de progresso inicial, não uma página física.
@@ -171,6 +162,7 @@ def main() -> None:
                 skipped += 1
                 continue
             try:
+                book["description"] = fetch_gutenberg_synopsis(book_id, args.user_agent)
                 temporary_epub = download_epub(epub_url, args.user_agent)
                 local_id = import_book(book, temporary_epub, args.catalog_date, args.max_genres)
                 imported += 1

@@ -13,7 +13,7 @@ export default async function ProfilePage() {
         <LivruspLogo className="block h-7 w-auto" />
         <h1 className="mt-4 text-3xl font-bold tracking-tight">Welcome, {user.username}</h1>
         <p className="mt-2 text-sm font-medium text-indigo-700">
-          {user.is_admin ? "Administrator profile" : "Reader profile"}
+          {user.is_admin ? "Administrator and reader profile" : "Reader profile"}
         </p>
         <dl className="mt-6 space-y-3 rounded-lg bg-slate-50 p-4 text-sm">
           <div>
@@ -34,8 +34,8 @@ export default async function ProfilePage() {
           </Link>
         )}
         <div className="mt-8 flex items-center justify-between gap-4">
-          <Link className="font-semibold text-indigo-600 hover:text-indigo-700" href="/">
-            Back to home
+          <Link className="font-semibold text-indigo-600 hover:text-indigo-700" href="/home">
+            Reader home
           </Link>
           <LogoutButton />
         </div>

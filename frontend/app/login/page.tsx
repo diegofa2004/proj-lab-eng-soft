@@ -36,7 +36,7 @@ export default function LoginPage() {
           password: formData.get("password"),
         }),
       });
-      const data = (await response.json()) as { detail?: unknown; username?: string; is_admin?: boolean };
+      const data = (await response.json()) as { detail?: unknown; username?: string };
 
       if (!response.ok) {
         setFormStatus("error");
@@ -46,7 +46,7 @@ export default function LoginPage() {
 
       setFormStatus("success");
       setMessage(`Signed in as ${data.username}.`);
-      window.location.replace(data.is_admin ? "/admin" : "/home");
+      window.location.replace("/home");
     } catch {
       setFormStatus("error");
       setMessage("Unable to reach the authentication service. Please try again.");

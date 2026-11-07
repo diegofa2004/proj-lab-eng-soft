@@ -14,6 +14,7 @@ from urllib.request import Request, urlopen
 from app.api.endpoints.catalog import CONTENT
 from app.db.base import CapaLivro
 from app.db.session import SessionLocal
+from app.gutenberg_metadata import synopsis_from_rdf
 from scripts.import_gutenberg import (
     GUTENBERG_HOSTS,
     already_imported,
@@ -122,6 +123,7 @@ def gutenberg_metadata(book_id: int, user_agent: str) -> dict | None:
         "title": title,
         "authors": authors,
         "subjects": subjects,
+        "description": synopsis_from_rdf(root),
         "formats": formats,
     }
 

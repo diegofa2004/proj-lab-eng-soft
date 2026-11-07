@@ -28,7 +28,7 @@ Abra [Swagger](http://localhost:8000/docs). A carga de exemplo inclui um livro E
 
 ### Importar Project Gutenberg em lote
 
-O importador usa o catálogo do Gutendex para descobrir metadados e baixa somente o EPUB3 hospedado no Project Gutenberg. Ele cria autores, gêneros e vínculos, grava o arquivo no volume `books` e pode ser executado novamente sem duplicar os ebooks já importados. Informe um `User-Agent` identificável e mantenha uma taxa moderada de download.
+O importador usa o catálogo do Gutendex para descobrir metadados e baixa somente o EPUB3 hospedado no Project Gutenberg. A sinopse vem do resumo do catálogo RDF do Project Gutenberg, quando disponível; a ausência de resumo não é preenchida com uma nota de origem. O ID Gutenberg fica em uma coluna própria para impedir duplicatas. Ele cria autores, gêneros e vínculos, grava o arquivo no volume `books` e pode ser executado novamente sem duplicar os ebooks já importados. Informe um `User-Agent` identificável e mantenha uma taxa moderada de download.
 
 ```sh
 # A partir da raiz do repositório (compose de desenvolvimento)
@@ -38,6 +38,12 @@ docker compose exec backend python -m scripts.import_gutenberg \
 ```
 
 Comece com 10 livros para validar o catálogo. `--limit 1000` continuará por tantas páginas do catálogo quanto necessário, sempre um download por vez. O campo legado `total_paginas` é preenchido como uma posição inicial de progresso porque EPUB não possui uma contagem de páginas fixa; o leitor EPUB deverá fornecer posições reais depois.
+
+Para trocar as notas de origem dos livros antigos pelas sinopses do catálogo (após `alembic upgrade head`), execute a partir da raiz:
+
+```sh
+docker compose exec -T backend python - --delay 1 < backend/scripts/backfill_gutenberg_synopsis.py
+```
 
 ## Conectar React/Vite
 

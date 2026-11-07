@@ -42,6 +42,9 @@ export default function BookDetailsCard({
       : 0;
 
   const sourceLabel = book.origem === "catalogo" ? "Official Catalog" : "Community Publication";
+  const synopsis = book.descricao.startsWith("Fonte: Project Gutenberg ebook #")
+    ? ""
+    : book.descricao.trim();
 
   return (
     <section className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
@@ -101,7 +104,7 @@ export default function BookDetailsCard({
               Synopsis
             </h2>
             <p className="mt-2 whitespace-pre-line leading-relaxed text-slate-700">
-              {book.descricao.trim() || "No description provided for this book."}
+              {synopsis || "No synopsis available for this book."}
             </p>
           </div>
 

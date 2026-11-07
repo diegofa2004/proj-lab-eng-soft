@@ -15,6 +15,6 @@ export default async function SignedHomeRoutePage() {
   }
   const data = await getSignedHomeData(currentUser);
 
-  return <SignedHomePage data={data} />;
+  return <SignedHomePage data={data} isAdmin={currentUser.is_admin} />;
 }
 

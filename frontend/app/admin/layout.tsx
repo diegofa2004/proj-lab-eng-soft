@@ -15,6 +15,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           <Link aria-label="LivrUSP home" href="/home"><LivruspLogo className="h-6 w-auto" /></Link>
           <div className="flex items-center gap-4 text-sm">
             <span className="font-medium text-slate-500">Administrator · {admin.username}</span>
+            <Link className="font-semibold text-indigo-700 hover:underline" href="/home">Reader mode</Link>
             <Link className="font-semibold text-indigo-700 hover:underline" href="/profile">My profile</Link>
             <LogoutButton />
           </div>

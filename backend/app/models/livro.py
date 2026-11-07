@@ -10,6 +10,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     func,
     text,
 )
@@ -32,12 +33,14 @@ class Livro(Base):
         CheckConstraint(
             "origem <> 'usuario' OR id_publicador IS NOT NULL", name="ck_livro_publicador"
         ),
+        UniqueConstraint("gutenberg_id", name="uq_livro_gutenberg_id"),
         {"schema": SCHEMA},
     )
 
     id_livro: Mapped[int] = primary_key_column()
     titulo: Mapped[str] = mapped_column(String(300), nullable=False)
     descricao: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("''"))
+    gutenberg_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     data_publicacao: Mapped[date] = mapped_column(Date, nullable=False)
     arquivo_conteudo: Mapped[str] = mapped_column(Text, nullable=False)
     total_paginas: Mapped[int] = mapped_column(Integer, nullable=False)

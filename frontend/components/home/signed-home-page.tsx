@@ -218,7 +218,13 @@ function BookShelfSection({
   );
 }
 
-export default function SignedHomePage({ data }: { data: SignedHomeData }) {
+export default function SignedHomePage({
+  data,
+  isAdmin,
+}: {
+  data: SignedHomeData;
+  isAdmin: boolean;
+}) {
   const reviewBadges = new Map<number, string>();
   const reviewedBooks: BookSearchResult[] = [];
   const seenReviewBookIds = new Set<number>();
@@ -255,12 +261,22 @@ export default function SignedHomePage({ data }: { data: SignedHomeData }) {
             ))}
           </nav>
 
-          <Link
-            className="order-2 inline-flex items-center justify-center rounded-full bg-[#24324F] px-6 py-2.5 text-xs font-semibold text-white transition hover:bg-[#1A253B] sm:order-3 sm:px-7 sm:py-3 sm:text-sm"
-            href="/profile"
-          >
-            My profile
-          </Link>
+          <div className="order-2 flex items-center gap-2 sm:order-3 sm:gap-3">
+            {isAdmin && (
+              <Link
+                className="inline-flex items-center justify-center rounded-full border border-[#24324F] px-4 py-2.5 text-xs font-semibold text-[#24324F] transition hover:bg-[#24324F] hover:text-white sm:px-5 sm:py-3 sm:text-sm"
+                href="/admin"
+              >
+                Admin dashboard
+              </Link>
+            )}
+            <Link
+              className="inline-flex items-center justify-center rounded-full bg-[#24324F] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#1A253B] sm:px-6 sm:py-3 sm:text-sm"
+              href="/profile"
+            >
+              My profile
+            </Link>
+          </div>
         </header>
 
         <main className="pt-4 pb-12 sm:pt-8 sm:pb-16">

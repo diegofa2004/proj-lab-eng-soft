@@ -43,6 +43,7 @@ services:
       - "127.0.0.1:8000:8000"
     volumes:
       - ../backend/app:/app/app
+      - ../backend/scripts:/app/scripts
       - ../backend/alembic:/app/alembic
       - ../backend/alembic.ini:/app/alembic.ini
       - books-dev:/app/content

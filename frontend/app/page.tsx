@@ -124,7 +124,7 @@ export default async function Home() {
 
   if (currentUser) {
     const signedHomeData = await getSignedHomeData(currentUser);
-    return <SignedHomePage data={signedHomeData} />;
+    return <SignedHomePage data={signedHomeData} isAdmin={currentUser.is_admin} />;
   }
 
   return (
