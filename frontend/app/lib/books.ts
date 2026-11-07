@@ -13,6 +13,7 @@ export type Book = {
   descricao: string;
   data_publicacao: string;
   arquivo_conteudo: string;
+  capa_url?: string | null;
   total_paginas: number;
   origem: OrigemLivro;
   status_publicacao: StatusPublicacao;
@@ -43,7 +44,7 @@ export type CurrentUser = {
   id: number;
   username: string;
   email: string;
-  is_admin?: boolean;
+  is_admin: boolean;
 };
 
 export type FetchBookResult =
@@ -279,10 +280,10 @@ type PaginatedBooksResponse = {
   page_size?: number;
 };
 
-/** The current /books endpoint filters by title, author and genre and returns a list. */
+/** Search the full catalog by title or author, with optional filters. */
 export async function searchBooks(filters: BookSearchFilters): Promise<BookSearchResponse> {
   const params = new URLSearchParams();
-  if (filters.query) params.set("title", filters.query);
+  if (filters.query) params.set("q", filters.query);
   if (filters.author) params.set("author", filters.author);
   if (filters.genre) params.set("genre", filters.genre);
 
@@ -518,19 +519,15 @@ export async function getSignedHomeData(
 
   const [
     catalogResponse,
-    v2CatalogResponse,
-    userCreatedResponse,
     v2ProgressResponse,
     v2SessionsResponse,
-    favoritesResponse,
     v2FavoritesResponse,
-    toReadResponse,
     v2ToReadResponse,
     v2MyBooksResponse,
+    myReviewsResponse,
+    recentReviewsResponse,
   ] = await Promise.all([
     fetchJsonOrNull<BookSearchResult[] | PaginatedBooksResponse>(`${backendUrl}/books`),
-    fetchJsonOrNull<BookSearchResult[] | PaginatedBooksResponse>(`${backendUrl}/v2/books`),
-    fetchJsonOrNull<BookSearchResult[]>(`${backendUrl}/content/user-created`),
     authHeaders
       ? fetchJsonOrNull<ReadingProgressItem[]>(`${backendUrl}/v2/me/progress`, authHeaders)
       : Promise.resolve({ ok: false as const, status: 401 }),
@@ -538,13 +535,7 @@ export async function getSignedHomeData(
       ? fetchJsonOrNull<ReadingSessionItem[]>(`${backendUrl}/v2/me/sessions`, authHeaders)
       : Promise.resolve({ ok: false as const, status: 401 }),
     authHeaders
-      ? fetchJsonOrNull<ListItem[]>(`${backendUrl}/users/me/favorites`, authHeaders)
-      : Promise.resolve({ ok: false as const, status: 401 }),
-    authHeaders
       ? fetchJsonOrNull<ListItem[]>(`${backendUrl}/v2/me/lists?tipo=favorito`, authHeaders)
-      : Promise.resolve({ ok: false as const, status: 401 }),
-    authHeaders
-      ? fetchJsonOrNull<ListItem[]>(`${backendUrl}/users/me/to-read`, authHeaders)
       : Promise.resolve({ ok: false as const, status: 401 }),
     authHeaders
       ? fetchJsonOrNull<ListItem[]>(`${backendUrl}/v2/me/lists?tipo=ler_depois`, authHeaders)
@@ -552,16 +543,16 @@ export async function getSignedHomeData(
     authHeaders
       ? fetchJsonOrNull<BookSearchResult[]>(`${backendUrl}/v2/me/books`, authHeaders)
       : Promise.resolve({ ok: false as const, status: 401 }),
+    authHeaders
+      ? fetchJsonOrNull<Review[]>(`${backendUrl}/v2/me/reviews`, authHeaders)
+      : Promise.resolve({ ok: false as const, status: 401 }),
+    fetchJsonOrNull<Review[]>(`${backendUrl}/v2/reviews/recent?limit=6`),
   ]);
 
   const bookMap = new Map<number, BookSearchResult>();
 
   for (const list of [
     catalogResponse.ok ? extractBookList(catalogResponse.data) : [],
-    v2CatalogResponse.ok ? extractBookList(v2CatalogResponse.data) : [],
-    userCreatedResponse.ok && Array.isArray(userCreatedResponse.data)
-      ? userCreatedResponse.data
-      : [],
     v2MyBooksResponse.ok && Array.isArray(v2MyBooksResponse.data)
       ? v2MyBooksResponse.data
       : [],
@@ -569,7 +560,7 @@ export async function getSignedHomeData(
     for (const book of list) {
       if (book && typeof book.id_livro === "number") {
         const existing = bookMap.get(book.id_livro);
-        bookMap.set(book.id_livro, existing ? { ...existing, ...book } : book);
+        bookMap.set(book.id_livro, existing ? { ...book, ...existing } : book);
       }
     }
   }
@@ -581,19 +572,6 @@ export async function getSignedHomeData(
     for (const item of v2ProgressResponse.data) {
       readingBookIds.push(item.id_livro);
     }
-  } else if (authHeaders && bookMap.size > 0) {
-    // Fallback for backend versions with per-book /books/{id}/progress
-    const catalogIds = Array.from(bookMap.keys());
-    const perBookProgress = await Promise.all(
-      catalogIds.map((id) =>
-        fetchJsonOrNull<ReadingProgressItem>(`${backendUrl}/books/${id}/progress`, authHeaders),
-      ),
-    );
-    for (const res of perBookProgress) {
-      if (res.ok && res.data && typeof res.data.id_livro === "number") {
-        readingBookIds.push(res.data.id_livro);
-      }
-    }
   }
 
   if (v2SessionsResponse.ok && Array.isArray(v2SessionsResponse.data)) {
@@ -602,11 +580,9 @@ export async function getSignedHomeData(
     }
   }
 
-  for (const favRes of [favoritesResponse, v2FavoritesResponse]) {
-    if (favRes.ok && Array.isArray(favRes.data)) {
-      for (const item of favRes.data) {
-        readingBookIds.push(item.id_livro);
-      }
+  if (v2FavoritesResponse.ok && Array.isArray(v2FavoritesResponse.data)) {
+    for (const item of v2FavoritesResponse.data) {
+      readingBookIds.push(item.id_livro);
     }
   }
 
@@ -636,52 +612,25 @@ export async function getSignedHomeData(
 
   // To-be-read
   const toReadIds: number[] = [];
-  for (const trRes of [toReadResponse, v2ToReadResponse]) {
-    if (trRes.ok && Array.isArray(trRes.data)) {
-      for (const item of trRes.data) {
-        toReadIds.push(item.id_livro);
-      }
+  if (v2ToReadResponse.ok && Array.isArray(v2ToReadResponse.data)) {
+    for (const item of v2ToReadResponse.data) {
+      toReadIds.push(item.id_livro);
     }
   }
   const toBeRead = await resolveBooksByIds(toReadIds, bookMap);
 
-  // Reviews across catalog books -> My Reviews & Socials
-  const allCatalogBooks = Array.from(bookMap.values()).filter(
-    (book) => book.status_publicacao === "publicado" && !book.status_bloqueado,
+  const toBookReviews = (reviews: Review[]) => reviews.flatMap((review) => {
+    const book = bookMap.get(review.id_livro);
+    return book ? [{ book, review }] : [];
+  });
+  const myReviews = toBookReviews(
+    myReviewsResponse.ok && Array.isArray(myReviewsResponse.data) ? myReviewsResponse.data : [],
   );
-  const reviewsByBook = await Promise.all(
-    allCatalogBooks.map(async (book) => ({
-      book,
-      reviews: await getBookReviews(book.id_livro),
-    })),
+  const recentSocialReviews = toBookReviews(
+    recentReviewsResponse.ok && Array.isArray(recentReviewsResponse.data)
+      ? recentReviewsResponse.data
+      : [],
   );
-
-  const myReviews: { book: BookSearchResult; review: Review }[] = [];
-  const allReviewsWithBook: { book: BookSearchResult; review: Review }[] = [];
-
-  for (const { book, reviews } of reviewsByBook) {
-    for (const review of reviews) {
-      if (review.is_removida) continue;
-      allReviewsWithBook.push({ book, review });
-      if (currentUser && review.id_usuario === currentUser.id) {
-        myReviews.push({ book, review });
-      }
-    }
-  }
-
-  myReviews.sort(
-    (a, b) =>
-      new Date(b.review.data_hora).getTime() - new Date(a.review.data_hora).getTime() ||
-      b.review.id_avaliacao - a.review.id_avaliacao,
-  );
-
-  allReviewsWithBook.sort(
-    (a, b) =>
-      new Date(b.review.data_hora).getTime() - new Date(a.review.data_hora).getTime() ||
-      b.review.id_avaliacao - a.review.id_avaliacao,
-  );
-
-  const recentSocialReviews = allReviewsWithBook.slice(0, 6);
   const uniqueReviewerIds = Array.from(
     new Set(recentSocialReviews.map((entry) => entry.review.id_usuario)),
   );

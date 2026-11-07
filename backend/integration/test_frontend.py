@@ -1,6 +1,5 @@
 """Run explicitly against a dedicated migrated PostgreSQL database with DEMO_BILLING=true."""
 
-from pathlib import Path
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -35,6 +34,10 @@ def test_frontend_journey():
     other, admin = account()
     with SessionLocal.begin() as db:
         db.scalar(select(User).filter_by(id=other["id"])).is_admin = True
+    assert api("GET", "/me", token=admin)["is_admin"] is True
+    found_users = api("GET", "/admin/users", token=admin, params={"q": reader["username"]})
+    assert [item["id"] for item in found_users] == [reader["id"]]
+    assert api("GET", f"/admin/users/{reader['id']}", token=admin)["email"] == reader["email"]
     api("GET", "/health")
     assert "email" not in api("GET", f"/profiles/{reader['id']}")
     api("GET", "/admin/plans", token=admin)
@@ -42,8 +45,9 @@ def test_frontend_journey():
     book = catalog[0]["id_livro"]
     details = api("GET", f"/books/{book}")
     assert details["generos"] and details["autores"]
-    assert api("GET", f"/books/{book}/content").content.startswith(b"%PDF-")
-    assert api("GET", f"/books/{book}/content", token=token).content.startswith(b"%PDF-")
+    epub = api("GET", f"/books/{book}/content").content
+    assert epub.startswith(b"PK")
+    assert api("GET", f"/books/{book}/content", token=token).content.startswith(b"PK")
     api("GET", "/admin/users", 403, token)
     api("GET", "/me/profile", 401)
     asset = api("GET", "/assets")[0]
@@ -63,6 +67,8 @@ def test_frontend_journey():
     api("DELETE", f"/me/notes/{note['id_nota']}", 204, token)
     review = api("PUT", f"/books/{book}/review", token=token, json={"nota": 4})
     api("GET", f"/books/{book}/reviews")
+    assert api("GET", f"/admin/users/{reader['id']}/reviews", token=admin)[0]["id_avaliacao"] == review["id_avaliacao"]
+    assert any(item["id_avaliacao"] == review["id_avaliacao"] for item in api("GET", "/admin/reviews/feed", token=admin))
     api("PUT", f"/me/progress/{book}", 422, token, json={"paginas_distintas_lidas": 3})
     for _ in range(2):
         api("PUT", f"/me/progress/{book}", token=token, json={"paginas_distintas_lidas": 2})
@@ -89,13 +95,13 @@ def test_frontend_journey():
     draft = api("POST", "/books", 201, token, json=payload)["id_livro"]
     api("GET", f"/books/{draft}", 404)
     api("PUT", f"/books/{draft}", 409, token, json=dict(payload, status_publicacao="publicado"))
-    pdf = Path(__file__).resolve().parents[1] / "app/demo/leituras.pdf"
+    epub = api("GET", f"/books/{book}/content").content
     api(
         "PUT",
         f"/books/{draft}/content",
         204,
         token,
-        files={"file": ("book.pdf", pdf.read_bytes(), "application/pdf")},
+        files={"file": ("book.epub", epub, "application/epub+zip")},
     )
     api("PUT", f"/books/{draft}", token=token, json=dict(payload, status_publicacao="publicado"))
     api("GET", f"/books/{draft}")
@@ -161,4 +167,4 @@ def test_legacy_billing_and_publication(monkeypatch):
     item = c.get("/v2/books", params={"q":"Primeiros passos"}).json()[0]
     assert item["arquivo_conteudo"].startswith("/v2/books/")
     for path in [item["arquivo_conteudo"], item["arquivo_conteudo"].removeprefix("/v2")]:
-        assert c.get(path).content.startswith(b"%PDF-")
+        assert c.get(path).content.startswith(b"PK")

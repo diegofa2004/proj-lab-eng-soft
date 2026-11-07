@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { type SyntheticEvent, useState } from "react";
 
 import { AuthShell } from "@/components/auth/auth-shell";
@@ -12,7 +11,6 @@ type FormStatus = "idle" | "submitting" | "success" | "error";
 export default function SignupPage() {
   const [formStatus, setFormStatus] = useState<FormStatus>("idle");
   const [message, setMessage] = useState("");
-  const router = useRouter();
 
   async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -83,8 +81,7 @@ export default function SignupPage() {
       form.reset();
       setFormStatus("success");
       setMessage("Account created. Welcome to livrUSP!");
-      router.replace("/home");
-      router.refresh();
+      window.location.replace("/home");
     } catch {
       if (accountCreated) {
         form.reset();

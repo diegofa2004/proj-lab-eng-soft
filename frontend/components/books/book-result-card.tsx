@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 import type { BookSearchResult } from "@/app/lib/books";
 import { LivruspLogo } from "@/components/home/livrusp-logos";
@@ -28,16 +29,28 @@ export default function BookResultCard({ book }: BookResultCardProps) {
         className="group flex h-full gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 transition hover:shadow-md hover:ring-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
         href={`/books/${book.id_livro}`}
       >
-        {/* Book Cover Placeholder */}
-        <div
-          aria-hidden="true"
-          className="flex h-36 w-24 shrink-0 flex-col justify-between rounded-lg bg-gradient-to-br from-indigo-600 via-indigo-700 to-slate-900 p-2.5 text-white shadow"
-        >
-          <span className="inline-flex w-fit rounded bg-white/90 px-1 py-0.5">
-            <LivruspLogo alt="" className="block h-2.5 w-auto" />
-          </span>
-          <p className="line-clamp-4 text-xs font-bold leading-snug">{book.titulo}</p>
-        </div>
+        {book.capa_url ? (
+          <div className="relative h-36 w-24 shrink-0 overflow-hidden rounded-lg bg-slate-100 shadow">
+            <Image
+              alt={`Cover of ${book.titulo}`}
+              className="object-cover"
+              fill
+              sizes="96px"
+              src={`/api/books/${book.id_livro}/cover`}
+              unoptimized
+            />
+          </div>
+        ) : (
+          <div
+            aria-hidden="true"
+            className="flex h-36 w-24 shrink-0 flex-col justify-between rounded-lg bg-gradient-to-br from-indigo-600 via-indigo-700 to-slate-900 p-2.5 text-white shadow"
+          >
+            <span className="inline-flex w-fit rounded bg-white/90 px-1 py-0.5">
+              <LivruspLogo alt="" className="block h-2.5 w-auto" />
+            </span>
+            <p className="line-clamp-4 text-xs font-bold leading-snug">{book.titulo}</p>
+          </div>
+        )}
 
         <div className="flex min-w-0 flex-1 flex-col">
           <span className="inline-flex w-fit items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-700">
@@ -76,7 +89,7 @@ export default function BookResultCard({ book }: BookResultCardProps) {
 
           <p className="mt-auto pt-3 text-xs text-slate-500">
             {publicationYear ? `${publicationYear} · ` : ""}
-            {book.total_paginas} pages
+            {book.total_paginas} progress positions
           </p>
         </div>
       </Link>

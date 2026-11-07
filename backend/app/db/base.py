@@ -6,6 +6,7 @@ from app.models.assinatura import Assinatura
 from app.models.atividade_admin import AtividadeAdmin
 from app.models.autor import Autor
 from app.models.avaliacao import Avaliacao
+from app.models.capa_livro import CapaLivro
 from app.models.genero import Genero
 from app.models.item_lista import ItemLista
 from app.models.livro import Livro
@@ -29,6 +30,7 @@ __all__ = [
     "Autor",
     "Avaliacao",
     "Base",
+    "CapaLivro",
     "Genero",
     "ItemLista",
     "Livro",

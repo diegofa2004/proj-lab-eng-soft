@@ -1,4 +1,4 @@
-import subprocess
+import zipfile
 from datetime import date
 from pathlib import Path
 from typing import Annotated
@@ -15,6 +15,7 @@ from app.db.base import (
     AcessoLivro,
     AtividadeAdmin,
     Autor,
+    CapaLivro,
     Genero,
     Livro,
     LivroAutor,
@@ -29,23 +30,30 @@ from app.schemas.livro import LivroPublic, StatusPublicacao
 
 router = APIRouter(tags=["Catalog"])
 CONTENT = Path("content")
-MAX_BYTES = 20 * 1024 * 1024
+MAX_BYTES = 50 * 1024 * 1024
+EPUB_MIME_TYPE = "application/epub+zip"
 
 
-def pdf_page_count(path: Path) -> int:
+def validate_epub(path: Path) -> None:
+    """Reject non-EPUB zip files and archives that could exhaust the server."""
     try:
-        result = subprocess.run(
-            ["pdfinfo", str(path)], capture_output=True, text=True, timeout=10, check=False
-        )
-    except (OSError, subprocess.TimeoutExpired) as exc:
-        raise HTTPException(422, "PDF could not be validated") from exc
-    if result.returncode == 0:
-        for line in result.stdout.splitlines():
-            if line.startswith("Pages:"):
-                pages = line.partition(":")[2].strip()
-                if pages.isdigit() and int(pages) > 0:
-                    return int(pages)
-    raise HTTPException(422, "Invalid PDF")
+        with zipfile.ZipFile(path) as archive:
+            files = archive.infolist()
+            if (
+                not files
+                or files[0].filename != "mimetype"
+                or files[0].compress_type != zipfile.ZIP_STORED
+            ):
+                raise ValueError("missing EPUB mimetype")
+            if archive.read("mimetype") != EPUB_MIME_TYPE.encode():
+                raise ValueError("wrong EPUB mimetype")
+            names = {entry.filename for entry in files}
+            if "META-INF/container.xml" not in names:
+                raise ValueError("missing EPUB container")
+            if len(files) > 10_000 or sum(entry.file_size for entry in files) > 250 * 1024 * 1024:
+                raise ValueError("EPUB is too large when expanded")
+    except (OSError, ValueError, zipfile.BadZipFile, KeyError) as exc:
+        raise HTTPException(422, "Invalid EPUB3 file") from exc
 
 
 def validate_page_count(db, row, total_pages: int) -> None:
@@ -74,12 +82,11 @@ def validate_page_count(db, row, total_pages: int) -> None:
         raise HTTPException(409, "Page count cannot change after a completed reading")
 
 
-def require_publication_ready(row, total_pages: int) -> None:
-    path = CONTENT / f"{row.id_livro}.pdf"
+def require_publication_ready(row, _total_pages: int) -> None:
+    path = CONTENT / f"{row.id_livro}.epub"
     if not path.is_file():
-        raise HTTPException(409, "Upload a PDF before publishing")
-    if pdf_page_count(path) != total_pages:
-        raise HTTPException(422, "PDF page count differs from book metadata")
+        raise HTTPException(409, "Upload an EPUB3 file before publishing")
+    validate_epub(path)
 
 
 class BookInput(BaseModel):
@@ -229,7 +236,7 @@ def replace(book_id: int, data: BookInput, db: DB, user: Reader):
 
 @router.put("/books/{book_id}/content", status_code=204)
 def upload(book_id: int, db: DB, user: Reader, file: UploadFile = File()):
-    row = owned_book(db, user, book_id)
+    owned_book(db, user, book_id)
     grant_publish(db, user)
     CONTENT.mkdir(exist_ok=True)
     tmp = CONTENT / uuid4().hex
@@ -237,17 +244,16 @@ def upload(book_id: int, db: DB, user: Reader, file: UploadFile = File()):
         with tmp.open("xb") as out:
             count = 0
             while chunk := file.file.read(65536):
-                if count == 0 and not chunk.startswith(b"%PDF-"):
-                    raise HTTPException(422, "Expected PDF")
+                if count == 0 and not chunk.startswith(b"PK"):
+                    raise HTTPException(422, "Expected an EPUB3 file")
                 count += len(chunk)
                 if count > MAX_BYTES:
-                    raise HTTPException(413, "Maximum size 20 MiB")
+                    raise HTTPException(413, "Maximum size 50 MiB")
                 out.write(chunk)
         if not count:
             raise HTTPException(422, "Empty file")
-        if pdf_page_count(tmp) != row.total_paginas:
-            raise HTTPException(422, "PDF page count differs from book metadata")
-        tmp.replace(CONTENT / f"{book_id}.pdf")
+        validate_epub(tmp)
+        tmp.replace(CONTENT / f"{book_id}.epub")
     finally:
         tmp.unlink(missing_ok=True)
 
@@ -256,7 +262,7 @@ def upload(book_id: int, db: DB, user: Reader, file: UploadFile = File()):
     "/books/{book_id}/content",
     response_class=FileResponse,
     openapi_extra={"security": [{}]},
-    responses={200: {"content": {"application/pdf": {}}}},
+    responses={200: {"content": {EPUB_MIME_TYPE: {}}}},
 )
 def content(book_id: int, db: DB, user: Annotated[User | None, Depends(optional_reader)]):
     row = require(db.get(Livro, book_id))
@@ -264,9 +270,26 @@ def content(book_id: int, db: DB, user: Annotated[User | None, Depends(optional_
         if user is None:
             raise HTTPException(404, "Not found")
         owned_book(db, user, book_id)
-    path = CONTENT / f"{book_id}.pdf"
+    path = CONTENT / f"{book_id}.epub"
     if not path.is_file():
-        raise HTTPException(404, "PDF not available")
+        raise HTTPException(404, "EPUB3 file not available")
     db.add(AcessoLivro(id_livro=book_id, id_usuario=user.id if user else None))
     db.commit()
-    return FileResponse(path, media_type="application/pdf")
+    return FileResponse(path, media_type=EPUB_MIME_TYPE, filename=f"book-{book_id}.epub")
+
+
+@router.get(
+    "/books/{book_id}/cover",
+    response_class=FileResponse,
+    responses={200: {"content": {"image/jpeg": {}}}},
+)
+def cover(book_id: int, db: DB):
+    book = require(db.get(Livro, book_id))
+    if book.status_bloqueado or book.status_publicacao != "publicado":
+        raise HTTPException(404, "Not found")
+    if db.get(CapaLivro, book_id) is None:
+        raise HTTPException(404, "Cover not available")
+    path = CONTENT / "covers" / f"{book_id}.jpg"
+    if not path.is_file():
+        raise HTTPException(404, "Cover not available")
+    return FileResponse(path, media_type="image/jpeg")

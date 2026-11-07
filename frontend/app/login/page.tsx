@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { type SyntheticEvent, useState } from "react";
 
 import { AuthShell } from "@/components/auth/auth-shell";
@@ -12,7 +11,6 @@ type FormStatus = "idle" | "submitting" | "success" | "error";
 export default function LoginPage() {
   const [formStatus, setFormStatus] = useState<FormStatus>("idle");
   const [message, setMessage] = useState("");
-  const router = useRouter();
 
   async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -38,7 +36,7 @@ export default function LoginPage() {
           password: formData.get("password"),
         }),
       });
-      const data = (await response.json()) as { detail?: unknown; username?: string };
+      const data = (await response.json()) as { detail?: unknown; username?: string; is_admin?: boolean };
 
       if (!response.ok) {
         setFormStatus("error");
@@ -48,8 +46,7 @@ export default function LoginPage() {
 
       setFormStatus("success");
       setMessage(`Signed in as ${data.username}.`);
-      router.replace("/profile");
-      router.refresh();
+      window.location.replace(data.is_admin ? "/admin" : "/home");
     } catch {
       setFormStatus("error");
       setMessage("Unable to reach the authentication service. Please try again.");

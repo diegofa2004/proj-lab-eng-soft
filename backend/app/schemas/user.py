@@ -42,6 +42,7 @@ class UserPublic(BaseModel):
     id: int
     username: str
     email: EmailStr
+    is_admin: bool
 
 
 class LoginResponse(BaseModel):

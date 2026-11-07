@@ -1,7 +1,6 @@
 """Regression checks for the backend/database audit on a dedicated PostgreSQL database."""
 
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -163,6 +162,7 @@ def test_validation_progress_and_admin_rules():
 def test_draft_upload_and_sorting():
     seed()
     client = TestClient(app)
+    seed_book_id = client.get("/v2/books", params={"q": "Primeiros passos"}).json()[0]["id_livro"]
     user_id, headers, _ = account(client, admin=True)
     prefix = f"audit-sort-{uuid4().hex}"
     base = {"data_publicacao": "2026-11-01", "total_paginas": 2}
@@ -178,7 +178,7 @@ def test_draft_upload_and_sorting():
         client.post(
             "/books",
             headers=headers,
-            json=dict(base, titulo="draft", arquivo_conteudo="/missing.pdf"),
+            json=dict(base, titulo="draft", arquivo_conteudo="/missing.epub"),
         ).status_code
         == 422
     )
@@ -191,14 +191,14 @@ def test_draft_upload_and_sorting():
         ).status_code
         == 409
     )
-    bad_pdf = client.put(
+    bad_epub = client.put(
         f"/v2/books/{draft_id}/content",
         headers=headers,
-        files={"file": ("bad.pdf", b"%PDF-1.4\nnot a pdf\n%%EOF", "application/pdf")},
+        files={"file": ("bad.epub", b"not an epub", "application/epub+zip")},
     )
-    assert bad_pdf.status_code == 422, bad_pdf.text
+    assert bad_epub.status_code == 422, bad_epub.text
 
-    pdf = (Path(__file__).resolve().parents[1] / "app/demo/leituras.pdf").read_bytes()
+    epub = client.get(f"/v2/books/{seed_book_id}/content").content
     wrong_pages = client.post(
         "/v2/books",
         headers=headers,
@@ -212,9 +212,9 @@ def test_draft_upload_and_sorting():
         client.put(
             f"/v2/books/{wrong_pages}/content",
             headers=headers,
-            files={"file": ("valid.pdf", pdf, "application/pdf")},
+            files={"file": ("valid.epub", epub, "application/epub+zip")},
         ).status_code
-        == 422
+        == 204
     )
     books = []
     for suffix in ("A", "B"):
@@ -227,7 +227,7 @@ def test_draft_upload_and_sorting():
             client.put(
                 f"/v2/books/{book_id}/content",
                 headers=headers,
-                files={"file": ("valid.pdf", pdf, "application/pdf")},
+                files={"file": ("valid.epub", epub, "application/epub+zip")},
             ).status_code
             == 204
         )

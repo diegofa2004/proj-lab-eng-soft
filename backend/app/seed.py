@@ -1,7 +1,7 @@
 """Opt-in fixtures for local frontend development."""
 
 import argparse
-import shutil
+import zipfile
 from datetime import date
 from pathlib import Path
 
@@ -20,6 +20,37 @@ from app.db.base import (
     User,
 )
 from app.db.session import SessionLocal
+
+
+def write_demo_epub(path: Path) -> None:
+    """Create a minimal valid EPUB3 fixture without storing a binary in Git."""
+    with zipfile.ZipFile(path, "w") as archive:
+        archive.writestr("mimetype", "application/epub+zip", compress_type=zipfile.ZIP_STORED)
+        archive.writestr(
+            "META-INF/container.xml",
+            "<?xml version=\"1.0\"?>"
+            "<container version=\"1.0\" xmlns=\"urn:oasis:names:tc:opendocument:xmlns:container\">"
+            "<rootfiles><rootfile full-path=\"OEBPS/content.opf\" "
+            "media-type=\"application/oebps-package+xml\"/></rootfiles></container>",
+        )
+        archive.writestr(
+            "OEBPS/content.opf",
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+            "<package version=\"3.0\" xmlns=\"http://www.idpf.org/2007/opf\" "
+            "unique-identifier=\"book-id\"><metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\">"
+            "<dc:identifier id=\"book-id\">livrusp-demo</dc:identifier>"
+            "<dc:title>Primeiros passos no LivrUSP</dc:title><dc:language>pt-BR</dc:language>"
+            "</metadata><manifest><item id=\"chapter\" href=\"chapter.xhtml\" "
+            "media-type=\"application/xhtml+xml\"/></manifest><spine>"
+            "<itemref idref=\"chapter\"/></spine></package>",
+        )
+        archive.writestr(
+            "OEBPS/chapter.xhtml",
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+            "<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title>Primeiros passos</title>"
+            "</head><body><h1>Primeiros passos no LivrUSP</h1><p>Livro de exemplo.</p>"
+            "</body></html>",
+        )
 
 
 def seed():
@@ -45,7 +76,7 @@ def seed():
         row = get_or_create(
             Livro,
             dict(
-                descricao="Um guia de duas páginas para testar o leitor.",
+                descricao="Um guia de duas posições de progresso para testar o leitor.",
                 data_publicacao=date(2026, 1, 1),
                 arquivo_conteudo="pending",
                 total_paginas=2,
@@ -59,9 +90,7 @@ def seed():
         get_or_create(LivroGenero, id_livro=row.id_livro, id_genero=genre.id_genero)
         row.arquivo_conteudo = f"/v2/books/{row.id_livro}/content"
         CONTENT.mkdir(exist_ok=True)
-        shutil.copyfile(
-            Path(__file__).parent / "demo/leituras.pdf", CONTENT / f"{row.id_livro}.pdf"
-        )
+        write_demo_epub(CONTENT / f"{row.id_livro}.epub")
 
 
 if __name__ == "__main__":

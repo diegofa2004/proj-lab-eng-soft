@@ -18,6 +18,7 @@ def test_register_returns_public_user(client):
     assert response.status_code == 201
     assert response.json()["username"] == "reader"
     assert response.json()["email"] == "reader@example.com"
+    assert response.json()["is_admin"] is False
     assert "password" not in response.json()
     assert "password_hash" not in response.json()
 
@@ -46,6 +47,7 @@ def test_login_accepts_valid_credentials(client):
     assert response.json()["access_token"]
     assert response.json()["token_type"] == "bearer"
     assert response.json()["user"]["username"] == "reader"
+    assert response.json()["user"]["is_admin"] is False
     assert "password_hash" not in response.json()["user"]
 
 

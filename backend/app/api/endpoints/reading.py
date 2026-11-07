@@ -9,6 +9,7 @@ from app.api.reading_progress import apply_reading_progress
 from app.db.base import (
     Avaliacao,
     ItemLista,
+    Livro,
     MovimentoPontos,
     NotaPessoal,
     ProgressoLeitura,
@@ -95,6 +96,37 @@ def reviews(book_id: int, db: DB):
         select(Avaliacao)
         .filter_by(id_livro=book_id, is_removida=False)
         .order_by(Avaliacao.id_avaliacao.desc())
+    ).all()
+
+
+@router.get("/reviews/recent", response_model=list[AvaliacaoPublic])
+def recent_reviews(db: DB, limit: int = 6):
+    limit = max(1, min(limit, 50))
+    return db.scalars(
+        select(Avaliacao)
+        .join(Livro, Livro.id_livro == Avaliacao.id_livro)
+        .where(
+            Avaliacao.is_removida.is_(False),
+            Livro.status_publicacao == "publicado",
+            Livro.status_bloqueado.is_(False),
+        )
+        .order_by(Avaliacao.data_hora.desc(), Avaliacao.id_avaliacao.desc())
+        .limit(limit)
+    ).all()
+
+
+@router.get("/me/reviews", response_model=list[AvaliacaoPublic])
+def my_reviews(db: DB, user: Reader):
+    return db.scalars(
+        select(Avaliacao)
+        .join(Livro, Livro.id_livro == Avaliacao.id_livro)
+        .where(
+            Avaliacao.id_usuario == user.id,
+            Avaliacao.is_removida.is_(False),
+            Livro.status_publicacao == "publicado",
+            Livro.status_bloqueado.is_(False),
+        )
+        .order_by(Avaliacao.data_hora.desc(), Avaliacao.id_avaliacao.desc())
     ).all()
 
 

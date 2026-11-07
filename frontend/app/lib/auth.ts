@@ -8,6 +8,7 @@ type CurrentUser = {
   id: number;
   username: string;
   email: string;
+  is_admin: boolean;
 };
 
 function getBackendUrl() {

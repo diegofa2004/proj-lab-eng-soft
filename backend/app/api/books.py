@@ -1,7 +1,8 @@
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import delete, func, select
+from pydantic import Field
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -13,6 +14,7 @@ from app.db.session import get_db
 from app.models.acesso_livro import AcessoLivro
 from app.models.autor import Autor
 from app.models.avaliacao import Avaliacao
+from app.models.capa_livro import CapaLivro
 from app.models.genero import Genero
 from app.models.item_lista import ItemLista
 from app.models.livro import Livro
@@ -21,7 +23,9 @@ from app.models.livro_genero import LivroGenero
 from app.models.nota_pessoal import NotaPessoal
 from app.models.progresso_leitura import ProgressoLeitura
 from app.models.user import User
+from app.schemas.autor import AutorPublic
 from app.schemas.avaliacao import AvaliacaoCreate, AvaliacaoPublic
+from app.schemas.genero import GeneroPublic
 from app.schemas.item_lista import ItemListaCreate, ItemListaPublic
 from app.schemas.livro import LivroCreate, LivroPublic
 from app.schemas.nota_pessoal import NotaPessoalCreate, NotaPessoalPublic, NotaPessoalUpdate
@@ -31,6 +35,48 @@ router = APIRouter(prefix="/books", tags=["books"])
 reviews_router = APIRouter(prefix="/reviews", tags=["reviews"])
 notes_router = APIRouter(prefix="/notes", tags=["notes"])
 users_router = APIRouter(prefix="/users/me", tags=["users"])
+
+
+class CatalogBookPublic(LivroPublic):
+    capa_url: str | None = None
+    autores: list[AutorPublic] = Field(default_factory=list)
+    generos: list[GeneroPublic] = Field(default_factory=list)
+
+
+def catalog_books(db: Session, books: list[Livro]) -> list[dict]:
+    if not books:
+        return []
+    ids = [book.id_livro for book in books]
+    covered_ids = set(
+        db.scalars(select(CapaLivro.id_livro).where(CapaLivro.id_livro.in_(ids))).all()
+    )
+    authors: dict[int, list[Autor]] = {book_id: [] for book_id in ids}
+    genres: dict[int, list[Genero]] = {book_id: [] for book_id in ids}
+    for book_id, author in db.execute(
+        select(LivroAutor.id_livro, Autor)
+        .join(Autor, LivroAutor.id_autor == Autor.id_autor)
+        .where(LivroAutor.id_livro.in_(ids))
+        .order_by(Autor.nome)
+    ):
+        authors[book_id].append(author)
+    for book_id, genre in db.execute(
+        select(LivroGenero.id_livro, Genero)
+        .join(Genero, LivroGenero.id_genero == Genero.id_genero)
+        .where(LivroGenero.id_livro.in_(ids))
+        .order_by(Genero.nome)
+    ):
+        genres[book_id].append(genre)
+    return [
+        {
+            **LivroPublic.model_validate(book).model_dump(),
+            "capa_url": (
+                f"/v2/books/{book.id_livro}/cover" if book.id_livro in covered_ids else None
+            ),
+            "autores": authors[book.id_livro],
+            "generos": genres[book.id_livro],
+        }
+        for book in books
+    ]
 
 
 def get_public_book(db: Session, book_id: int) -> Livro:
@@ -52,21 +98,33 @@ def book_response(book: Livro) -> dict:
     return result
 
 
-@router.get("", response_model=list[LivroPublic])
+@router.get("", response_model=list[CatalogBookPublic])
 def search_books(
+    q: str | None = None,
     title: str | None = None,
     author: str | None = None,
     genre: str | None = None,
     publication_date: date | None = None,
     sort: str | None = Query(default=None, pattern="^(popularity|rating)$"),
     db: Session = Depends(get_db),
-) -> list[Livro]:
+) -> list[dict]:
     query = select(Livro).where(
         Livro.status_publicacao == "publicado",
         Livro.status_bloqueado.is_(False),
     )
     if title:
         query = query.where(Livro.titulo.ilike(f"%{title}%"))
+    if q:
+        query = query.where(
+            or_(
+                Livro.titulo.ilike(f"%{q}%"),
+                Livro.id_livro.in_(
+                    select(LivroAutor.id_livro)
+                    .join(Autor, LivroAutor.id_autor == Autor.id_autor)
+                    .where(Autor.nome.ilike(f"%{q}%"))
+                ),
+            )
+        )
     if publication_date:
         query = query.where(Livro.data_publicacao == publication_date)
     if author:
@@ -99,12 +157,12 @@ def search_books(
         query = query.order_by(func.coalesce(average, 0).desc(), Livro.id_livro.desc())
     else:
         query = query.order_by(Livro.data_publicacao.desc(), Livro.id_livro.desc())
-    return list(db.scalars(query).all())
+    return catalog_books(db, list(db.scalars(query).all()))
 
 
-@router.get("/{book_id}", response_model=LivroPublic)
-def get_book(book_id: int, db: Session = Depends(get_db)) -> Livro:
-    return get_public_book(db, book_id)
+@router.get("/{book_id}", response_model=CatalogBookPublic)
+def get_book(book_id: int, db: Session = Depends(get_db)) -> dict:
+    return catalog_books(db, [get_public_book(db, book_id)])[0]
 
 
 @router.post("", response_model=LivroPublic, status_code=status.HTTP_201_CREATED)

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 import type { Book, CurrentUser, Review } from "@/app/lib/books";
 import BookListActions from "@/components/books/book-list-actions";
@@ -45,16 +46,28 @@ export default function BookDetailsCard({
   return (
     <section className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
       <div className="flex flex-col gap-8 md:flex-row md:items-start">
-        {/* Book Cover Placeholder */}
-        <div className="flex h-64 w-44 shrink-0 flex-col justify-between rounded-xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-slate-900 p-5 text-white shadow-md">
-          <span className="inline-flex w-fit rounded bg-white/90 px-1.5 py-1">
-            <LivruspLogo alt="" className="block h-3 w-auto" />
-          </span>
-          <div>
-            <p className="line-clamp-4 text-lg font-bold leading-snug">{book.titulo}</p>
-            <p className="mt-2 text-xs text-indigo-200">{book.total_paginas} pages</p>
+        {book.capa_url ? (
+          <div className="relative h-64 w-44 shrink-0 overflow-hidden rounded-xl bg-slate-100 shadow-md">
+            <Image
+              alt={`Cover of ${book.titulo}`}
+              className="object-cover"
+              fill
+              sizes="176px"
+              src={`/api/books/${book.id_livro}/cover`}
+              unoptimized
+            />
           </div>
-        </div>
+        ) : (
+          <div className="flex h-64 w-44 shrink-0 flex-col justify-between rounded-xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-slate-900 p-5 text-white shadow-md">
+            <span className="inline-flex w-fit rounded bg-white/90 px-1.5 py-1">
+              <LivruspLogo alt="" className="block h-3 w-auto" />
+            </span>
+            <div>
+              <p className="line-clamp-4 text-lg font-bold leading-snug">{book.titulo}</p>
+              <p className="mt-2 text-xs text-indigo-200">{book.total_paginas} progress positions</p>
+            </div>
+          </div>
+        )}
 
         {/* Book Metadata and Actions */}
         <div className="flex-1 space-y-6">
@@ -101,7 +114,9 @@ export default function BookDetailsCard({
             </div>
             <div>
               <dt className="font-medium text-slate-500">Length</dt>
-              <dd className="mt-1 font-semibold text-slate-900">{book.total_paginas} pages</dd>
+              <dd className="mt-1 font-semibold text-slate-900">
+                {book.total_paginas} progress positions
+              </dd>
             </div>
             <div>
               <dt className="font-medium text-slate-500">Source</dt>
@@ -114,8 +129,14 @@ export default function BookDetailsCard({
               className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
               href={`/books/${book.id_livro}/read`}
             >
-              Read book
+              Read online
             </Link>
+            <a
+              className="inline-flex items-center justify-center rounded-lg border border-indigo-200 px-5 py-2.5 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50"
+              href={`/api/books/${book.id_livro}/content`}
+            >
+              Download EPUB
+            </a>
 
             {currentUser ? (
               <BookListActions
