@@ -47,14 +47,21 @@ export async function PUT(request: Request, context: RouteContext) {
     return NextResponse.json({ detail: "Sign in to save reading progress." }, { status: 401 });
   }
 
-  let position: unknown;
+  let body: unknown;
   try {
-    position = (await request.json()).position;
+    body = await request.json();
   } catch {
     return NextResponse.json({ detail: "Invalid request body." }, { status: 400 });
   }
+  const { position, pagesRead } = (body ?? {}) as { position?: unknown; pagesRead?: unknown };
   if (typeof position !== "string" || !position.startsWith("epubcfi(") || position.length > 2048) {
     return NextResponse.json({ detail: "Invalid EPUB position." }, { status: 422 });
+  }
+  if (
+    pagesRead !== undefined &&
+    (typeof pagesRead !== "number" || !Number.isInteger(pagesRead) || pagesRead < 0)
+  ) {
+    return NextResponse.json({ detail: "Invalid page count." }, { status: 422 });
   }
 
   try {
@@ -64,7 +71,7 @@ export async function PUT(request: Request, context: RouteContext) {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ ultima_posicao: position, paginas_distintas_lidas: 0 }),
+      body: JSON.stringify({ ultima_posicao: position, paginas_distintas_lidas: pagesRead ?? 0 }),
       cache: "no-store",
     });
     return new NextResponse(await response.text(), {
