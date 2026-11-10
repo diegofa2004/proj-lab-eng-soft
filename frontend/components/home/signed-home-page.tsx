@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import type { BookSearchResult, SignedHomeData } from "@/app/lib/books";
 import { SIGNED_NAV_LINKS } from "@/app/lib/navigation";
-import { pageBody, pageContainer } from "@/app/lib/ui";
+import { card, pageBody, pageContainer } from "@/app/lib/ui";
 import SiteFooter from "@/components/layout/site-footer";
 import SiteHeader from "@/components/layout/site-header";
 
@@ -184,39 +184,41 @@ function BookShelfSection({
   badgesByBookId?: Map<number, string>;
 }) {
   return (
-    <section className="py-10 sm:py-14" id={id}>
-      <h2 className="font-serif text-4xl font-normal tracking-tight text-black sm:text-5xl md:text-6xl">
-        {title}
-      </h2>
+    <section className="py-6 sm:py-8" id={id}>
+      <div className={`${card} p-6 sm:p-8`}>
+        <h2 className="font-serif text-4xl font-normal tracking-tight text-black sm:text-5xl md:text-6xl">
+          {title}
+        </h2>
 
-      {books.length > 0 ? (
-        <div className="mt-8 flex flex-wrap gap-6 sm:mt-10 sm:gap-8">
-          {books.map((book) => (
-            <BookCoverItem
-              badgeText={badgesByBookId?.get(book.id_livro)}
-              book={book}
-              key={book.id_livro}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="mt-8 sm:mt-10">
-          <Link
-            className="group flex aspect-[2/3] w-[150px] flex-col justify-between border border-dashed border-black/25 bg-[#E6EBF5]/50 p-4 text-left transition hover:border-[#1E2E4F] hover:bg-[#E6EBF5]/80 sm:w-[185px] sm:p-5"
-            href="/books"
-          >
-            <span className="font-mono text-[10px] uppercase tracking-wider text-[#556B45]">
-              Empty shelf
-            </span>
-            <p className="font-serif text-lg leading-snug text-black/75">
-              {emptyLabel}
-            </p>
-            <span className="text-xs font-semibold text-[#1E2E4F] group-hover:underline">
-              Browse books →
-            </span>
-          </Link>
-        </div>
-      )}
+        {books.length > 0 ? (
+          <div className="mt-8 flex flex-wrap gap-6 sm:mt-10 sm:gap-8">
+            {books.map((book) => (
+              <BookCoverItem
+                badgeText={badgesByBookId?.get(book.id_livro)}
+                book={book}
+                key={book.id_livro}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="mt-8 sm:mt-10">
+            <Link
+              className="group flex aspect-[2/3] w-[150px] flex-col justify-between border border-dashed border-black/25 bg-[#E6EBF5]/50 p-4 text-left transition hover:border-[#1E2E4F] hover:bg-[#E6EBF5]/80 sm:w-[185px] sm:p-5"
+              href="/books"
+            >
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[#556B45]">
+                Empty shelf
+              </span>
+              <p className="font-serif text-lg leading-snug text-black/75">
+                {emptyLabel}
+              </p>
+              <span className="text-xs font-semibold text-[#1E2E4F] group-hover:underline">
+                Browse books →
+              </span>
+            </Link>
+          </div>
+        )}
+      </div>
     </section>
   );
 }
