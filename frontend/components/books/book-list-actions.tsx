@@ -76,7 +76,7 @@ export default function BookListActions({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="relative">
       <div className="flex flex-wrap gap-3">
         <button
           className={`${isFavorite ? primaryCompact : secondaryCompact} gap-2`}
@@ -100,7 +100,9 @@ export default function BookListActions({
       {feedback && (
         <p
           aria-live="polite"
-          className={`text-xs ${feedback.type === "error" ? "text-red-600" : "text-emerald-600"}`}
+          className={`absolute top-full left-0 z-10 mt-1.5 whitespace-nowrap text-xs ${
+            feedback.type === "error" ? "text-red-600" : "text-emerald-600"
+          }`}
           role="status"
         >
           {feedback.text}
