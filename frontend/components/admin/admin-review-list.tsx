@@ -14,7 +14,7 @@ export default function AdminReviewList({ reviews }: { reviews: AdminReview[] })
         <li className="flex flex-wrap items-start justify-between gap-4 p-5" key={review.id_avaliacao}>
           <div className="min-w-0 flex-1">
             <p className="text-sm text-slate-500">
-              <Link className="font-semibold text-indigo-700 hover:underline" href={`/admin/users/${review.id_usuario}`}>
+              <Link className="font-semibold text-[#1E2E4F] hover:underline" href={`/admin/users/${review.id_usuario}`}>
                 {review.nome_usuario}
               </Link>
               {" · "}{review.titulo_livro}{" · "}{review.nota}/5 stars

@@ -33,7 +33,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: User
 
   return (
     <section>
-      <Link className="text-sm font-semibold text-indigo-700 hover:underline" href="/admin/users">← Back to users</Link>
+      <Link className="text-sm font-semibold text-[#1E2E4F] hover:underline" href="/admin/users">← Back to users</Link>
       <div className="mt-4 flex flex-wrap items-start justify-between gap-5 rounded-xl bg-white p-6 shadow-sm">
         <div>
           <h2 className="text-2xl font-bold">{user.username}</h2>
@@ -58,7 +58,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: User
       {reviews === null
         ? <p className="rounded-xl bg-white p-5 text-red-700">Could not load comments.</p>
         : <AdminReviewList reviews={reviews} />}
-      <div className="mt-5 flex gap-4 text-sm font-semibold text-indigo-700">
+      <div className="mt-5 flex gap-4 text-sm font-semibold text-[#1E2E4F]">
         {page > 1 && <Link href={`/admin/users/${user.id}?page=${page - 1}`}>← Previous</Link>}
         {reviews?.length === PAGE_SIZE && <Link href={`/admin/users/${user.id}?page=${page + 1}`}>Next →</Link>}
       </div>

@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { dangerCompact, neutralCompact } from "@/app/lib/ui";
+
 type AdminActionButtonProps = {
   path: string;
   method: "POST" | "DELETE";
@@ -44,9 +46,7 @@ export default function AdminActionButton({
   return (
     <span className="inline-flex flex-col items-start gap-1">
       <button
-        className={tone === "danger"
-          ? "rounded-lg border border-red-200 px-3 py-1.5 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
-          : "rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"}
+        className={tone === "danger" ? dangerCompact : neutralCompact}
         disabled={pending}
         onClick={runAction}
         type="button"

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import type { CurrentUser, Review } from "@/app/lib/books";
+import { dangerCompact } from "@/app/lib/ui";
 import { StarRatingDisplay } from "@/components/books/star-rating";
 
 type ReviewListProps = {
@@ -117,7 +118,7 @@ export default function ReviewList({ reviews, currentUser }: ReviewListProps) {
 
                   {canDelete && (
                     <button
-                      className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      className={dangerCompact}
                       disabled={isDeleting}
                       onClick={() => handleDelete(review.id_avaliacao)}
                       type="button"

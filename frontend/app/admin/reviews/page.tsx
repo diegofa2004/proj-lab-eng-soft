@@ -26,7 +26,7 @@ export default async function AdminReviewsPage({ searchParams }: ReviewsPageProp
           ? <p className="rounded-xl bg-white p-5 text-red-700">Could not load comments.</p>
           : <AdminReviewList reviews={reviews} />}
       </div>
-      <div className="mt-5 flex gap-4 text-sm font-semibold text-indigo-700">
+      <div className="mt-5 flex gap-4 text-sm font-semibold text-[#1E2E4F]">
         {page > 1 && <Link href={`/admin/reviews?page=${page - 1}`}>← Previous</Link>}
         {reviews?.length === PAGE_SIZE && <Link href={`/admin/reviews?page=${page + 1}`}>Next →</Link>}
       </div>

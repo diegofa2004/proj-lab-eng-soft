@@ -24,7 +24,7 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
               ? bookResult.detail
               : "This book is not available in the public catalog."}
           </p>
-          <Link className="mt-5 inline-block text-indigo-700 hover:underline" href="/books">
+          <Link className="mt-5 inline-block text-[#1E2E4F] hover:underline" href="/books">
             Browse books
           </Link>
         </div>

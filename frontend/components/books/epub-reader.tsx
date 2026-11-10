@@ -400,10 +400,10 @@ export default function EpubReader({ bookId, title, userId }: Props) {
     <div className="mx-auto flex min-h-screen max-w-[960px] flex-col gap-3 px-2 py-3 sm:px-4 sm:py-5">
       <header className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 shadow-sm">
         <div className="min-w-0">
-          <Link className="text-sm font-medium text-indigo-700 hover:underline" href={`/books/${bookId}`}>← Back to book</Link>
+          <Link className="text-sm font-medium text-[#1E2E4F] hover:underline" href={`/books/${bookId}`}>← Back to book</Link>
           <h1 className="truncate text-lg font-semibold" title={title}>{title}</h1>
         </div>
-        <a className="text-sm font-medium text-slate-600 hover:text-indigo-700" href={`/api/books/${bookId}/content`}>Download EPUB</a>
+        <a className="text-sm font-semibold text-[#1E2E4F] hover:underline" href={`/api/books/${bookId}/content`}>Download EPUB</a>
       </header>
 
       <div className="rounded-xl bg-white px-3 py-3 shadow-sm sm:px-4">
@@ -411,7 +411,7 @@ export default function EpubReader({ bookId, title, userId }: Props) {
           <button
             aria-keyshortcuts="ArrowLeft PageUp"
             aria-label="Previous page or chapter"
-            className="inline-flex h-9 items-center rounded-lg border border-slate-300 px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-40"
+            className="inline-flex h-9 items-center rounded-full border border-black/15 px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-40"
             disabled={status !== "ready"}
             onClick={goToPrevious}
             type="button"
@@ -436,7 +436,7 @@ export default function EpubReader({ bookId, title, userId }: Props) {
           <button
             aria-keyshortcuts="ArrowRight PageDown"
             aria-label="Next page or chapter"
-            className="inline-flex h-9 items-center rounded-lg border border-slate-300 px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-40"
+            className="inline-flex h-9 items-center rounded-full border border-black/15 px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-40"
             disabled={status !== "ready"}
             onClick={goToNext}
             type="button"
@@ -460,7 +460,7 @@ export default function EpubReader({ bookId, title, userId }: Props) {
             role="progressbar"
           >
             <div
-              className="h-full rounded-full bg-[#24324F] transition-[width] duration-200"
+              className="h-full rounded-full bg-[#1E2E4F] transition-[width] duration-200"
               style={{ width: `${percentage}%` }}
             />
           </div>
@@ -475,12 +475,12 @@ export default function EpubReader({ bookId, title, userId }: Props) {
           <select className="max-w-[165px] rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm" id="reader-font" onChange={(event) => setFont(event.target.value)} value={font}>
             {FONTS.map((entry) => <option key={entry.label} value={entry.value}>{entry.label}</option>)}
           </select>
-          <button aria-label="Decrease font size" className="h-9 w-9 rounded-lg border border-slate-300 text-lg font-medium disabled:opacity-40" disabled={fontSizePt <= MIN_FONT_SIZE_PT} onClick={() => setFontSizePt((size) => Math.max(MIN_FONT_SIZE_PT, size - 1))} type="button">A−</button>
+          <button aria-label="Decrease font size" className="h-9 w-9 rounded-full border border-black/15 text-lg font-medium disabled:opacity-40" disabled={fontSizePt <= MIN_FONT_SIZE_PT} onClick={() => setFontSizePt((size) => Math.max(MIN_FONT_SIZE_PT, size - 1))} type="button">A−</button>
           <label className="sr-only" htmlFor="reader-font-size">Font size in points</label>
           <select className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-sm tabular-nums text-slate-700" id="reader-font-size" onChange={(event) => setFontSizePt(Number(event.target.value))} value={fontSizePt}>
             {FONT_SIZES_PT.map((size) => <option key={size} value={size}>{size}</option>)}
           </select>
-          <button aria-label="Increase font size" className="h-9 w-9 rounded-lg border border-slate-300 text-lg font-medium disabled:opacity-40" disabled={fontSizePt >= MAX_FONT_SIZE_PT} onClick={() => setFontSizePt((size) => Math.min(MAX_FONT_SIZE_PT, size + 1))} type="button">A+</button>
+          <button aria-label="Increase font size" className="h-9 w-9 rounded-full border border-black/15 text-lg font-medium disabled:opacity-40" disabled={fontSizePt >= MAX_FONT_SIZE_PT} onClick={() => setFontSizePt((size) => Math.min(MAX_FONT_SIZE_PT, size + 1))} type="button">A+</button>
         </div>
       </div>
 

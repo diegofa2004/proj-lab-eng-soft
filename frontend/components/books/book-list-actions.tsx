@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import type { ListItemType } from "@/app/lib/books";
+import { primaryCompact, secondaryCompact } from "@/app/lib/ui";
 
 type BookListActionsProps = {
   bookId: number;
@@ -78,11 +79,7 @@ export default function BookListActions({
     <div className="space-y-2">
       <div className="flex flex-wrap gap-3">
         <button
-          className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
-            isFavorite
-              ? "border-indigo-600 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
-              : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-          }`}
+          className={`${isFavorite ? primaryCompact : secondaryCompact} gap-2`}
           disabled={pendingList !== null}
           onClick={() => toggleList("favorito")}
           type="button"
@@ -91,11 +88,7 @@ export default function BookListActions({
         </button>
 
         <button
-          className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
-            isToRead
-              ? "border-indigo-600 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
-              : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-          }`}
+          className={`${isToRead ? primaryCompact : secondaryCompact} gap-2`}
           disabled={pendingList !== null}
           onClick={() => toggleList("ler_depois")}
           type="button"
