@@ -29,7 +29,14 @@ export default async function ProfilePage() {
       <div className={pageContainer}>
         <SiteHeader
           activeHref="/profile"
-          currentUser={{ username: profile.nome_perfil, is_admin: Boolean(profile.is_admin) }}
+          assets={assets}
+          currentUser={{
+            username: profile.nome_perfil,
+            is_admin: Boolean(profile.is_admin),
+            id_avatar: profile.id_avatar,
+            id_icone: profile.id_icone,
+            nivel: profile.nivel,
+          }}
         />
 
         <main className="space-y-10 pt-4 pb-16 sm:pt-8 sm:pb-20">
