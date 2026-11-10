@@ -11,6 +11,7 @@ const NAV_LINKS = [
   { label: "To-be-read", href: "#to-be-read" },
   { label: "My Reviews", href: "#my-reviews" },
   { label: "Socials", href: "#socials" },
+  { label: "Dashboard", href: "/dashboard" },
   { label: "Search", href: "/books" },
 ] as const;
 
