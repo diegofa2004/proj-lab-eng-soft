@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { getAdminData, type AdminBook } from "@/app/lib/admin";
+import { primaryCompact } from "@/app/lib/ui";
 import AdminActionButton from "@/components/admin/admin-action-button";
 
 type BooksPageProps = {
@@ -32,7 +33,7 @@ export default async function AdminBooksPage({ searchParams }: BooksPageProps) {
           placeholder="Book title"
           type="search"
         />
-        <button className="rounded-lg bg-indigo-700 px-4 py-2 font-semibold text-white hover:bg-indigo-800" type="submit">Search</button>
+        <button className={primaryCompact} type="submit">Search</button>
       </form>
       {books === null ? (
         <p className="mt-6 rounded-xl bg-white p-5 text-red-700">Could not load books.</p>
@@ -48,7 +49,7 @@ export default async function AdminBooksPage({ searchParams }: BooksPageProps) {
                   #{book.id_livro} · {book.origem === "usuario" ? "Community book" : "Catalog book"} · {book.status_bloqueado ? "Removed" : book.status_publicacao}
                 </p>
                 {!book.status_bloqueado && book.status_publicacao === "publicado" && (
-                  <Link className="text-sm text-indigo-700 hover:underline" href={`/books/${book.id_livro}`}>
+                  <Link className="text-sm text-[#1E2E4F] hover:underline" href={`/books/${book.id_livro}`}>
                     View public page
                   </Link>
                 )}
@@ -64,7 +65,7 @@ export default async function AdminBooksPage({ searchParams }: BooksPageProps) {
           ))}
         </ul>
       )}
-      <div className="mt-5 flex gap-4 text-sm font-semibold text-indigo-700">
+      <div className="mt-5 flex gap-4 text-sm font-semibold text-[#1E2E4F]">
         {page > 1 && <Link href={pageHref(page - 1)}>← Previous</Link>}
         {books?.length === PAGE_SIZE && <Link href={pageHref(page + 1)}>Next →</Link>}
       </div>

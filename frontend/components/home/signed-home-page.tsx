@@ -3,17 +3,18 @@ import Image from "next/image";
 import type { ReactNode } from "react";
 
 import type { BookSearchResult, SignedHomeData } from "@/app/lib/books";
-import { LivruspFooterLogo, LivruspHeaderLogo } from "@/components/home/livrusp-logos";
+import { SIGNED_NAV_LINKS } from "@/app/lib/navigation";
+import { pageBody, pageContainer } from "@/app/lib/ui";
+import SiteFooter from "@/components/layout/site-footer";
+import SiteHeader from "@/components/layout/site-header";
 
-const NAV_LINKS = [
+const SHELF_LINKS = [
   { label: "My readings", href: "#my-readings" },
   { label: "Favorites", href: "#favorites" },
   { label: "My stories", href: "#my-stories" },
   { label: "To-be-read", href: "#to-be-read" },
   { label: "My Reviews", href: "#my-reviews" },
   { label: "Socials", href: "#socials" },
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Search", href: "/books" },
 ] as const;
 
 const COVER_THEMES = [
@@ -221,11 +222,11 @@ function BookShelfSection({
 }
 
 export default function SignedHomePage({
+  currentUser,
   data,
-  isAdmin,
 }: {
+  currentUser: { username: string; is_admin: boolean };
   data: SignedHomeData;
-  isAdmin: boolean;
 }) {
   const reviewBadges = new Map<number, string>();
   const reviewedBooks: BookSearchResult[] = [];
@@ -240,46 +241,21 @@ export default function SignedHomePage({
   }
 
   return (
-    <div className="min-h-screen bg-[#D9E1F1] font-sans text-black selection:bg-[#1E2E4F] selection:text-white">
-      <div className="mx-auto max-w-[1280px] px-6 sm:px-10 lg:px-12">
-        {/* Top Navbar */}
-        <header className="flex flex-wrap items-center justify-between gap-4 py-6">
-          <Link aria-label="LivrUSP Home" className="inline-flex items-center" href="/">
-            <LivruspHeaderLogo />
-          </Link>
+    <div className={pageBody}>
+      <div className={pageContainer}>
+        <SiteHeader activeHref="/home" currentUser={currentUser} />
 
-          <nav
-            aria-label="Primary"
-            className="order-3 flex w-full flex-wrap items-center justify-center gap-4 rounded-full bg-[#E6EBF5]/90 px-5 py-3 text-xs font-semibold text-black shadow-xs backdrop-blur-xs sm:order-2 sm:w-auto sm:gap-7 sm:px-8 sm:text-sm"
-          >
-            {NAV_LINKS.map((item) => (
-              <Link
-                className="transition hover:opacity-70"
-                href={item.href}
-                key={item.label}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="order-2 flex items-center gap-2 sm:order-3 sm:gap-3">
-            {isAdmin && (
-              <Link
-                className="inline-flex items-center justify-center rounded-full border border-[#24324F] px-4 py-2.5 text-xs font-semibold text-[#24324F] transition hover:bg-[#24324F] hover:text-white sm:px-5 sm:py-3 sm:text-sm"
-                href="/admin"
-              >
-                Admin dashboard
-              </Link>
-            )}
+        <nav aria-label="Home sections" className="flex flex-wrap gap-2 pb-2">
+          {SHELF_LINKS.map((item) => (
             <Link
-              className="inline-flex items-center justify-center rounded-full bg-[#24324F] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#1A253B] sm:px-6 sm:py-3 sm:text-sm"
-              href="/profile"
+              className="rounded-full border border-black/10 bg-white/60 px-3 py-1.5 text-xs font-semibold text-[#1E2E4F] transition hover:bg-white"
+              href={item.href}
+              key={item.label}
             >
-              My profile
+              {item.label}
             </Link>
-          </div>
-        </header>
+          ))}
+        </nav>
 
         <main className="pt-4 pb-12 sm:pt-8 sm:pb-16">
           {/* My readings */}
@@ -373,40 +349,7 @@ export default function SignedHomePage({
           </section>
         </main>
 
-        {/* Footer */}
-        <footer className="pt-8 pb-10">
-          <div>
-            <nav
-              aria-label="Footer"
-              className="inline-flex flex-wrap items-center gap-4 rounded-full bg-[#E6EBF5]/90 px-5 py-3 text-xs font-semibold text-black shadow-xs backdrop-blur-xs sm:gap-7 sm:px-8 sm:text-sm"
-            >
-              {NAV_LINKS.map((item) => (
-                <Link
-                  className="transition hover:opacity-70"
-                  href={item.href}
-                  key={item.label}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-
-          <div className="mt-14 flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
-            <div className="flex flex-wrap items-baseline gap-6 sm:gap-10">
-              <Link aria-label="LivrUSP Home" href="/">
-                <LivruspFooterLogo />
-              </Link>
-              <span className="font-mono text-[11px] text-[#556B45]">
-                © livrUSP. &nbsp; {new Date().getFullYear()}
-              </span>
-            </div>
-
-            <p className="font-mono text-[11px] text-[#556B45]">
-              All Rights Reserved
-            </p>
-          </div>
-        </footer>
+        <SiteFooter links={SIGNED_NAV_LINKS} />
       </div>
     </div>
   );

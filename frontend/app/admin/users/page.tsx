@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { getAdminData, type AdminUser } from "@/app/lib/admin";
+import { primaryCompact } from "@/app/lib/ui";
 
 type UsersPageProps = {
   searchParams: Promise<{ q?: string | string[]; page?: string | string[] }>;
@@ -31,7 +32,7 @@ export default async function AdminUsersPage({ searchParams }: UsersPageProps) {
           placeholder="Username or email"
           type="search"
         />
-        <button className="rounded-lg bg-indigo-700 px-4 py-2 font-semibold text-white hover:bg-indigo-800" type="submit">Search</button>
+        <button className={primaryCompact} type="submit">Search</button>
       </form>
 
       {users === null ? (
@@ -43,7 +44,7 @@ export default async function AdminUsersPage({ searchParams }: UsersPageProps) {
           {users.map((user) => (
             <li className="flex flex-wrap items-center justify-between gap-3 p-4" key={user.id}>
               <div className="min-w-0">
-                <Link className="font-semibold text-indigo-800 hover:underline" href={`/admin/users/${user.id}`}>
+                <Link className="font-semibold text-[#1E2E4F] hover:underline" href={`/admin/users/${user.id}`}>
                   {user.username}
                 </Link>
                 <p className="truncate text-sm text-slate-500">{user.email}</p>
@@ -55,7 +56,7 @@ export default async function AdminUsersPage({ searchParams }: UsersPageProps) {
           ))}
         </ul>
       )}
-      <div className="mt-5 flex gap-4 text-sm font-semibold text-indigo-700">
+      <div className="mt-5 flex gap-4 text-sm font-semibold text-[#1E2E4F]">
         {page > 1 && <Link href={pageHref(page - 1)}>← Previous</Link>}
         {users?.length === PAGE_SIZE && <Link href={pageHref(page + 1)}>Next →</Link>}
       </div>

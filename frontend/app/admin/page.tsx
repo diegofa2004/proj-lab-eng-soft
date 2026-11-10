@@ -18,7 +18,7 @@ export default async function AdminOverviewPage() {
             { label: "Books", value: stats.books, href: "/admin/books" },
             { label: "Visible comments", value: stats.reviews, href: "/admin/reviews" },
           ].map((item) => (
-            <Link className="rounded-xl bg-white p-6 shadow-sm hover:ring-2 hover:ring-indigo-200" href={item.href} key={item.label}>
+            <Link className="rounded-xl bg-white p-6 shadow-sm hover:ring-2 hover:ring-[#1E2E4F]/20" href={item.href} key={item.label}>
               <span className="text-sm text-slate-500">{item.label}</span>
               <strong className="mt-2 block text-3xl">{item.value}</strong>
             </Link>

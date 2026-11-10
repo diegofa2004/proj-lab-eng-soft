@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { getBookById, getOptionalCurrentUser } from "@/app/lib/books";
+import { pageBody } from "@/app/lib/ui";
 import EpubReader from "@/components/books/epub-reader";
 
 type ReaderPageProps = {
@@ -16,7 +17,7 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
 
   if (bookResult.status !== "ok") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#D9E1F1] px-6 text-slate-900">
+      <main className={`${pageBody} flex items-center justify-center px-6`}>
         <div className="rounded-xl bg-white p-8 shadow-sm">
           <h1 className="text-xl font-semibold">Book unavailable</h1>
           <p className="mt-2 text-slate-600">
@@ -24,7 +25,7 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
               ? bookResult.detail
               : "This book is not available in the public catalog."}
           </p>
-          <Link className="mt-5 inline-block text-indigo-700 hover:underline" href="/books">
+          <Link className="mt-5 inline-block text-[#1E2E4F] hover:underline" href="/books">
             Browse books
           </Link>
         </div>
@@ -34,7 +35,7 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
 
   const currentUser = await getOptionalCurrentUser();
   return (
-    <main className="min-h-screen bg-[#D9E1F1] text-slate-900">
+    <main className={pageBody}>
       <EpubReader
         bookId={bookResult.book.id_livro}
         title={bookResult.book.titulo}

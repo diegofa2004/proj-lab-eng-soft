@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 import type { Book, CurrentUser, Review } from "@/app/lib/books";
+import { primaryCompact, secondaryCompact } from "@/app/lib/ui";
 import BookListActions from "@/components/books/book-list-actions";
 import { StarRatingDisplay } from "@/components/books/star-rating";
 import { LivruspLogo } from "@/components/home/livrusp-logos";
@@ -76,10 +77,10 @@ export default function BookDetailsCard({
         <div className="flex-1 space-y-6">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+              <span className="inline-flex items-center rounded-full border border-[#1E2E4F]/15 bg-[#D9E1F1] px-3 py-1 text-xs font-semibold text-[#1E2E4F]">
                 {sourceLabel}
               </span>
-              <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+              <span className="inline-flex items-center rounded-full border border-black/10 bg-white/70 px-3 py-1 text-xs font-medium text-black/65">
                 Book #{book.id_livro}
               </span>
             </div>
@@ -129,13 +130,13 @@ export default function BookDetailsCard({
 
           <div className="flex flex-wrap items-center gap-4 pt-2">
             <Link
-              className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
+              className={primaryCompact}
               href={`/books/${book.id_livro}/read`}
             >
               Read online
             </Link>
             <a
-              className="inline-flex items-center justify-center rounded-lg border border-indigo-200 px-5 py-2.5 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50"
+              className={secondaryCompact}
               href={`/api/books/${book.id_livro}/content`}
             >
               Download EPUB
@@ -149,7 +150,7 @@ export default function BookDetailsCard({
               />
             ) : (
               <p className="text-sm text-slate-600">
-                <Link className="font-semibold text-indigo-600 hover:text-indigo-700" href="/login">
+                <Link className="font-semibold text-[#1E2E4F] hover:text-[#15223B]" href="/login">
                   Sign in
                 </Link>{" "}
                 to save this book to your reading lists.

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { type SyntheticEvent, useState } from "react";
 
 import type { CurrentUser, Review } from "@/app/lib/books";
+import { primaryCompact } from "@/app/lib/ui";
 
 type FormStatus = "idle" | "submitting" | "success" | "error";
 
@@ -43,7 +44,7 @@ export default function ReviewForm({
         <div className="mt-6 flex flex-wrap items-center gap-4 rounded-xl bg-slate-50 p-4">
           <p className="text-sm text-slate-700">You must be signed in to post a review.</p>
           <Link
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+            className={primaryCompact}
             href="/login"
           >
             Sign in
@@ -124,7 +125,7 @@ export default function ReviewForm({
                 <button
                   aria-label={`Rate ${star} out of 5 stars`}
                   aria-pressed={star === rating}
-                  className={`inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-sm font-semibold transition ${
+                  className={`inline-flex items-center gap-1 rounded-full border px-3 py-2 text-sm font-semibold transition ${
                     isSelected
                       ? "border-amber-400 bg-amber-50 text-amber-700"
                       : "border-slate-300 bg-white text-slate-500 hover:bg-slate-50"
@@ -147,7 +148,7 @@ export default function ReviewForm({
             Review comment <span className="font-normal text-slate-400">(optional)</span>
           </label>
           <textarea
-            className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none transition focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200"
+            className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none transition focus:border-[#1E2E4F] focus:ring-2 focus:ring-[#1E2E4F]/20"
             id="texto_revisao"
             maxLength={2000}
             name="texto_revisao"
@@ -160,7 +161,7 @@ export default function ReviewForm({
 
         <div className="flex flex-wrap items-center gap-4">
           <button
-            className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-400"
+            className={primaryCompact}
             disabled={isSubmitting}
             type="submit"
           >
