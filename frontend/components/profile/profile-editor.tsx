@@ -13,7 +13,7 @@ import {
   type ProfileDashboardStats,
   type ProfileLevel,
   type UserProfile,
-} from "@/app/lib/profile";
+} from "@/app/lib/profile-utils";
 import LogoutButton from "@/components/auth/logout-button";
 
 type FormStatus = "idle" | "submitting" | "success" | "error";
