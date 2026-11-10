@@ -141,6 +141,14 @@ export default function BookDetailsCard({
             >
               Download EPUB
             </a>
+            {currentUser?.is_admin ? (
+              <Link
+                className={secondaryCompact}
+                href={`/admin/books/${book.id_livro}`}
+              >
+                Edit metadata
+              </Link>
+            ) : null}
 
             {currentUser ? (
               <BookListActions
