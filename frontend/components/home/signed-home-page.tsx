@@ -17,39 +17,6 @@ const SHELF_LINKS = [
   { label: "Socials", href: "#socials" },
 ] as const;
 
-const COVER_THEMES = [
-  {
-    bg: "bg-[#FBF9F5]",
-    text: "text-[#171717]",
-    accent: "text-[#B81D13]",
-    border: "border-black/15",
-  },
-  {
-    bg: "bg-[#1B1C1E]",
-    text: "text-[#F5F5F5]",
-    accent: "text-[#A3B8D7]",
-    border: "border-black/30",
-  },
-  {
-    bg: "bg-[#F7F3E8]",
-    text: "text-[#1E2E4F]",
-    accent: "text-[#556B45]",
-    border: "border-black/15",
-  },
-  {
-    bg: "bg-[#D93829]",
-    text: "text-white",
-    accent: "text-[#FBE251]",
-    border: "border-black/20",
-  },
-  {
-    bg: "bg-[#0B1546]",
-    text: "text-white",
-    accent: "text-[#35D430]",
-    border: "border-black/25",
-  },
-] as const;
-
 const SOCIAL_ICONS: ReactNode[] = [
   // Chain link icon
   <svg
@@ -108,7 +75,6 @@ function BookCoverItem({
   book: BookSearchResult;
   badgeText?: string;
 }) {
-  const theme = COVER_THEMES[Math.abs(book.id_livro) % COVER_THEMES.length];
   const authorNames = (book.autores ?? []).map((author) => author.nome).filter(Boolean);
 
   return (
@@ -117,7 +83,7 @@ function BookCoverItem({
       href={`/books/${book.id_livro}`}
     >
       <div
-        className={`relative flex aspect-[2/3] w-[150px] shrink-0 flex-col justify-between overflow-hidden rounded-lg border ${theme.border} ${theme.bg} ${theme.text} p-4 shadow-sm sm:w-[185px] sm:p-5`}
+        className="relative flex aspect-[2/3] w-[150px] shrink-0 flex-col justify-between overflow-hidden rounded-lg border border-black/20 bg-gradient-to-br from-indigo-600 via-indigo-700 to-slate-900 p-4 text-white shadow-sm sm:w-[185px] sm:p-5"
       >
         {book.capa_url ? (
           <>
@@ -149,7 +115,7 @@ function BookCoverItem({
                 {authorNames.length > 0 ? authorNames.join(", ") : "LivrUSP"}
               </span>
               {badgeText ? (
-                <span className={`shrink-0 font-mono text-[10px] font-bold ${theme.accent}`}>
+                <span className="shrink-0 font-mono text-[10px] font-bold text-[#FBE251]">
                   {badgeText}
                 </span>
               ) : null}
