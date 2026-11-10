@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import type { BookSearchResult, SignedHomeData } from "@/app/lib/books";
 import { SIGNED_NAV_LINKS } from "@/app/lib/navigation";
-import { pageBody, pageContainer } from "@/app/lib/ui";
+import { card, cardInteractive, pageBody, pageContainer } from "@/app/lib/ui";
 import SiteFooter from "@/components/layout/site-footer";
 import SiteHeader from "@/components/layout/site-header";
 
@@ -15,39 +15,6 @@ const SHELF_LINKS = [
   { label: "To-be-read", href: "#to-be-read" },
   { label: "My Reviews", href: "#my-reviews" },
   { label: "Socials", href: "#socials" },
-] as const;
-
-const COVER_THEMES = [
-  {
-    bg: "bg-[#FBF9F5]",
-    text: "text-[#171717]",
-    accent: "text-[#B81D13]",
-    border: "border-black/15",
-  },
-  {
-    bg: "bg-[#1B1C1E]",
-    text: "text-[#F5F5F5]",
-    accent: "text-[#A3B8D7]",
-    border: "border-black/30",
-  },
-  {
-    bg: "bg-[#F7F3E8]",
-    text: "text-[#1E2E4F]",
-    accent: "text-[#556B45]",
-    border: "border-black/15",
-  },
-  {
-    bg: "bg-[#D93829]",
-    text: "text-white",
-    accent: "text-[#FBE251]",
-    border: "border-black/20",
-  },
-  {
-    bg: "bg-[#0B1546]",
-    text: "text-white",
-    accent: "text-[#35D430]",
-    border: "border-black/25",
-  },
 ] as const;
 
 const SOCIAL_ICONS: ReactNode[] = [
@@ -108,64 +75,67 @@ function BookCoverItem({
   book: BookSearchResult;
   badgeText?: string;
 }) {
-  const theme = COVER_THEMES[Math.abs(book.id_livro) % COVER_THEMES.length];
   const authorNames = (book.autores ?? []).map((author) => author.nome).filter(Boolean);
 
   return (
     <Link
-      className={`group relative flex aspect-[2/3] w-[150px] shrink-0 flex-col justify-between overflow-hidden border ${theme.border} ${theme.bg} ${theme.text} p-4 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E2E4F] sm:w-[185px] sm:p-5`}
+      className={`group flex w-fit shrink-0 ${card} ${cardInteractive} p-5`}
       href={`/books/${book.id_livro}`}
     >
-      {book.capa_url ? (
-        <>
-          <Image
-            alt={`Cover of ${book.titulo}`}
-            className="object-cover"
-            fill
-            sizes="(max-width: 640px) 150px, 185px"
-            src={`/api/books/${book.id_livro}/cover`}
-            unoptimized
-          />
-          <span className="sr-only">{book.titulo}</span>
-          {badgeText ? (
-            <span className="relative z-10 self-end rounded bg-white/90 px-2 py-1 text-xs font-bold text-slate-900">
-              {badgeText}
-            </span>
-          ) : null}
-        </>
-      ) : (
-        <>
-          {/* Subtle book spine crease */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 left-0 w-2.5 bg-gradient-to-r from-black/15 to-transparent"
-          />
-
-          <div className="relative z-10 flex items-start justify-between gap-2">
-            <span className="line-clamp-1 font-mono text-[9px] font-medium uppercase tracking-[0.16em] opacity-75 sm:text-[10px]">
-              {authorNames.length > 0 ? authorNames.join(", ") : "LivrUSP"}
-            </span>
+      <div
+        className="relative flex aspect-[2/3] w-[150px] shrink-0 flex-col justify-between overflow-hidden rounded-lg border border-black/20 bg-gradient-to-br from-indigo-600 via-indigo-700 to-slate-900 p-4 text-white shadow-sm sm:w-[185px] sm:p-5"
+      >
+        {book.capa_url ? (
+          <>
+            <Image
+              alt={`Cover of ${book.titulo}`}
+              className="object-cover"
+              fill
+              sizes="(max-width: 640px) 150px, 185px"
+              src={`/api/books/${book.id_livro}/cover`}
+              unoptimized
+            />
+            <span className="sr-only">{book.titulo}</span>
             {badgeText ? (
-              <span className={`shrink-0 font-mono text-[10px] font-bold ${theme.accent}`}>
+              <span className="relative z-10 self-end rounded bg-white/90 px-2 py-1 text-xs font-bold text-slate-900">
                 {badgeText}
               </span>
             ) : null}
-          </div>
+          </>
+        ) : (
+          <>
+            {/* Subtle book spine crease */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 left-0 w-2.5 bg-gradient-to-r from-black/15 to-transparent"
+            />
 
-          <div className="relative z-10 my-auto py-2">
-            <h3 className="line-clamp-4 font-serif text-2xl leading-[1.08] font-normal tracking-tight sm:text-3xl">
-              {book.titulo}
-            </h3>
-          </div>
+            <div className="relative z-10 flex items-start justify-between gap-2">
+              <span className="line-clamp-1 font-mono text-[9px] font-medium uppercase tracking-[0.16em] opacity-75 sm:text-[10px]">
+                {authorNames.length > 0 ? authorNames.join(", ") : "LivrUSP"}
+              </span>
+              {badgeText ? (
+                <span className="shrink-0 font-mono text-[10px] font-bold text-[#FBE251]">
+                  {badgeText}
+                </span>
+              ) : null}
+            </div>
 
-          <div className="relative z-10 flex items-center justify-between gap-2 border-t border-current/15 pt-2 text-[10px] opacity-70">
-            <span className="truncate">
-              {book.origem === "usuario" ? "Original Story" : "Catalog"}
-            </span>
-            <span className="shrink-0 font-mono">{book.total_paginas}p</span>
-          </div>
-        </>
-      )}
+            <div className="relative z-10 my-auto py-2">
+              <h3 className="line-clamp-4 font-serif text-2xl leading-[1.08] font-normal tracking-tight sm:text-3xl">
+                {book.titulo}
+              </h3>
+            </div>
+
+            <div className="relative z-10 flex items-center justify-between gap-2 border-t border-current/15 pt-2 text-[10px] opacity-70">
+              <span className="truncate">
+                {book.origem === "usuario" ? "Original Story" : "Catalog"}
+              </span>
+              <span className="shrink-0 font-mono">{book.total_paginas}p</span>
+            </div>
+          </>
+        )}
+      </div>
     </Link>
   );
 }
@@ -202,18 +172,20 @@ function BookShelfSection({
       ) : (
         <div className="mt-8 sm:mt-10">
           <Link
-            className="group flex aspect-[2/3] w-[150px] flex-col justify-between border border-dashed border-black/25 bg-[#E6EBF5]/50 p-4 text-left transition hover:border-[#1E2E4F] hover:bg-[#E6EBF5]/80 sm:w-[185px] sm:p-5"
+            className={`group flex w-fit ${card} ${cardInteractive} p-5`}
             href="/books"
           >
-            <span className="font-mono text-[10px] uppercase tracking-wider text-[#556B45]">
-              Empty shelf
-            </span>
-            <p className="font-serif text-lg leading-snug text-black/75">
-              {emptyLabel}
-            </p>
-            <span className="text-xs font-semibold text-[#1E2E4F] group-hover:underline">
-              Browse books →
-            </span>
+            <div className="flex aspect-[2/3] w-[150px] flex-col justify-between rounded-lg border border-dashed border-black/25 bg-white/60 p-4 text-left sm:w-[185px] sm:p-5">
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[#556B45]">
+                Empty shelf
+              </span>
+              <p className="font-serif text-lg leading-snug text-black/75">
+                {emptyLabel}
+              </p>
+              <span className="text-xs font-semibold text-[#1E2E4F] group-hover:underline">
+                Browse books →
+              </span>
+            </div>
           </Link>
         </div>
       )}

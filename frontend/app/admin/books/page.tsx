@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { getAdminData, type AdminBook } from "@/app/lib/admin";
-import { primaryCompact } from "@/app/lib/ui";
+import { card, primaryCompact } from "@/app/lib/ui";
 import AdminActionButton from "@/components/admin/admin-action-button";
 
 type BooksPageProps = {
@@ -36,11 +36,11 @@ export default async function AdminBooksPage({ searchParams }: BooksPageProps) {
         <button className={primaryCompact} type="submit">Search</button>
       </form>
       {books === null ? (
-        <p className="mt-6 rounded-xl bg-white p-5 text-red-700">Could not load books.</p>
+        <p className={`mt-6 p-5 text-red-700 ${card}`}>Could not load books.</p>
       ) : books.length === 0 ? (
-        <p className="mt-6 rounded-xl bg-white p-5 text-slate-600">No books found.</p>
+        <p className={`mt-6 p-5 text-slate-600 ${card}`}>No books found.</p>
       ) : (
-        <ul className="mt-6 divide-y divide-slate-200 rounded-xl bg-white shadow-sm">
+        <ul className={`mt-6 divide-y divide-slate-200 ${card}`}>
           {books.map((book) => (
             <li className="flex flex-wrap items-center justify-between gap-4 p-4" key={book.id_livro}>
               <div className="min-w-0">

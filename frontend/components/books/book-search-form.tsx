@@ -9,6 +9,7 @@ import {
   type BookSearchFilters,
   type Genre,
 } from "@/app/lib/books";
+import { card } from "@/app/lib/ui";
 
 type BookSearchFormProps = {
   filters: BookSearchFilters;
@@ -66,7 +67,7 @@ export default function BookSearchForm({
   return (
     <section
       aria-label="Search books"
-      className="rounded-[28px] border border-black/10 bg-[#E6EBF5]/90 p-6 shadow-xs backdrop-blur-xs sm:p-8"
+      className={`${card} p-6 sm:p-8`}
     >
       {/* The key remounts the form so the fields reflect the current URL after navigation. */}
       <Form

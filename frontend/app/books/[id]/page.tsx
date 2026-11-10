@@ -7,7 +7,7 @@ import {
   getUserBookListsStatus,
 } from "@/app/lib/books";
 import { GUEST_NAV_LINKS, SIGNED_NAV_LINKS } from "@/app/lib/navigation";
-import { pageBody, pageContainer } from "@/app/lib/ui";
+import { card, pageBody, pageContainer } from "@/app/lib/ui";
 import BookDetailsCard from "@/components/books/book-details-card";
 import ReviewForm from "@/components/books/review-form";
 import ReviewList from "@/components/books/review-list";
@@ -26,7 +26,7 @@ export default async function BookDetailsPage({ params }: BookDetailsPageProps) 
   if (!Number.isInteger(bookId) || bookId <= 0) {
     return (
       <main className={`${pageBody} flex items-center justify-center px-6 py-10`}>
-        <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+        <section className={`${card} w-full max-w-md p-8`}>
           <LivruspLogo className="block h-6 w-auto" />
           <h1 className="mt-4 text-2xl font-bold tracking-tight">Invalid book link</h1>
           <p className="mt-3 text-sm text-slate-600">
@@ -52,7 +52,7 @@ export default async function BookDetailsPage({ params }: BookDetailsPageProps) 
   if (bookResult.status === "not_found") {
     return (
       <main className={`${pageBody} flex items-center justify-center px-6 py-10`}>
-        <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+        <section className={`${card} w-full max-w-md p-8`}>
           <LivruspLogo className="block h-6 w-auto" />
           <h1 className="mt-4 text-2xl font-bold tracking-tight">Book not found</h1>
           <p className="mt-3 text-sm text-slate-600">
@@ -74,7 +74,7 @@ export default async function BookDetailsPage({ params }: BookDetailsPageProps) 
   if (bookResult.status === "unavailable") {
     return (
       <main className={`${pageBody} flex items-center justify-center px-6 py-10`}>
-        <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+        <section className={`${card} w-full max-w-md p-8`}>
           <LivruspLogo className="block h-6 w-auto" />
           <h1 className="mt-4 text-2xl font-bold tracking-tight">Catalog unavailable</h1>
           <p className="mt-3 text-sm text-slate-600">{bookResult.detail}</p>

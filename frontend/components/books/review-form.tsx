@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { type SyntheticEvent, useState } from "react";
 
 import type { CurrentUser, Review } from "@/app/lib/books";
-import { primaryCompact } from "@/app/lib/ui";
+import { card, cardInset, primaryCompact } from "@/app/lib/ui";
 
 type FormStatus = "idle" | "submitting" | "success" | "error";
 
@@ -36,12 +36,12 @@ export default function ReviewForm({
 
   if (!currentUser) {
     return (
-      <section className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+      <section className={`${card} p-8`}>
         <h2 className="text-xl font-bold tracking-tight text-slate-900">Write a review</h2>
         <p className="mt-2 text-sm text-slate-600">
           Share your thoughts on this book with other readers.
         </p>
-        <div className="mt-6 flex flex-wrap items-center gap-4 rounded-xl bg-slate-50 p-4">
+        <div className={`mt-6 flex flex-wrap items-center gap-4 p-4 ${cardInset}`}>
           <p className="text-sm text-slate-700">You must be signed in to post a review.</p>
           <Link
             className={primaryCompact}
@@ -56,7 +56,7 @@ export default function ReviewForm({
 
   if (existingUserReview) {
     return (
-      <section className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+      <section className={`${card} p-8`}>
         <h2 className="text-xl font-bold tracking-tight text-slate-900">Your review</h2>
         <p className="mt-2 text-sm text-slate-600">
           You have already submitted a review for this book ({existingUserReview.nota} out of 5
@@ -109,7 +109,7 @@ export default function ReviewForm({
   const isSubmitting = formStatus === "submitting";
 
   return (
-    <section className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+    <section className={`${card} p-8`}>
       <h2 className="text-xl font-bold tracking-tight text-slate-900">Write a review</h2>
       <p className="mt-1 text-sm text-slate-600">
         Posting as <span className="font-semibold text-slate-800">{currentUser.username}</span>

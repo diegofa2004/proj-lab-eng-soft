@@ -1,15 +1,16 @@
 import Link from "next/link";
 
 import type { AdminReview } from "@/app/lib/admin";
+import { card } from "@/app/lib/ui";
 import AdminActionButton from "@/components/admin/admin-action-button";
 
 export default function AdminReviewList({ reviews }: { reviews: AdminReview[] }) {
   if (reviews.length === 0) {
-    return <p className="rounded-xl bg-white p-5 text-slate-600">No comments found.</p>;
+    return <p className={`p-5 text-slate-600 ${card}`}>No comments found.</p>;
   }
 
   return (
-    <ul className="divide-y divide-slate-200 rounded-xl bg-white shadow-sm">
+    <ul className={`divide-y divide-slate-200 ${card}`}>
       {reviews.map((review) => (
         <li className="flex flex-wrap items-start justify-between gap-4 p-5" key={review.id_avaliacao}>
           <div className="min-w-0 flex-1">

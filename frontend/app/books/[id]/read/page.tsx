@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { getBookById, getOptionalCurrentUser } from "@/app/lib/books";
-import { pageBody } from "@/app/lib/ui";
+import { card, pageBody } from "@/app/lib/ui";
 import EpubReader from "@/components/books/epub-reader";
 
 type ReaderPageProps = {
@@ -18,7 +18,7 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
   if (bookResult.status !== "ok") {
     return (
       <main className={`${pageBody} flex items-center justify-center px-6`}>
-        <div className="rounded-xl bg-white p-8 shadow-sm">
+        <div className={`${card} p-8`}>
           <h1 className="text-xl font-semibold">Book unavailable</h1>
           <p className="mt-2 text-slate-600">
             {bookResult.status === "unavailable"

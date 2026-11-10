@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { getAdminData, type AdminReview, type AdminUser } from "@/app/lib/admin";
+import { card } from "@/app/lib/ui";
 import AdminActionButton from "@/components/admin/admin-action-button";
 import AdminReviewList from "@/components/admin/admin-review-list";
 
@@ -15,7 +16,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: User
   const { id } = await params;
   const userId = Number(id);
   if (!Number.isSafeInteger(userId) || userId <= 0) {
-    return <p className="rounded-xl bg-white p-5 text-red-700">Invalid user ID.</p>;
+    return <p className={`p-5 text-red-700 ${card}`}>Invalid user ID.</p>;
   }
   const query = await searchParams;
   const requestedPage = Number(query.page);
@@ -28,13 +29,13 @@ export default async function AdminUserDetailPage({ params, searchParams }: User
   ]);
 
   if (!user) {
-    return <p className="rounded-xl bg-white p-5 text-red-700">User not found or unavailable.</p>;
+    return <p className={`p-5 text-red-700 ${card}`}>User not found or unavailable.</p>;
   }
 
   return (
     <section>
       <Link className="text-sm font-semibold text-[#1E2E4F] hover:underline" href="/admin/users">← Back to users</Link>
-      <div className="mt-4 flex flex-wrap items-start justify-between gap-5 rounded-xl bg-white p-6 shadow-sm">
+      <div className={`mt-4 flex flex-wrap items-start justify-between gap-5 p-6 ${card}`}>
         <div>
           <h2 className="text-2xl font-bold">{user.username}</h2>
           <p className="mt-1 text-sm text-slate-600">{user.email}</p>
@@ -56,7 +57,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: User
       </div>
       <h3 className="mb-4 mt-8 text-xl font-semibold">Comments by {user.username}</h3>
       {reviews === null
-        ? <p className="rounded-xl bg-white p-5 text-red-700">Could not load comments.</p>
+        ? <p className={`p-5 text-red-700 ${card}`}>Could not load comments.</p>
         : <AdminReviewList reviews={reviews} />}
       <div className="mt-5 flex gap-4 text-sm font-semibold text-[#1E2E4F]">
         {page > 1 && <Link href={`/admin/users/${user.id}?page=${page - 1}`}>← Previous</Link>}
