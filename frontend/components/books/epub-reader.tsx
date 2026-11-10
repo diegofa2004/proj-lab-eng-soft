@@ -329,6 +329,11 @@ export default function EpubReader({ bookId, title, userId }: Props) {
         }
       }
 
+      // EPUB CFI percentages stop just short of the last location, so trust atEnd.
+      if (location.atEnd || nextPercentage >= 99.5) {
+        nextPercentage = 100;
+      }
+
       setPercentage(Math.max(0, Math.min(100, Math.round(nextPercentage))));
     }
 
