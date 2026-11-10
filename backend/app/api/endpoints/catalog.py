@@ -22,6 +22,7 @@ from app.db.base import (
     LivroGenero,
     ProgressoLeitura,
 )
+from app.epub_progress import epub_progress_positions
 from app.models.user import User
 from app.schemas.autor import AutorPublic
 from app.schemas.common import BookTitle, PositiveId
@@ -66,7 +67,7 @@ def validate_page_count(db, row, total_pages: int) -> None:
         or 0
     )
     if total_pages < max_read:
-        raise HTTPException(422, "Page count cannot be below recorded reading progress")
+        raise HTTPException(422, "Position count cannot be below recorded reading progress")
     if (
         total_pages != row.total_paginas
         and db.scalar(
@@ -79,14 +80,25 @@ def validate_page_count(db, row, total_pages: int) -> None:
         )
         is not None
     ):
-        raise HTTPException(409, "Page count cannot change after a completed reading")
+        raise HTTPException(409, "Position count cannot change after a completed reading")
 
 
-def require_publication_ready(row, _total_pages: int) -> None:
+def stored_epub_positions(row) -> int | None:
     path = CONTENT / f"{row.id_livro}.epub"
     if not path.is_file():
-        raise HTTPException(409, "Upload an EPUB3 file before publishing")
+        return None
     validate_epub(path)
+    try:
+        return epub_progress_positions(path)
+    except ValueError as exc:
+        raise HTTPException(422, "Unable to calculate EPUB reading positions") from exc
+
+
+def require_publication_ready(row, _total_pages: int) -> int:
+    total_positions = stored_epub_positions(row)
+    if total_positions is None:
+        raise HTTPException(409, "Upload an EPUB3 file before publishing")
+    return total_positions
 
 
 class BookInput(BaseModel):
@@ -186,10 +198,13 @@ def owned_book(db, user, book_id):
 
 
 def metadata(db, row, data):
-    validate_page_count(db, row, data.total_paginas)
+    total_positions = stored_epub_positions(row) or data.total_paginas
+    validate_page_count(db, row, total_positions)
     if data.status_publicacao == "publicado":
-        require_publication_ready(row, data.total_paginas)
+        total_positions = require_publication_ready(row, total_positions)
     for key, value in data.model_dump(exclude={"autores", "generos"}).items():
+        if key == "total_paginas":
+            value = total_positions
         setattr(row, key, value)
     for model, through, key, ids in [
         (Autor, LivroAutor, "id_autor", data.autores),
@@ -236,7 +251,7 @@ def replace(book_id: int, data: BookInput, db: DB, user: Reader):
 
 @router.put("/books/{book_id}/content", status_code=204)
 def upload(book_id: int, db: DB, user: Reader, file: UploadFile = File()):
-    owned_book(db, user, book_id)
+    row = owned_book(db, user, book_id)
     grant_publish(db, user)
     CONTENT.mkdir(exist_ok=True)
     tmp = CONTENT / uuid4().hex
@@ -253,7 +268,14 @@ def upload(book_id: int, db: DB, user: Reader, file: UploadFile = File()):
         if not count:
             raise HTTPException(422, "Empty file")
         validate_epub(tmp)
+        try:
+            total_positions = epub_progress_positions(tmp)
+        except ValueError as exc:
+            raise HTTPException(422, "Unable to calculate EPUB reading positions") from exc
+        validate_page_count(db, row, total_positions)
         tmp.replace(CONTENT / f"{book_id}.epub")
+        row.total_paginas = total_positions
+        db.commit()
     finally:
         tmp.unlink(missing_ok=True)
 

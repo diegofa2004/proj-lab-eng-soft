@@ -602,6 +602,7 @@ export type SocialActivityItem = {
 
 export type SignedHomeData = {
   myReadings: BookSearchResult[];
+  readingProgress: ReadingProgressItem[];
   favorites: BookSearchResult[];
   myStories: BookSearchResult[];
   toBeRead: BookSearchResult[];
@@ -843,10 +844,138 @@ export async function getSignedHomeData(
 
   return {
     myReadings,
+    readingProgress:
+      v2ProgressResponse.ok && Array.isArray(v2ProgressResponse.data)
+        ? v2ProgressResponse.data
+        : [],
     favorites,
     myStories,
     toBeRead,
     myReviews,
     socials,
+  };
+}
+
+export type RecommendationReason =
+  | "genre"
+  | "author"
+  | "trending"
+  | "rating"
+  | "discovery";
+
+export type BookRecommendation = {
+  book: BookSearchResult;
+  reason: string;
+  reason_type: RecommendationReason;
+};
+
+export type ContinueReadingItem = {
+  book: BookSearchResult;
+  pagesRead: number;
+  progressPercent: number;
+};
+
+export type GenreShelf = {
+  genre: Genre;
+  books: BookSearchResult[];
+};
+
+export type ForYouHomeData = {
+  continueReading: ContinueReadingItem[];
+  recommendations: BookRecommendation[];
+  trending: BookRecommendation[];
+  genreShelves: GenreShelf[];
+  socials: SocialActivityItem[];
+  isColdStart: boolean;
+};
+
+export async function getForYouHomeData(
+  currentUser: CurrentUser,
+): Promise<ForYouHomeData> {
+  const backendUrl = getBackendUrl();
+  const token = (await cookies()).get(accessTokenCookieName)?.value;
+  const authHeaders: HeadersInit | undefined = token
+    ? { Authorization: `Bearer ${token}` }
+    : undefined;
+
+  const [library, recommendationsResponse, trendingResponse, catalogResponse] =
+    await Promise.all([
+      getSignedHomeData(currentUser),
+      authHeaders
+        ? fetchJsonOrNull<BookRecommendation[]>(
+            `${backendUrl}/v2/me/recommendations?limit=12`,
+            authHeaders,
+          )
+        : Promise.resolve({ ok: false as const, status: 401 }),
+      fetchJsonOrNull<BookRecommendation[]>(`${backendUrl}/v2/books/trending?limit=12`),
+      fetchJsonOrNull<BookSearchResult[] | PaginatedBooksResponse>(`${backendUrl}/books`),
+    ]);
+
+  const progressByBook = new Map(
+    library.readingProgress.map((progress) => [progress.id_livro, progress]),
+  );
+  const continueReading = library.myReadings
+    .flatMap((book): ContinueReadingItem[] => {
+      const progress = progressByBook.get(book.id_livro);
+      if (progress?.concluido_em) return [];
+      const pagesRead = Math.min(progress?.paginas_distintas_lidas ?? 0, book.total_paginas);
+      return [
+        {
+          book,
+          pagesRead,
+          progressPercent:
+            book.total_paginas > 0 ? Math.round((pagesRead / book.total_paginas) * 100) : 0,
+        },
+      ];
+    })
+    .sort((a, b) => b.progressPercent - a.progressPercent)
+    .slice(0, 6);
+
+  const recommendations =
+    recommendationsResponse.ok && Array.isArray(recommendationsResponse.data)
+      ? recommendationsResponse.data
+      : [];
+  const trending =
+    trendingResponse.ok && Array.isArray(trendingResponse.data)
+      ? trendingResponse.data
+      : [];
+  const catalog = catalogResponse.ok ? extractBookList(catalogResponse.data) : [];
+  const allBooks = new Map<number, BookSearchResult>();
+  for (const book of [
+    ...catalog,
+    ...recommendations.map((item) => item.book),
+    ...trending.map((item) => item.book),
+  ]) {
+    allBooks.set(book.id_livro, book);
+  }
+
+  const genreBooks = new Map<number, { genre: Genre; books: BookSearchResult[] }>();
+  for (const book of allBooks.values()) {
+    for (const genre of book.generos ?? []) {
+      if (genre.nome.trim().length < 3) continue;
+      const shelf = genreBooks.get(genre.id_genero) ?? { genre, books: [] };
+      shelf.books.push(book);
+      genreBooks.set(genre.id_genero, shelf);
+    }
+  }
+  const genreShelves = Array.from(genreBooks.values())
+    .sort(
+      (a, b) =>
+        b.books.length - a.books.length || a.genre.nome.localeCompare(b.genre.nome),
+    )
+    .slice(0, 4)
+    .map((shelf) => ({ ...shelf, books: shelf.books.slice(0, 6) }));
+
+  return {
+    continueReading,
+    recommendations,
+    trending,
+    genreShelves,
+    socials: library.socials,
+    isColdStart:
+      recommendations.length === 0 ||
+      recommendations.every(
+        (item) => item.reason_type !== "genre" && item.reason_type !== "author",
+      ),
   };
 }

@@ -4,7 +4,8 @@ export type NavLink = {
 };
 
 export const SIGNED_NAV_LINKS: readonly NavLink[] = [
-  { label: "Home", href: "/home" },
+  { label: "For You", href: "/home" },
+  { label: "Library", href: "/library" },
   { label: "Catalog", href: "/books" },
   { label: "Popular", href: "/books?sort=popularity" },
   { label: "Top Rated", href: "/books?sort=rating" },

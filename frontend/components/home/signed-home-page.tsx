@@ -1,10 +1,10 @@
 import Link from "next/link";
-import Image from "next/image";
 import type { ReactNode } from "react";
 
 import type { BookSearchResult, SignedHomeData } from "@/app/lib/books";
 import { SIGNED_NAV_LINKS } from "@/app/lib/navigation";
 import { card, cardInteractive, pageBody, pageContainer } from "@/app/lib/ui";
+import BookCoverCard from "@/components/books/book-cover-card";
 import SiteFooter from "@/components/layout/site-footer";
 import SiteHeader from "@/components/layout/site-header";
 
@@ -68,78 +68,6 @@ const SOCIAL_ICONS: ReactNode[] = [
   </svg>,
 ];
 
-function BookCoverItem({
-  book,
-  badgeText,
-}: {
-  book: BookSearchResult;
-  badgeText?: string;
-}) {
-  const authorNames = (book.autores ?? []).map((author) => author.nome).filter(Boolean);
-
-  return (
-    <Link
-      className={`group flex w-fit shrink-0 ${card} ${cardInteractive} p-5`}
-      href={`/books/${book.id_livro}`}
-    >
-      <div
-        className="relative flex aspect-[2/3] w-[150px] shrink-0 flex-col justify-between overflow-hidden rounded-lg border border-black/20 bg-gradient-to-br from-indigo-600 via-indigo-700 to-slate-900 p-4 text-white shadow-sm sm:w-[185px] sm:p-5"
-      >
-        {book.capa_url ? (
-          <>
-            <Image
-              alt={`Cover of ${book.titulo}`}
-              className="object-cover"
-              fill
-              sizes="(max-width: 640px) 150px, 185px"
-              src={`/api/books/${book.id_livro}/cover`}
-              unoptimized
-            />
-            <span className="sr-only">{book.titulo}</span>
-            {badgeText ? (
-              <span className="relative z-10 self-end rounded bg-white/90 px-2 py-1 text-xs font-bold text-slate-900">
-                {badgeText}
-              </span>
-            ) : null}
-          </>
-        ) : (
-          <>
-            {/* Subtle book spine crease */}
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-y-0 left-0 w-2.5 bg-gradient-to-r from-black/15 to-transparent"
-            />
-
-            <div className="relative z-10 flex items-start justify-between gap-2">
-              <span className="line-clamp-1 font-mono text-[9px] font-medium uppercase tracking-[0.16em] opacity-75 sm:text-[10px]">
-                {authorNames.length > 0 ? authorNames.join(", ") : "LivrUSP"}
-              </span>
-              {badgeText ? (
-                <span className="shrink-0 font-mono text-[10px] font-bold text-[#FBE251]">
-                  {badgeText}
-                </span>
-              ) : null}
-            </div>
-
-            <div className="relative z-10 my-auto py-2">
-              <h3 className="line-clamp-4 font-serif text-2xl leading-[1.08] font-normal tracking-tight sm:text-3xl">
-                {book.titulo}
-              </h3>
-            </div>
-
-            <div className="relative z-10 flex items-center justify-between gap-2 border-t border-current/15 pt-2 text-[10px] opacity-70">
-              <span className="truncate">
-                {book.origem === "usuario" ? "Original Story" : "Catalog"}
-              </span>
-              <span className="shrink-0 font-mono">{book.total_paginas}p</span>
-            </div>
-          </>
-        )}
-      </div>
-    </Link>
-  );
-}
-
 function BookShelfSection({
   id,
   title,
@@ -162,7 +90,7 @@ function BookShelfSection({
       {books.length > 0 ? (
         <div className="mt-8 flex flex-wrap gap-6 sm:mt-10 sm:gap-8">
           {books.map((book) => (
-            <BookCoverItem
+            <BookCoverCard
               badgeText={badgesByBookId?.get(book.id_livro)}
               book={book}
               key={book.id_livro}
@@ -196,9 +124,11 @@ function BookShelfSection({
 export default function SignedHomePage({
   currentUser,
   data,
+  activeHref = "/library",
 }: {
   currentUser: { username: string; is_admin: boolean };
   data: SignedHomeData;
+  activeHref?: string;
 }) {
   const reviewBadges = new Map<number, string>();
   const reviewedBooks: BookSearchResult[] = [];
@@ -215,7 +145,7 @@ export default function SignedHomePage({
   return (
     <div className={pageBody}>
       <div className={pageContainer}>
-        <SiteHeader activeHref="/home" currentUser={currentUser} />
+        <SiteHeader activeHref={activeHref} currentUser={currentUser} />
 
         <nav aria-label="Home sections" className="flex flex-wrap gap-2 pb-2">
           {SHELF_LINKS.map((item) => (

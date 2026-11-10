@@ -2,7 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.endpoints.catalog import require_publication_ready, validate_page_count
+from app.api.endpoints.catalog import (
+    require_publication_ready,
+    stored_epub_positions,
+    validate_page_count,
+)
 from app.core.deps import get_current_admin
 from app.db.session import get_db
 from app.models.acesso_livro import AcessoLivro
@@ -37,7 +41,10 @@ def update_book(
         and values["arquivo_conteudo"] != f"/v2/books/{book_id}/content"
     ):
         raise HTTPException(status_code=422, detail="Use the content upload endpoint")
-    new_total = values.get("total_paginas", book.total_paginas)
+    stored_total = stored_epub_positions(book)
+    new_total = stored_total or values.get("total_paginas", book.total_paginas)
+    if stored_total is not None:
+        values["total_paginas"] = stored_total
     validate_page_count(db, book, new_total)
     if values.get("status_publicacao", book.status_publicacao) == "publicado":
         require_publication_ready(book, new_total)

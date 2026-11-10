@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { getOptionalCurrentUser, getSignedHomeData } from "@/app/lib/books";
-import SignedHomePage from "@/components/home/signed-home-page";
+import { getForYouHomeData, getOptionalCurrentUser } from "@/app/lib/books";
+import ForYouHomePage from "@/components/home/for-you-home-page";
 
 export const metadata: Metadata = {
-  title: "Home · LivrUSP",
+  title: "For You · LivrUSP",
 };
 
 export default async function SignedHomeRoutePage() {
@@ -13,8 +13,8 @@ export default async function SignedHomeRoutePage() {
   if (!currentUser) {
     redirect("/login");
   }
-  const data = await getSignedHomeData(currentUser);
+  const data = await getForYouHomeData(currentUser);
 
-  return <SignedHomePage currentUser={currentUser} data={data} />;
+  return <ForYouHomePage currentUser={currentUser} data={data} />;
 }
 
