@@ -38,6 +38,7 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
       <EpubReader
         bookId={bookResult.book.id_livro}
         title={bookResult.book.titulo}
+        totalPages={bookResult.book.total_paginas}
         userId={currentUser?.id ?? null}
       />
     </main>

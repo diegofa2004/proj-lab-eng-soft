@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import type { Book as EpubBook, Location, Rendition } from "epubjs";
-import { useEffect, useRef, useState } from "react";
+import type { Book as EpubBook, Location, NavItem, Rendition } from "epubjs";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-type Props = { bookId: number; title: string; userId: number | null };
+type Props = { bookId: number; title: string; totalPages: number; userId: number | null };
 const MIN_FONT_SIZE_PT = 8;
 const MAX_FONT_SIZE_PT = 36;
 const DEFAULT_FONT_SIZE_PT = 12;
@@ -21,7 +21,59 @@ const FONTS = [
 ];
 const SETTINGS_KEY = "livrusp-reader-settings";
 
-export default function EpubReader({ bookId, title, userId }: Props) {
+type TocEntry = {
+  href: string;
+  label: string;
+  depth: number;
+};
+
+function normalizeHref(href?: string | null): string {
+  if (!href) return "";
+  let value = href.split("#")[0].split("?")[0];
+  try {
+    value = decodeURIComponent(value);
+  } catch {
+    // Keep the raw value when it is not valid percent-encoding.
+  }
+  return value.replace(/^\.\//, "").replace(/^\/+/, "");
+}
+
+function flattenToc(items: NavItem[], depth = 0): TocEntry[] {
+  return items.flatMap((item) => {
+    const label = item.label?.trim() || item.href;
+    const entry: TocEntry = { href: item.href, label, depth };
+    const children = item.subitems?.length ? flattenToc(item.subitems, depth + 1) : [];
+    return [entry, ...children];
+  });
+}
+
+function findTocEntry(entries: TocEntry[], href?: string | null): TocEntry | null {
+  const target = normalizeHref(href);
+  if (!target) return null;
+
+  const exact = entries.find((entry) => normalizeHref(entry.href) === target);
+  if (exact) return exact;
+
+  const bySuffix = entries.find((entry) => {
+    const candidate = normalizeHref(entry.href);
+    return Boolean(candidate) && (target.endsWith(candidate) || candidate.endsWith(target));
+  });
+  if (bySuffix) return bySuffix;
+
+  let best: TocEntry | null = null;
+  for (const entry of entries) {
+    const candidate = normalizeHref(entry.href);
+    if (!candidate) continue;
+    if (target.startsWith(candidate) || candidate.startsWith(target)) {
+      if (!best || candidate.length > normalizeHref(best.href).length) {
+        best = entry;
+      }
+    }
+  }
+  return best;
+}
+
+export default function EpubReader({ bookId, title, totalPages, userId }: Props) {
   const viewerRef = useRef<HTMLDivElement>(null);
   const bookRef = useRef<EpubBook | null>(null);
   const renditionRef = useRef<Rendition | null>(null);
@@ -34,6 +86,54 @@ export default function EpubReader({ bookId, title, userId }: Props) {
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
+  const [toc, setToc] = useState<NavItem[]>([]);
+  const [currentHref, setCurrentHref] = useState("");
+  const [currentLabel, setCurrentLabel] = useState("");
+  const [percentage, setPercentage] = useState(0);
+  const tocEntries = useMemo(() => flattenToc(toc), [toc]);
+  const tocEntriesRef = useRef<TocEntry[]>([]);
+
+  useEffect(() => {
+    tocEntriesRef.current = tocEntries;
+  }, [tocEntries]);
+
+  const currentTocHref = useMemo(
+    () => findTocEntry(tocEntries, currentHref)?.href ?? "",
+    [currentHref, tocEntries],
+  );
+
+  const goToPrevious = useCallback(() => {
+    void renditionRef.current?.prev();
+  }, []);
+
+  const goToNext = useCallback(() => {
+    void renditionRef.current?.next();
+  }, []);
+
+  const goToChapter = useCallback((href: string) => {
+    if (!href) return;
+    void renditionRef.current?.display(href);
+  }, []);
+
+  const handleKeyboard = useCallback((event: KeyboardEvent) => {
+    if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+    const target = event.target as HTMLElement | null;
+    const tagName = target?.tagName;
+    if (tagName === "INPUT" || tagName === "SELECT" || tagName === "TEXTAREA") return;
+
+    if (event.key === "ArrowLeft" || event.key === "PageUp") {
+      event.preventDefault();
+      void renditionRef.current?.prev();
+    } else if (event.key === "ArrowRight" || event.key === "PageDown") {
+      event.preventDefault();
+      void renditionRef.current?.next();
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyboard);
+    return () => window.removeEventListener("keydown", handleKeyboard);
+  }, [handleKeyboard]);
 
   useEffect(() => {
     let disposed = false;
@@ -110,6 +210,16 @@ export default function EpubReader({ bookId, title, userId }: Props) {
         if (disposed) { book.destroy(); return; }
         positionRef.current = savedPosition;
         bookRef.current = book;
+        try {
+          const navigation = await book.loaded.navigation;
+          if (!disposed) setToc(navigation.toc ?? []);
+        } catch {
+          if (!disposed) setToc([]);
+        }
+        if (disposed) { book.destroy(); return; }
+        void book.locations.generate(1600).catch(() => {
+          // The reader still works with approximate progress when this fails.
+        });
         setBookReady(true);
       } catch (cause) {
         if (disposed) return;
@@ -136,10 +246,72 @@ export default function EpubReader({ bookId, title, userId }: Props) {
   }, [bookId, userId]);
 
   useEffect(() => {
+    if (!bookReady || userId === null) return;
+    let disposed = false;
+    let sessionId: number | null = null;
+    let activeSeconds = 0;
+    let lastTick = Date.now();
+    let ending = false;
+
+    function tick() {
+      const now = Date.now();
+      if (document.visibilityState === "visible") {
+        activeSeconds += Math.max(0, (now - lastTick) / 1000);
+      }
+      lastTick = now;
+    }
+
+    async function endSession(keepalive = false) {
+      if (ending || sessionId === null) return;
+      ending = true;
+      tick();
+      const seconds = Math.max(0, Math.round(activeSeconds));
+      try {
+        await fetch(`/api/books/${bookId}/session`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId, tempoAtivoSegundos: seconds }),
+          keepalive,
+        });
+      } catch {
+        // Reading sessions are optional and should never block the reader.
+      }
+    }
+
+    void (async () => {
+      try {
+        const response = await fetch(`/api/books/${bookId}/session`, { method: "POST" });
+        if (!response.ok) return;
+        const data = (await response.json()) as { id_sessao?: unknown };
+        if (typeof data.id_sessao === "number" && Number.isSafeInteger(data.id_sessao)) {
+          sessionId = data.id_sessao;
+        }
+        if (disposed) void endSession();
+      } catch {
+        // Reading sessions are optional and should never block the reader.
+      }
+    })();
+
+    const onVisibilityChange = () => tick();
+    const onPageHide = () => { void endSession(true); };
+    const interval = window.setInterval(tick, 1000);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("pagehide", onPageHide);
+
+    return () => {
+      disposed = true;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("pagehide", onPageHide);
+      void endSession();
+    };
+  }, [bookId, bookReady, userId]);
+
+  useEffect(() => {
     if (!bookReady || !settingsReady || !bookRef.current || !viewerRef.current) return;
     let disposed = false;
     let saveTimer: ReturnType<typeof setTimeout> | null = null;
-    let pendingPosition: string | null = null;
+    let pendingProgress: { position: string; pagesRead: number } | null = null;
     let saving = false;
     const storageKey = `livrusp-reader:${userId ?? "guest"}:${bookId}`;
     const progressUrl = `/api/books/${bookId}/progress`;
@@ -168,14 +340,14 @@ export default function EpubReader({ bookId, title, userId }: Props) {
     async function saveProgress() {
       if (saving || userId === null) return;
       saving = true;
-      while (pendingPosition) {
-        const position = pendingPosition;
-        pendingPosition = null;
+      while (pendingProgress) {
+        const { position, pagesRead } = pendingProgress;
+        pendingProgress = null;
         try {
           const response = await fetch(progressUrl, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ position }),
+            body: JSON.stringify({ position, pagesRead }),
           });
           if (!disposed) setSaveMessage(response.ok ? "Position saved" : "Saved on this device only");
         } catch {
@@ -185,8 +357,53 @@ export default function EpubReader({ bookId, title, userId }: Props) {
       saving = false;
     }
 
+    function updateChapterPosition(location: Location) {
+      const href = location.start?.href ?? "";
+      setCurrentHref(href);
+      const entry = findTocEntry(tocEntriesRef.current, href);
+      setCurrentLabel(entry?.label ?? "");
+
+      const position = location.start?.cfi;
+      let nextPercentage = 0;
+      let measured = false;
+      const locations = bookRef.current?.locations;
+
+      if (position && locations && locations.length() > 0) {
+        const fromCfi = locations.percentageFromCfi(position);
+        if (Number.isFinite(fromCfi) && fromCfi >= 0) {
+          nextPercentage = fromCfi * 100;
+          measured = true;
+        }
+      }
+      if (
+        !measured &&
+        typeof location.start?.percentage === "number" &&
+        Number.isFinite(location.start.percentage)
+      ) {
+        nextPercentage = location.start.percentage * 100;
+        measured = true;
+      }
+      if (!measured) {
+        const entries = tocEntriesRef.current;
+        const index = entry ? entries.findIndex((item) => item.href === entry.href) : -1;
+        if (index >= 0 && entries.length > 1) {
+          nextPercentage = (index / (entries.length - 1)) * 100;
+        }
+      }
+
+      // EPUB CFI percentages stop just short of the last location, so trust atEnd.
+      if (location.atEnd || nextPercentage >= 99.5) {
+        nextPercentage = 100;
+      }
+
+      const roundedPercentage = Math.max(0, Math.min(100, Math.round(nextPercentage)));
+      setPercentage(roundedPercentage);
+      return roundedPercentage;
+    }
+
     function onRelocated(location: Location) {
       if (disposed) return;
+      const percentageRead = updateChapterPosition(location);
       const position = location.start?.cfi;
       if (!position) return;
       positionRef.current = position;
@@ -194,13 +411,32 @@ export default function EpubReader({ bookId, title, userId }: Props) {
       if (userId === null) {
         setSaveMessage("Position saved on this device");
       } else {
-        pendingPosition = position;
+        const pagesRead =
+          totalPages > 0
+            ? Math.min(totalPages, Math.max(1, Math.ceil((percentageRead / 100) * totalPages)))
+            : 0;
+        pendingProgress = { position, pagesRead };
         setSaveMessage("Saving position...");
         if (saveTimer) clearTimeout(saveTimer);
         saveTimer = setTimeout(() => { void saveProgress(); }, 700);
       }
     }
+
+    const keyboardDocs = new Set<Document>();
+    function attachKeyboard() {
+      // epubjs types declare getContents() as a single Contents, but it returns an array.
+      const contentsList = rendition.getContents() as unknown as Array<{ document?: Document }>;
+      for (const contents of contentsList) {
+        const doc = contents?.document;
+        if (doc && !keyboardDocs.has(doc)) {
+          doc.addEventListener("keydown", handleKeyboard);
+          keyboardDocs.add(doc);
+        }
+      }
+    }
+
     rendition.on("relocated", onRelocated);
+    rendition.on("rendered", attachKeyboard);
     queueMicrotask(() => { if (!disposed) setStatus("loading"); });
     async function display() {
       try {
@@ -217,12 +453,16 @@ export default function EpubReader({ bookId, title, userId }: Props) {
     return () => {
       disposed = true;
       if (saveTimer) clearTimeout(saveTimer);
-      if (pendingPosition) void saveProgress();
+      if (pendingProgress) void saveProgress();
       rendition.off("relocated", onRelocated);
+      rendition.off("rendered", attachKeyboard);
+      for (const doc of keyboardDocs) {
+        doc.removeEventListener("keydown", handleKeyboard);
+      }
       if (renditionRef.current === rendition) renditionRef.current = null;
       rendition.destroy();
     };
-  }, [bookId, bookReady, settingsReady, userId]);
+  }, [bookId, bookReady, handleKeyboard, settingsReady, totalPages, userId]);
 
   return (
     <div className="mx-auto flex min-h-screen max-w-[960px] flex-col gap-3 px-2 py-3 sm:px-4 sm:py-5">
@@ -234,8 +474,70 @@ export default function EpubReader({ bookId, title, userId }: Props) {
         <a className="text-sm font-medium text-slate-600 hover:text-indigo-700" href={`/api/books/${bookId}/content`}>Download EPUB</a>
       </header>
 
+      <div className="rounded-xl bg-white px-3 py-3 shadow-sm sm:px-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            aria-keyshortcuts="ArrowLeft PageUp"
+            aria-label="Previous page or chapter"
+            className="inline-flex h-9 items-center rounded-lg border border-slate-300 px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-40"
+            disabled={status !== "ready"}
+            onClick={goToPrevious}
+            type="button"
+          >
+            ← Previous
+          </button>
+          <label className="sr-only" htmlFor="reader-chapter">Chapter</label>
+          <select
+            className="h-9 max-w-[220px] rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-700 disabled:opacity-40 sm:max-w-[320px]"
+            disabled={status !== "ready" || tocEntries.length === 0}
+            id="reader-chapter"
+            onChange={(event) => goToChapter(event.target.value)}
+            value={currentTocHref}
+          >
+            <option disabled value="">{tocEntries.length > 0 ? "Select chapter" : "No chapters"}</option>
+            {tocEntries.map((entry) => (
+              <option key={`${entry.href}-${entry.depth}-${entry.label}`} value={entry.href}>
+                {"— ".repeat(entry.depth)}{entry.label}
+              </option>
+            ))}
+          </select>
+          <button
+            aria-keyshortcuts="ArrowRight PageDown"
+            aria-label="Next page or chapter"
+            className="inline-flex h-9 items-center rounded-lg border border-slate-300 px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-40"
+            disabled={status !== "ready"}
+            onClick={goToNext}
+            type="button"
+          >
+            Next →
+          </button>
+          <span
+            className="min-w-0 flex-1 truncate text-right text-sm font-medium text-slate-600"
+            title={currentLabel || undefined}
+          >
+            {currentLabel || "Reading"}
+          </span>
+        </div>
+        <div className="mt-3 flex items-center gap-3">
+          <div
+            aria-label="Reading progress"
+            aria-valuemax={100}
+            aria-valuemin={0}
+            aria-valuenow={percentage}
+            className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200"
+            role="progressbar"
+          >
+            <div
+              className="h-full rounded-full bg-[#24324F] transition-[width] duration-200"
+              style={{ width: `${percentage}%` }}
+            />
+          </div>
+          <span className="font-mono text-xs font-semibold tabular-nums text-slate-600">{percentage}%</span>
+        </div>
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white px-3 py-2 shadow-sm sm:px-4">
-        <span className="text-sm font-medium text-slate-600">Scroll down to read</span>
+        <span className="text-sm font-medium text-slate-600">Scroll or use the controls to read</span>
         <div className="flex flex-wrap items-center gap-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="reader-font">Font</label>
           <select className="max-w-[165px] rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm" id="reader-font" onChange={(event) => setFont(event.target.value)} value={font}>
