@@ -7,6 +7,7 @@ import { LivruspFooterLogo, LivruspHeaderLogo } from "@/components/home/livrusp-
 
 const NAV_LINKS = [
   { label: "My readings", href: "#my-readings" },
+  { label: "Favorites", href: "#favorites" },
   { label: "My stories", href: "#my-stories" },
   { label: "To-be-read", href: "#to-be-read" },
   { label: "My Reviews", href: "#my-reviews" },
@@ -284,9 +285,17 @@ export default function SignedHomePage({
           {/* My readings */}
           <BookShelfSection
             books={data.myReadings}
-            emptyLabel="No readings started or saved yet."
+            emptyLabel="No readings started yet."
             id="my-readings"
             title="My readings"
+          />
+
+          {/* Favorites */}
+          <BookShelfSection
+            books={data.favorites}
+            emptyLabel="No favorite books yet."
+            id="favorites"
+            title="Favorites"
           />
 
           {/* My stories */}
