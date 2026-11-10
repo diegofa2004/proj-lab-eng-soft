@@ -16,16 +16,19 @@ from app.models.autor import Autor
 from app.models.avaliacao import Avaliacao
 from app.models.capa_livro import CapaLivro
 from app.models.genero import Genero
+from app.models.genero_canonico import GeneroCanonico
 from app.models.item_lista import ItemLista
 from app.models.livro import Livro
 from app.models.livro_autor import LivroAutor
 from app.models.livro_genero import LivroGenero
+from app.models.livro_genero_canonico import LivroGeneroCanonico
 from app.models.nota_pessoal import NotaPessoal
 from app.models.progresso_leitura import ProgressoLeitura
 from app.models.user import User
 from app.schemas.autor import AutorPublic
 from app.schemas.avaliacao import AvaliacaoCreate, AvaliacaoPublic
 from app.schemas.genero import GeneroPublic
+from app.schemas.genero_canonico import GeneroCanonicoPublic
 from app.schemas.item_lista import ItemListaCreate, ItemListaPublic
 from app.schemas.livro import LivroCreate, LivroPublic
 from app.schemas.nota_pessoal import NotaPessoalCreate, NotaPessoalPublic, NotaPessoalUpdate
@@ -41,6 +44,7 @@ class CatalogBookPublic(LivroPublic):
     capa_url: str | None = None
     autores: list[AutorPublic] = Field(default_factory=list)
     generos: list[GeneroPublic] = Field(default_factory=list)
+    generos_canonicos: list[GeneroCanonicoPublic] = Field(default_factory=list)
 
 
 def catalog_books(db: Session, books: list[Livro]) -> list[dict]:
@@ -52,6 +56,7 @@ def catalog_books(db: Session, books: list[Livro]) -> list[dict]:
     )
     authors: dict[int, list[Autor]] = {book_id: [] for book_id in ids}
     genres: dict[int, list[Genero]] = {book_id: [] for book_id in ids}
+    canonical_genres: dict[int, list[GeneroCanonico]] = {book_id: [] for book_id in ids}
     for book_id, author in db.execute(
         select(LivroAutor.id_livro, Autor)
         .join(Autor, LivroAutor.id_autor == Autor.id_autor)
@@ -66,6 +71,23 @@ def catalog_books(db: Session, books: list[Livro]) -> list[dict]:
         .order_by(Genero.nome)
     ):
         genres[book_id].append(genre)
+    for book_id, genre in db.execute(
+        select(LivroGeneroCanonico.id_livro, GeneroCanonico)
+        .join(
+            GeneroCanonico,
+            LivroGeneroCanonico.id_genero_canonico == GeneroCanonico.id_genero_canonico,
+        )
+        .where(
+            LivroGeneroCanonico.id_livro.in_(ids),
+            GeneroCanonico.ativo.is_(True),
+        )
+        .order_by(
+            LivroGeneroCanonico.principal.desc(),
+            LivroGeneroCanonico.confianca.desc(),
+            GeneroCanonico.ordem_exibicao,
+        )
+    ):
+        canonical_genres[book_id].append(genre)
     return [
         {
             **LivroPublic.model_validate(book).model_dump(),
@@ -74,6 +96,7 @@ def catalog_books(db: Session, books: list[Livro]) -> list[dict]:
             ),
             "autores": authors[book.id_livro],
             "generos": genres[book.id_livro],
+            "generos_canonicos": canonical_genres[book.id_livro],
         }
         for book in books
     ]
@@ -136,7 +159,15 @@ def search_books(
     if genre:
         query = query.where(
             Livro.id_livro.in_(
-                select(LivroGenero.id_livro).join(Genero).where(Genero.nome.ilike(f"%{genre}%"))
+                select(LivroGeneroCanonico.id_livro)
+                .join(GeneroCanonico)
+                .where(
+                    or_(
+                        GeneroCanonico.nome.ilike(genre),
+                        GeneroCanonico.slug.ilike(genre),
+                    ),
+                    GeneroCanonico.ativo.is_(True),
+                )
             )
         )
     if sort == "popularity":

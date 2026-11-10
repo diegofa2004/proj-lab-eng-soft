@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import delete, func, select, text
 
 from app.api.platform import DB, Limit, Offset, Reader, profile_stats, require, save
+from app.canonical_genres import classify_book
 from app.core.deps import optional_reader
 from app.db.base import (
     AcessoLivro,
@@ -17,9 +18,11 @@ from app.db.base import (
     Autor,
     CapaLivro,
     Genero,
+    GeneroCanonico,
     Livro,
     LivroAutor,
     LivroGenero,
+    LivroGeneroCanonico,
     ProgressoLeitura,
 )
 from app.epub_progress import epub_progress_positions
@@ -27,6 +30,7 @@ from app.models.user import User
 from app.schemas.autor import AutorPublic
 from app.schemas.common import BookTitle, PositiveId
 from app.schemas.genero import GeneroPublic
+from app.schemas.genero_canonico import GeneroCanonicoPublic
 from app.schemas.livro import LivroPublic, StatusPublicacao
 
 router = APIRouter(tags=["Catalog"])
@@ -120,6 +124,7 @@ class CatalogBook(LivroPublic):
 class Detail(CatalogBook):
     autores: list[AutorPublic]
     generos: list[GeneroPublic]
+    generos_canonicos: list[GeneroCanonicoPublic]
 
 
 def links(db, book_id, model, through, key):
@@ -173,6 +178,13 @@ def detail(book_id: int, db: DB):
         book,
         autores=links(db, book_id, Autor, LivroAutor, "id_autor"),
         generos=links(db, book_id, Genero, LivroGenero, "id_genero"),
+        generos_canonicos=links(
+            db,
+            book_id,
+            GeneroCanonico,
+            LivroGeneroCanonico,
+            "id_genero_canonico",
+        ),
     )
 
 
@@ -214,6 +226,8 @@ def metadata(db, row, data):
             raise HTTPException(422, "Unknown author or genre")
         db.execute(delete(through).where(through.id_livro == row.id_livro))
         db.add_all(through(id_livro=row.id_livro, **{key: i}) for i in set(ids))
+    db.flush()
+    classify_book(db, row.id_livro)
 
 
 @router.post("/books", response_model=LivroPublic, status_code=201)

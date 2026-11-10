@@ -48,6 +48,41 @@ async function getAdminToken(): Promise<string | null> {
   return (await cookies()).get(accessTokenCookieName)?.value ?? null;
 }
 
+async function forwardCanonicalAdmin(
+  request: Request,
+  path: string[],
+  method: "POST" | "PATCH" | "DELETE",
+) {
+  const originError = validateOrigin(request);
+  if (originError) return originError;
+  const token = await getAdminToken();
+  if (!token) {
+    return NextResponse.json({ detail: "Sign in as an administrator." }, { status: 401 });
+  }
+  const body = method === "DELETE" || path.join("/") === "canonical-genres/reprocess"
+    ? undefined
+    : await request.text();
+  try {
+    const backendResponse = await fetch(`${getBackendUrl()}/v2/admin/${path.join("/")}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+      },
+      body,
+      cache: "no-store",
+    });
+    return new NextResponse(await backendResponse.text(), {
+      status: backendResponse.status,
+      headers: {
+        "Content-Type": backendResponse.headers.get("Content-Type") ?? "application/json",
+      },
+    });
+  } catch {
+    return NextResponse.json({ detail: "Administration service is unavailable." }, { status: 502 });
+  }
+}
+
 async function forwardBookMetadataUpdate(
   request: Request,
   bookId: number,
@@ -276,6 +311,18 @@ async function forwardReferenceCreate(request: Request, kind: "authors" | "genre
 async function forwardAction(request: Request, context: RouteContext, method: "POST" | "DELETE") {
   const { path } = await context.params;
 
+  if (
+    (method === "POST" &&
+      (path.join("/") === "canonical-genre-rules" ||
+        path.join("/") === "canonical-genres/reprocess")) ||
+    (method === "DELETE" &&
+      path.length === 2 &&
+      path[0] === "canonical-genre-rules" &&
+      Number.isSafeInteger(Number(path[1])))
+  ) {
+    return forwardCanonicalAdmin(request, path, method);
+  }
+
   if (method === "POST" && path.length === 1 && (path[0] === "authors" || path[0] === "genres")) {
     return forwardReferenceCreate(request, path[0]);
   }
@@ -333,6 +380,13 @@ export async function DELETE(request: Request, context: RouteContext) {
 
 export async function PATCH(request: Request, context: RouteContext) {
   const { path } = await context.params;
+  if (
+    path.length === 2 &&
+    path[0] === "canonical-genre-rules" &&
+    Number.isSafeInteger(Number(path[1]))
+  ) {
+    return forwardCanonicalAdmin(request, path, "PATCH");
+  }
   const [kind, rawId] = path;
   const bookId = Number(rawId);
 

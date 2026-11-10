@@ -13,11 +13,11 @@ from app.db.base import (
     AcessoLivro,
     Autor,
     Avaliacao,
-    Genero,
+    GeneroCanonico,
     ItemLista,
     Livro,
     LivroAutor,
-    LivroGenero,
+    LivroGeneroCanonico,
     ProgressoLeitura,
     SessaoLeitura,
 )
@@ -92,9 +92,19 @@ def _book_context(db: DB, books: list[Livro]):
         ):
             authors_by_book[book_id].append((author_id, name))
         for book_id, genre_id, name in db.execute(
-            select(LivroGenero.id_livro, Genero.id_genero, Genero.nome)
-            .join(Genero, Genero.id_genero == LivroGenero.id_genero)
-            .where(LivroGenero.id_livro.in_(ids))
+            select(
+                LivroGeneroCanonico.id_livro,
+                GeneroCanonico.id_genero_canonico,
+                GeneroCanonico.nome,
+            )
+            .join(
+                GeneroCanonico,
+                GeneroCanonico.id_genero_canonico == LivroGeneroCanonico.id_genero_canonico,
+            )
+            .where(
+                LivroGeneroCanonico.id_livro.in_(ids),
+                GeneroCanonico.ativo.is_(True),
+            )
         ):
             genres_by_book[book_id].append((genre_id, name))
 
@@ -107,9 +117,7 @@ def _book_context(db: DB, books: list[Livro]):
         .where(Avaliacao.is_removida.is_(False), Avaliacao.id_livro.in_(ids))
         .group_by(Avaliacao.id_livro)
     ).all()
-    ratings = {
-        book_id: (float(average), int(count)) for book_id, average, count in rating_rows
-    }
+    ratings = {book_id: (float(average), int(count)) for book_id, average, count in rating_rows}
     total_accesses = dict(
         db.execute(
             select(AcessoLivro.id_livro, func.count(AcessoLivro.id_acesso))
@@ -263,9 +271,7 @@ def recommendations(
     for item in db.scalars(select(ItemLista).where(ItemLista.id_usuario == user.id)):
         interaction_weights[item.id_livro] += 3 if item.tipo == "favorito" else 1
     for review in db.scalars(
-        select(Avaliacao).where(
-            Avaliacao.id_usuario == user.id, Avaliacao.is_removida.is_(False)
-        )
+        select(Avaliacao).where(Avaliacao.id_usuario == user.id, Avaliacao.is_removida.is_(False))
     ):
         interaction_weights[review.id_livro] += _rating_weight(review.nota)
     for book_id, active_seconds in db.execute(
@@ -322,10 +328,7 @@ def recommendations(
 
         if has_preferences:
             score = (
-                0.5 * genre_score
-                + 0.25 * author_score
-                + 0.15 * weekly_score
-                + 0.1 * rating_score
+                0.5 * genre_score + 0.25 * author_score + 0.15 * weekly_score + 0.1 * rating_score
             )
             if genre_score >= author_score and genre_score > 0:
                 reason, reason_type = f"Because you enjoy {best_genre[1]}", "genre"

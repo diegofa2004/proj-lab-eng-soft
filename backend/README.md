@@ -76,6 +76,14 @@ O exemplo mantém a sessão em memória. No logout, descarte o token. Quando a A
 | Administração | GET /admin/users, /admin/books, /admin/reviews, /admin/actions, /admin/dashboard; POST /admin/actions | Bloquear/desbloquear livros e leitores, moderar avaliações e consultar métricas. Alteração e registro de moderação ocorrem na mesma transação. |
 | Referências | POST/PATCH /admin/authors, /admin/genres, /admin/assets, /admin/levels, /admin/plans | POST na coleção e PATCH em /{id}. Desative planos com ativo=false. GET /admin/plans inclui os inativos. |
 
+### Gêneros canônicos
+
+Os assuntos originais continuam em `genero`/`livro_genero`. A navegação e as recomendações usam os 20 gêneros estáveis de `genero_canonico`, associados por regras configuráveis em `regra_genero_canonico`. Novos livros são classificados quando seus metadados são salvos ou importados. Depois de alterar regras em `/admin/genres`, reprocese o catálogo pela tela ou execute:
+
+```bash
+docker compose exec backend python -m scripts.reclassify_canonical_genres
+```
+
 ### Limites e decisões do projeto
 
 O modo de pagamento **é uma simulação local**. Nenhum cartão é solicitado ou cobrado. Com DEMO_BILLING=false, o checkout responde 503 até que um provedor real e a confirmação de pagamento no servidor sejam implementados. O frontend deve consultar /billing/config para mostrar o estado correto. Os EPUBs ficam no volume books com nome baseado no ID. O servidor valida a estrutura EPUB3 e limita o tamanho compactado a 50 MiB (e o descompactado a 250 MiB). Para consultar cadastros de autores e gêneros ao criar uma publicação, use os endpoints de referências; o administrador cadastra novos nomes. A política de pontos e o preço da carga inicial são exemplos de produto.

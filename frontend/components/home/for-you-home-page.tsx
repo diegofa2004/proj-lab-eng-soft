@@ -199,12 +199,12 @@ export default function ForYouHomePage({
               />
               <div className="mt-10 space-y-12">
                 {data.genreShelves.map((shelf) => (
-                  <section key={shelf.genre.id_genero}>
+                  <section key={shelf.genre.id_genero_canonico}>
                     <div className="flex items-center justify-between gap-4">
                       <h3 className="font-serif text-2xl sm:text-3xl">{shelf.genre.nome}</h3>
                       <Link
                         className="text-xs font-semibold text-[#1E2E4F] hover:underline"
-                        href={`/books?genre=${encodeURIComponent(shelf.genre.nome)}`}
+                        href={`/books?genre=${encodeURIComponent(shelf.genre.slug)}`}
                       >
                         View genre →
                       </Link>

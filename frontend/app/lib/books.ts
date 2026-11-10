@@ -48,7 +48,7 @@ export type CurrentUser = {
 };
 
 export type FetchBookResult =
-  | { status: "ok"; book: Book }
+  | { status: "ok"; book: BookSearchResult }
   | { status: "not_found" }
   | { status: "unavailable"; detail: string };
 
@@ -62,6 +62,14 @@ export type Genre = {
   nome: string;
 };
 
+export type CanonicalGenre = {
+  id_genero_canonico: number;
+  slug: string;
+  nome: string;
+  descricao?: string;
+  ordem_exibicao?: number;
+};
+
 /**
  * A book returned by the catalog search. Authors and genres are optional
  * because the backend may or may not embed them in search results.
@@ -69,6 +77,7 @@ export type Genre = {
 export type BookSearchResult = Book & {
   autores?: Author[];
   generos?: Genre[];
+  generos_canonicos?: CanonicalGenre[];
   nota_media?: number;
   total_avaliacoes?: number;
   total_acessos?: number;
@@ -174,7 +183,7 @@ export async function getBookById(bookId: number): Promise<FetchBookResult> {
       };
     }
 
-    const book = (await response.json()) as Book;
+    const book = (await response.json()) as BookSearchResult;
     return { status: "ok", book };
   } catch {
     return {
@@ -353,6 +362,9 @@ async function enrichBooksWithMetrics(
         typeof book.total_acessos === "number" ? book.total_acessos : v2Book.total_acessos,
       autores: book.autores?.length ? book.autores : v2Book.autores,
       generos: book.generos?.length ? book.generos : v2Book.generos,
+      generos_canonicos: book.generos_canonicos?.length
+        ? book.generos_canonicos
+        : v2Book.generos_canonicos,
     };
   });
 
@@ -536,10 +548,10 @@ export async function searchBooks(filters: BookSearchFilters): Promise<BookSearc
 }
 
 /** Lists the genres used by the search filters. Returns an empty list on failure. */
-export async function getGenres(): Promise<Genre[]> {
+export async function getGenres(): Promise<CanonicalGenre[]> {
   const backendUrl = getBackendUrl();
 
-  for (const endpoint of [`${backendUrl}/v2/genres`, `${backendUrl}/genres`]) {
+  for (const endpoint of [`${backendUrl}/v2/canonical-genres`]) {
     try {
       const response = await fetch(endpoint, {
         cache: "no-store",
@@ -549,7 +561,7 @@ export async function getGenres(): Promise<Genre[]> {
         continue;
       }
 
-      const genres = (await response.json()) as Genre[];
+      const genres = (await response.json()) as CanonicalGenre[];
       if (Array.isArray(genres)) {
         return [...genres].sort((a, b) => a.nome.localeCompare(b.nome));
       }
@@ -876,7 +888,7 @@ export type ContinueReadingItem = {
 };
 
 export type GenreShelf = {
-  genre: Genre;
+  genre: CanonicalGenre;
   books: BookSearchResult[];
 };
 
@@ -949,13 +961,15 @@ export async function getForYouHomeData(
     allBooks.set(book.id_livro, book);
   }
 
-  const genreBooks = new Map<number, { genre: Genre; books: BookSearchResult[] }>();
+  const genreBooks = new Map<
+    number,
+    { genre: CanonicalGenre; books: BookSearchResult[] }
+  >();
   for (const book of allBooks.values()) {
-    for (const genre of book.generos ?? []) {
-      if (genre.nome.trim().length < 3) continue;
-      const shelf = genreBooks.get(genre.id_genero) ?? { genre, books: [] };
+    for (const genre of book.generos_canonicos ?? []) {
+      const shelf = genreBooks.get(genre.id_genero_canonico) ?? { genre, books: [] };
       shelf.books.push(book);
-      genreBooks.set(genre.id_genero, shelf);
+      genreBooks.set(genre.id_genero_canonico, shelf);
     }
   }
   const genreShelves = Array.from(genreBooks.values())
