@@ -24,7 +24,7 @@ docker compose exec api python -m app.seed
 curl http://localhost:8000/health
 ```
 
-Abra [Swagger](http://localhost:8000/docs). A carga de exemplo inclui um livro EPUB3, autor e gênero, avatar, nível e plano. Pode ser repetida. Registre um usuário em `POST /register`. Para testar administração com uma **segunda conta local**, registre-a e execute `docker compose exec api python -m app.seed --grant-admin SEU_USERNAME`. O cadastro público sempre cria um leitor. Os volumes preservam banco e EPUBs ao reiniciar.
+Abra [Swagger](http://localhost:8000/docs). A carga de exemplo inclui dois livros EPUB3 de teste, com autores e gêneros distintos, avatar, nível e plano. Pode ser repetida. Registre um usuário em `POST /register`. Para testar administração com uma **segunda conta local**, registre-a e execute `docker compose exec api python -m app.seed --grant-admin SEU_USERNAME`. O cadastro público sempre cria um leitor. Os volumes preservam banco e EPUBs ao reiniciar.
 
 ### Importar Project Gutenberg em lote
 
