@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { pageContainer } from "@/app/lib/ui";
 
-type Props = { bookId: number; title: string; userId: number | null };
+type Props = { bookId: number; title: string; totalPages: number; userId: number | null };
 const MIN_FONT_SIZE_PT = 8;
 const MAX_FONT_SIZE_PT = 36;
 const DEFAULT_FONT_SIZE_PT = 12;
@@ -75,7 +75,7 @@ function findTocEntry(entries: TocEntry[], href?: string | null): TocEntry | nul
   return best;
 }
 
-export default function EpubReader({ bookId, title, userId }: Props) {
+export default function EpubReader({ bookId, title, totalPages, userId }: Props) {
   const viewerRef = useRef<HTMLDivElement>(null);
   const bookRef = useRef<EpubBook | null>(null);
   const renditionRef = useRef<Rendition | null>(null);
@@ -248,10 +248,72 @@ export default function EpubReader({ bookId, title, userId }: Props) {
   }, [bookId, userId]);
 
   useEffect(() => {
+    if (!bookReady || userId === null) return;
+    let disposed = false;
+    let sessionId: number | null = null;
+    let activeSeconds = 0;
+    let lastTick = Date.now();
+    let ending = false;
+
+    function tick() {
+      const now = Date.now();
+      if (document.visibilityState === "visible") {
+        activeSeconds += Math.max(0, (now - lastTick) / 1000);
+      }
+      lastTick = now;
+    }
+
+    async function endSession(keepalive = false) {
+      if (ending || sessionId === null) return;
+      ending = true;
+      tick();
+      const seconds = Math.max(0, Math.round(activeSeconds));
+      try {
+        await fetch(`/api/books/${bookId}/session`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId, tempoAtivoSegundos: seconds }),
+          keepalive,
+        });
+      } catch {
+        // Reading sessions are optional and should never block the reader.
+      }
+    }
+
+    void (async () => {
+      try {
+        const response = await fetch(`/api/books/${bookId}/session`, { method: "POST" });
+        if (!response.ok) return;
+        const data = (await response.json()) as { id_sessao?: unknown };
+        if (typeof data.id_sessao === "number" && Number.isSafeInteger(data.id_sessao)) {
+          sessionId = data.id_sessao;
+        }
+        if (disposed) void endSession();
+      } catch {
+        // Reading sessions are optional and should never block the reader.
+      }
+    })();
+
+    const onVisibilityChange = () => tick();
+    const onPageHide = () => { void endSession(true); };
+    const interval = window.setInterval(tick, 1000);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("pagehide", onPageHide);
+
+    return () => {
+      disposed = true;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("pagehide", onPageHide);
+      void endSession();
+    };
+  }, [bookId, bookReady, userId]);
+
+  useEffect(() => {
     if (!bookReady || !settingsReady || !bookRef.current || !viewerRef.current) return;
     let disposed = false;
     let saveTimer: ReturnType<typeof setTimeout> | null = null;
-    let pendingPosition: string | null = null;
+    let pendingProgress: { position: string; pagesRead: number } | null = null;
     let saving = false;
     const storageKey = `livrusp-reader:${userId ?? "guest"}:${bookId}`;
     const progressUrl = `/api/books/${bookId}/progress`;
@@ -280,14 +342,14 @@ export default function EpubReader({ bookId, title, userId }: Props) {
     async function saveProgress() {
       if (saving || userId === null) return;
       saving = true;
-      while (pendingPosition) {
-        const position = pendingPosition;
-        pendingPosition = null;
+      while (pendingProgress) {
+        const { position, pagesRead } = pendingProgress;
+        pendingProgress = null;
         try {
           const response = await fetch(progressUrl, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ position }),
+            body: JSON.stringify({ position, pagesRead }),
           });
           if (!disposed) setSaveMessage(response.ok ? "Position saved" : "Saved on this device only");
         } catch {
@@ -336,12 +398,14 @@ export default function EpubReader({ bookId, title, userId }: Props) {
         nextPercentage = 100;
       }
 
-      setPercentage(Math.max(0, Math.min(100, Math.round(nextPercentage))));
+      const roundedPercentage = Math.max(0, Math.min(100, Math.round(nextPercentage)));
+      setPercentage(roundedPercentage);
+      return roundedPercentage;
     }
 
     function onRelocated(location: Location) {
       if (disposed) return;
-      updateChapterPosition(location);
+      const percentageRead = updateChapterPosition(location);
       const position = location.start?.cfi;
       if (!position) return;
       positionRef.current = position;
@@ -349,7 +413,11 @@ export default function EpubReader({ bookId, title, userId }: Props) {
       if (userId === null) {
         setSaveMessage("Position saved on this device");
       } else {
-        pendingPosition = position;
+        const pagesRead =
+          totalPages > 0
+            ? Math.min(totalPages, Math.max(1, Math.ceil((percentageRead / 100) * totalPages)))
+            : 0;
+        pendingProgress = { position, pagesRead };
         setSaveMessage("Saving position...");
         if (saveTimer) clearTimeout(saveTimer);
         saveTimer = setTimeout(() => { void saveProgress(); }, 700);
@@ -387,7 +455,7 @@ export default function EpubReader({ bookId, title, userId }: Props) {
     return () => {
       disposed = true;
       if (saveTimer) clearTimeout(saveTimer);
-      if (pendingPosition) void saveProgress();
+      if (pendingProgress) void saveProgress();
       rendition.off("relocated", onRelocated);
       rendition.off("rendered", attachKeyboard);
       for (const doc of keyboardDocs) {
@@ -396,7 +464,7 @@ export default function EpubReader({ bookId, title, userId }: Props) {
       if (renditionRef.current === rendition) renditionRef.current = null;
       rendition.destroy();
     };
-  }, [bookId, bookReady, handleKeyboard, settingsReady, userId]);
+  }, [bookId, bookReady, handleKeyboard, settingsReady, totalPages, userId]);
 
   return (
     <div className={`${pageContainer} flex min-h-screen flex-col gap-3 py-3 sm:py-5`}>
