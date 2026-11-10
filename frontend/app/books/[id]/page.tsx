@@ -21,7 +21,7 @@ export default async function BookDetailsPage({ params }: BookDetailsPageProps) 
 
   if (!Number.isInteger(bookId) || bookId <= 0) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-10 text-slate-900">
+      <main className="flex min-h-screen items-center justify-center bg-[#D9E1F1] px-6 py-10 text-slate-900">
         <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
           <LivruspLogo className="block h-6 w-auto" />
           <h1 className="mt-4 text-2xl font-bold tracking-tight">Invalid book link</h1>
@@ -47,7 +47,7 @@ export default async function BookDetailsPage({ params }: BookDetailsPageProps) 
 
   if (bookResult.status === "not_found") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-10 text-slate-900">
+      <main className="flex min-h-screen items-center justify-center bg-[#D9E1F1] px-6 py-10 text-slate-900">
         <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
           <LivruspLogo className="block h-6 w-auto" />
           <h1 className="mt-4 text-2xl font-bold tracking-tight">Book not found</h1>
@@ -69,7 +69,7 @@ export default async function BookDetailsPage({ params }: BookDetailsPageProps) 
 
   if (bookResult.status === "unavailable") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-10 text-slate-900">
+      <main className="flex min-h-screen items-center justify-center bg-[#D9E1F1] px-6 py-10 text-slate-900">
         <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
           <LivruspLogo className="block h-6 w-auto" />
           <h1 className="mt-4 text-2xl font-bold tracking-tight">Catalog unavailable</h1>
@@ -90,7 +90,7 @@ export default async function BookDetailsPage({ params }: BookDetailsPageProps) 
     : null;
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-10 text-slate-900">
+    <main className="min-h-screen bg-[#D9E1F1] px-6 py-10 text-slate-900">
       <div className="mx-auto max-w-4xl space-y-8">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">

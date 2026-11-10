@@ -16,7 +16,7 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
 
   if (bookResult.status !== "ok") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-100 px-6 text-slate-900">
+      <main className="flex min-h-screen items-center justify-center bg-[#D9E1F1] px-6 text-slate-900">
         <div className="rounded-xl bg-white p-8 shadow-sm">
           <h1 className="text-xl font-semibold">Book unavailable</h1>
           <p className="mt-2 text-slate-600">
@@ -34,7 +34,7 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
 
   const currentUser = await getOptionalCurrentUser();
   return (
-    <main className="min-h-screen bg-slate-100 text-slate-900">
+    <main className="min-h-screen bg-[#D9E1F1] text-slate-900">
       <EpubReader
         bookId={bookResult.book.id_livro}
         title={bookResult.book.titulo}
