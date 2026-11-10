@@ -100,7 +100,7 @@ export default function BookListActions({
       {feedback && (
         <p
           aria-live="polite"
-          className={`absolute top-full left-0 z-10 mt-1.5 whitespace-nowrap text-xs ${
+          className={`absolute top-full left-0 z-10 mt-1.5 max-w-[20rem] text-xs ${
             feedback.type === "error" ? "text-red-600" : "text-emerald-600"
           }`}
           role="status"
