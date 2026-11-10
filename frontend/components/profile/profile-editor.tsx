@@ -14,6 +14,7 @@ import {
   type ProfileLevel,
   type UserProfile,
 } from "@/app/lib/profile-utils";
+import { card, cardInset, cardInsetMuted } from "@/app/lib/ui";
 import LogoutButton from "@/components/auth/logout-button";
 
 type FormStatus = "idle" | "submitting" | "success" | "error";
@@ -222,7 +223,7 @@ export default function ProfileEditor({
     <div className="grid gap-8 lg:grid-cols-12 lg:items-start">
       {/* Left Column: Live Reader Card & Account Overview */}
       <aside aria-label="Reader profile preview" className="space-y-6 lg:col-span-5">
-        <section className="rounded-[28px] border border-black/10 bg-[#E6EBF5]/90 p-6 shadow-xs backdrop-blur-xs sm:p-8">
+        <section className={`${card} p-6 sm:p-8`}>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#556B45]">
               Reader Card Preview
@@ -299,7 +300,7 @@ export default function ProfileEditor({
           </div>
 
           {/* Equipped cosmetics summary */}
-          <div className="mt-6 grid grid-cols-2 gap-3 rounded-2xl border border-black/10 bg-white/70 p-3.5 text-xs">
+          <div className={`mt-6 grid grid-cols-2 gap-3 p-3.5 text-xs ${cardInset}`}>
             <div>
               <span className="font-mono text-[10px] uppercase tracking-wider text-[#556B45]">
                 Avatar
@@ -336,7 +337,7 @@ export default function ProfileEditor({
 
           {/* Reading Progress & Points Summary */}
           <dl className="mt-6 grid grid-cols-3 gap-3 border-t border-black/10 pt-5 text-center">
-            <div className="rounded-2xl border border-black/10 bg-white/75 px-3 py-3">
+            <div className={`px-3 py-3 ${cardInset}`}>
               <dt className="font-mono text-[10px] uppercase tracking-wider text-[#556B45]">
                 Points
               </dt>
@@ -344,7 +345,7 @@ export default function ProfileEditor({
                 {savedProfile.pontos_leitura}
               </dd>
             </div>
-            <div className="rounded-2xl border border-black/10 bg-white/75 px-3 py-3">
+            <div className={`px-3 py-3 ${cardInset}`}>
               <dt className="font-mono text-[10px] uppercase tracking-wider text-[#556B45]">
                 Books Read
               </dt>
@@ -352,7 +353,7 @@ export default function ProfileEditor({
                 {stats.booksCompleted}
               </dd>
             </div>
-            <div className="rounded-2xl border border-black/10 bg-white/75 px-3 py-3">
+            <div className={`px-3 py-3 ${cardInset}`}>
               <dt className="font-mono text-[10px] uppercase tracking-wider text-[#556B45]">
                 Pages
               </dt>
@@ -363,7 +364,7 @@ export default function ProfileEditor({
           </dl>
 
           {nextLevel ? (
-            <div className="mt-4 rounded-2xl border border-black/10 bg-[#D9E1F1]/75 px-4 py-3 text-xs text-black/75">
+            <div className={`mt-4 px-4 py-3 text-xs text-black/75 ${cardInsetMuted}`}>
               <div className="flex items-center justify-between gap-2 font-mono text-[11px]">
                 <span className="font-semibold text-[#1E2E4F]">
                   Next level: {nextLevel.nome}
@@ -419,7 +420,7 @@ export default function ProfileEditor({
       {/* Right Column: Profile Editor Form */}
       <section
         aria-labelledby="profile-editor-heading"
-        className="rounded-[28px] border border-black/10 bg-[#E6EBF5]/90 p-6 shadow-xs backdrop-blur-xs sm:p-8 lg:col-span-7"
+        className={`${card} p-6 sm:p-8 lg:col-span-7`}
       >
         <div className="border-b border-black/10 pb-5">
           <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#556B45]">
@@ -788,7 +789,7 @@ export default function ProfileEditor({
           </fieldset>
 
           {/* Additional Reading Metadata Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-black/10 bg-white/60 px-4 py-3 text-xs text-black/65">
+          <div className={`flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-xs text-black/65 ${cardInset}`}>
             <span>
               Active reading time:{" "}
               <strong className="font-semibold text-black">

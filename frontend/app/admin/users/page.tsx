@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { getAdminData, type AdminUser } from "@/app/lib/admin";
-import { primaryCompact } from "@/app/lib/ui";
+import { card, primaryCompact } from "@/app/lib/ui";
 
 type UsersPageProps = {
   searchParams: Promise<{ q?: string | string[]; page?: string | string[] }>;
@@ -36,11 +36,11 @@ export default async function AdminUsersPage({ searchParams }: UsersPageProps) {
       </form>
 
       {users === null ? (
-        <p className="mt-6 rounded-xl bg-white p-5 text-red-700">Could not load users.</p>
+        <p className={`mt-6 p-5 text-red-700 ${card}`}>Could not load users.</p>
       ) : users.length === 0 ? (
-        <p className="mt-6 rounded-xl bg-white p-5 text-slate-600">No users found.</p>
+        <p className={`mt-6 p-5 text-slate-600 ${card}`}>No users found.</p>
       ) : (
-        <ul className="mt-6 divide-y divide-slate-200 rounded-xl bg-white shadow-sm">
+        <ul className={`mt-6 divide-y divide-slate-200 ${card}`}>
           {users.map((user) => (
             <li className="flex flex-wrap items-center justify-between gap-3 p-4" key={user.id}>
               <div className="min-w-0">

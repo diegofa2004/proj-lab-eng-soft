@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 import type { Book, CurrentUser, Review } from "@/app/lib/books";
-import { primaryCompact, secondaryCompact } from "@/app/lib/ui";
+import { card, cardInset, primaryCompact, secondaryCompact } from "@/app/lib/ui";
 import BookListActions from "@/components/books/book-list-actions";
 import { StarRatingDisplay } from "@/components/books/star-rating";
 import { LivruspLogo } from "@/components/home/livrusp-logos";
@@ -48,7 +48,7 @@ export default function BookDetailsCard({
     : book.descricao.trim();
 
   return (
-    <section className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+    <section className={`${card} p-8`}>
       <div className="flex flex-col gap-8 md:flex-row md:items-start">
         {book.capa_url ? (
           <div className="relative h-64 w-44 shrink-0 overflow-hidden rounded-xl bg-slate-100 shadow-md">
@@ -109,7 +109,7 @@ export default function BookDetailsCard({
             </p>
           </div>
 
-          <dl className="grid grid-cols-2 gap-4 rounded-xl bg-slate-50 p-4 text-sm sm:grid-cols-3">
+          <dl className={`grid grid-cols-2 gap-4 p-4 text-sm sm:grid-cols-3 ${cardInset}`}>
             <div>
               <dt className="font-medium text-slate-500">Publication date</dt>
               <dd className="mt-1 font-semibold text-slate-900">

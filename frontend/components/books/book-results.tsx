@@ -6,6 +6,7 @@ import {
   searchBooks,
   type BookSearchFilters,
 } from "@/app/lib/books";
+import { card } from "@/app/lib/ui";
 import BookResultCard from "@/components/books/book-result-card";
 
 type BookResultsProps = {
@@ -22,7 +23,7 @@ function ResultsMessage({
   action?: { href: string; label: string };
 }) {
   return (
-    <section className="rounded-[28px] border border-black/10 bg-[#E6EBF5]/90 p-10 text-center shadow-xs backdrop-blur-xs">
+    <section className={`${card} p-10 text-center`}>
       <h2 className="font-serif text-3xl font-normal tracking-tight text-black">{title}</h2>
       <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-black/65">{description}</p>
       {action ? (
@@ -163,7 +164,7 @@ export function BookResultsSkeleton() {
       <ul className="grid gap-5 sm:grid-cols-2">
         {Array.from({ length: 4 }, (_, index) => (
           <li
-            className="flex gap-5 rounded-[24px] border border-black/10 bg-[#E6EBF5]/90 p-5 shadow-2xs"
+            className={`flex gap-5 p-5 ${card}`}
             key={index}
           >
             <div className="h-44 w-28 shrink-0 animate-pulse rounded bg-[#D9E1F1]" />

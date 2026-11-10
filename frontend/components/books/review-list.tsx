@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import type { CurrentUser, Review } from "@/app/lib/books";
-import { dangerCompact } from "@/app/lib/ui";
+import { card, cardInset, dangerCompact } from "@/app/lib/ui";
 import { StarRatingDisplay } from "@/components/books/star-rating";
 
 type ReviewListProps = {
@@ -58,7 +58,7 @@ export default function ReviewList({ reviews, currentUser }: ReviewListProps) {
   }
 
   return (
-    <section className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+    <section className={`${card} p-8`}>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold tracking-tight text-slate-900">Reader reviews</h2>
@@ -83,7 +83,7 @@ export default function ReviewList({ reviews, currentUser }: ReviewListProps) {
       )}
 
       {sortedReviews.length === 0 ? (
-        <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+        <div className={`mt-6 border-dashed p-8 text-center ${cardInset}`}>
           <p className="text-sm font-medium text-slate-700">
             No reviews yet. Be the first to share your thoughts!
           </p>

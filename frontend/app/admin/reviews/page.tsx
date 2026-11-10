@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { getAdminData, type AdminReview } from "@/app/lib/admin";
+import { card } from "@/app/lib/ui";
 import AdminReviewList from "@/components/admin/admin-review-list";
 
 type ReviewsPageProps = {
@@ -23,7 +24,7 @@ export default async function AdminReviewsPage({ searchParams }: ReviewsPageProp
       <p className="mt-1 text-sm text-slate-600">Review recent comments and remove those that violate the rules.</p>
       <div className="mt-5">
         {reviews === null
-          ? <p className="rounded-xl bg-white p-5 text-red-700">Could not load comments.</p>
+          ? <p className={`p-5 text-red-700 ${card}`}>Could not load comments.</p>
           : <AdminReviewList reviews={reviews} />}
       </div>
       <div className="mt-5 flex gap-4 text-sm font-semibold text-[#1E2E4F]">

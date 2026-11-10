@@ -7,6 +7,7 @@ import {
   getBookReviewCount,
   type BookSearchResult,
 } from "@/app/lib/books";
+import { card, cardInteractive } from "@/app/lib/ui";
 import { StarRatingDisplay } from "@/components/books/star-rating";
 import { LivruspLogo } from "@/components/home/livrusp-logos";
 
@@ -37,7 +38,7 @@ export default function BookResultCard({ book }: BookResultCardProps) {
   return (
     <li>
       <Link
-        className="group flex h-full gap-5 rounded-[24px] border border-black/10 bg-[#E6EBF5]/90 p-5 shadow-2xs transition duration-200 hover:-translate-y-0.5 hover:border-[#1E2E4F]/40 hover:bg-white/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E2E4F]"
+        className={`group flex h-full gap-5 p-5 ${card} ${cardInteractive}`}
         href={`/books/${book.id_livro}`}
       >
         {book.capa_url ? (

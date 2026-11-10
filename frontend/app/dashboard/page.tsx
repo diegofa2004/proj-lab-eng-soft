@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { requireCurrentUser } from "@/app/lib/auth";
 import { SIGNED_NAV_LINKS } from "@/app/lib/navigation";
-import { pageBody, pageContainer } from "@/app/lib/ui";
+import { card, pageBody, pageContainer } from "@/app/lib/ui";
 import { formatActiveTime, getReadingDashboard, type ReadingDashboard } from "@/app/lib/reading";
 import SiteFooter from "@/components/layout/site-footer";
 import SiteHeader from "@/components/layout/site-header";
@@ -83,7 +83,7 @@ export default async function DashboardPage() {
           {result.status === "error" ? (
             <section
               aria-live="polite"
-              className="rounded-2xl border border-red-300 bg-red-50/80 p-6 text-red-800 sm:p-8"
+              className="rounded-[24px] border border-red-300 bg-red-50/80 p-6 text-red-800 sm:p-8"
               role="alert"
             >
               <h2 className="font-serif text-2xl font-normal">Dashboard unavailable</h2>
@@ -100,7 +100,7 @@ export default async function DashboardPage() {
               <section aria-label="Reading statistics" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {buildMetrics(result.dashboard).map((metric) => (
                   <article
-                    className="flex flex-col justify-between rounded-[24px] border border-black/10 bg-[#E6EBF5]/90 p-6 shadow-2xs sm:p-7"
+                    className={`flex flex-col justify-between p-6 sm:p-7 ${card}`}
                     key={metric.label}
                   >
                     <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#556B45]">
@@ -115,7 +115,7 @@ export default async function DashboardPage() {
               </section>
 
               {isNewReader(result.dashboard) ? (
-                <section className="rounded-[24px] border border-black/10 bg-white/70 p-6 sm:p-8">
+                <section className={`${card} p-6 sm:p-8`}>
                   <h2 className="font-serif text-3xl font-normal tracking-tight text-black">
                     Your reading journey starts here.
                   </h2>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { getAdminData, type AdminStats } from "@/app/lib/admin";
+import { card } from "@/app/lib/ui";
 
 export default async function AdminOverviewPage() {
   const stats = await getAdminData<AdminStats>("/admin/stats");
@@ -9,7 +10,7 @@ export default async function AdminOverviewPage() {
     <section>
       <h2 className="text-xl font-semibold">Overview</h2>
       {!stats ? (
-        <p className="mt-4 rounded-xl bg-white p-5 text-red-700">Administration data is unavailable.</p>
+        <p className={`mt-4 p-5 text-red-700 ${card}`}>Administration data is unavailable.</p>
       ) : (
         <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
@@ -18,7 +19,7 @@ export default async function AdminOverviewPage() {
             { label: "Books", value: stats.books, href: "/admin/books" },
             { label: "Visible comments", value: stats.reviews, href: "/admin/reviews" },
           ].map((item) => (
-            <Link className="rounded-xl bg-white p-6 shadow-sm hover:ring-2 hover:ring-[#1E2E4F]/20" href={item.href} key={item.label}>
+            <Link className={`block p-6 hover:ring-2 hover:ring-[#1E2E4F]/20 ${card}`} href={item.href} key={item.label}>
               <span className="text-sm text-slate-500">{item.label}</span>
               <strong className="mt-2 block text-3xl">{item.value}</strong>
             </Link>
