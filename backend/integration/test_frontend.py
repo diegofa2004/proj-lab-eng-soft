@@ -44,6 +44,7 @@ def test_frontend_journey():
     catalog = api("GET", "/books", params={"q": "Primeiros passos"})
     book = catalog[0]["id_livro"]
     details = api("GET", f"/books/{book}")
+    total_pages = details["total_paginas"]
     assert details["generos"] and details["autores"]
     epub = api("GET", f"/books/{book}/content").content
     assert epub.startswith(b"PK")
@@ -59,7 +60,9 @@ def test_frontend_journey():
     )
     for _ in range(2):
         api("PUT", f"/me/lists/favorito/{book}", token=token)
-    assert len(api("GET", "/me/lists", token=token)) == 1
+    api("PUT", f"/me/lists/ler_depois/{book}", token=token)
+    assert len(api("GET", "/me/lists", token=token)) == 2
+    assert len(api("GET", "/me/lists", token=token, params={"tipo": "ler_depois"})) == 1
     note = api("POST", "/me/notes", 201, token, json={"id_livro": book, "texto": "private"})
     api("PATCH", f"/me/notes/{note['id_nota']}", 404, admin, json={"texto": "forbidden"})
     assert not api("GET", "/me/notes", token=admin)
@@ -75,11 +78,24 @@ def test_frontend_journey():
         item["id_avaliacao"] == review["id_avaliacao"]
         for item in api("GET", "/admin/reviews/feed", token=admin)
     )
-    api("PUT", f"/me/progress/{book}", 422, token, json={"paginas_distintas_lidas": 3})
+    api(
+        "PUT",
+        f"/me/progress/{book}",
+        422,
+        token,
+        json={"paginas_distintas_lidas": total_pages + 1},
+    )
     for _ in range(2):
-        api("PUT", f"/me/progress/{book}", token=token, json={"paginas_distintas_lidas": 2})
+        api(
+            "PUT",
+            f"/me/progress/{book}",
+            token=token,
+            json={"paginas_distintas_lidas": total_pages},
+        )
     assert len(api("GET", "/me/points", token=token)) == 1
     assert api("GET", "/me/dashboard", token=token)["livros_concluidos"] == 1
+    assert not api("GET", "/me/lists", token=token, params={"tipo": "ler_depois"})
+    assert len(api("GET", "/me/lists", token=token, params={"tipo": "favorito"})) == 1
     session = api("POST", f"/me/sessions/{book}", 201, token)
     api(
         "PUT",

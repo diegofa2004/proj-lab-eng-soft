@@ -31,7 +31,9 @@ def account(client, *, admin=False):
 def test_validation_progress_and_admin_rules():
     seed()
     client = TestClient(app)
-    book_id = client.get("/v2/books", params={"q": "Primeiros passos"}).json()[0]["id_livro"]
+    catalog_book = client.get("/v2/books", params={"q": "Primeiros passos"}).json()[0]
+    book_id = catalog_book["id_livro"]
+    total_pages = catalog_book["total_paginas"]
     user_id, headers, name = account(client)
     admin_id, admin_headers, _ = account(client, admin=True)
 
@@ -80,7 +82,9 @@ def test_validation_progress_and_admin_rules():
         )
     assert (
         client.put(
-            f"/v2/me/progress/{book_id}", headers=headers, json={"paginas_distintas_lidas": 2}
+            f"/v2/me/progress/{book_id}",
+            headers=headers,
+            json={"paginas_distintas_lidas": total_pages},
         ).status_code
         == 403
     )
@@ -101,7 +105,9 @@ def test_validation_progress_and_admin_rules():
     assert client.get(f"/v2/books/{book_id}/content", headers=headers).status_code == 200
     assert (
         client.put(
-            f"/v2/me/progress/{book_id}", headers=headers, json={"paginas_distintas_lidas": 2}
+            f"/v2/me/progress/{book_id}",
+            headers=headers,
+            json={"paginas_distintas_lidas": total_pages},
         ).status_code
         == 200
     )

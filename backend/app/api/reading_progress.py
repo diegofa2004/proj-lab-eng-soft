@@ -3,10 +3,11 @@
 from datetime import UTC, datetime
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.models.acesso_livro import AcessoLivro
+from app.models.item_lista import ItemLista
 from app.models.livro import Livro
 from app.models.movimento_pontos import MovimentoPontos
 from app.models.progresso_leitura import ProgressoLeitura
@@ -63,4 +64,11 @@ def apply_reading_progress(
                     chave_evento=f"completed:{user.id}:{book.id_livro}",
                 )
             )
+    db.execute(
+        delete(ItemLista).where(
+            ItemLista.id_usuario == user.id,
+            ItemLista.id_livro == book.id_livro,
+            ItemLista.tipo == "ler_depois",
+        )
+    )
     return row

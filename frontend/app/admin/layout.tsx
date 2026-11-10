@@ -9,7 +9,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const admin = await requireAdmin();
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900">
+    <div className="min-h-screen bg-[#D9E1F1] text-slate-900">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-5">
           <Link aria-label="LivrUSP home" href="/home"><LivruspLogo className="h-6 w-auto" /></Link>

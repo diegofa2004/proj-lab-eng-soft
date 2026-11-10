@@ -26,7 +26,7 @@ export default async function BooksPage({ searchParams }: BooksPageProps) {
   const [genres, currentUser] = await Promise.all([getGenres(), getOptionalCurrentUser()]);
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-10 text-slate-900">
+    <main className="min-h-screen bg-[#D9E1F1] px-6 py-10 text-slate-900">
       <div className="mx-auto max-w-5xl space-y-8">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
