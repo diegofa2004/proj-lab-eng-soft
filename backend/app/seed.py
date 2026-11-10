@@ -21,67 +21,123 @@ from app.db.base import (
 )
 from app.db.session import SessionLocal
 
-DEMO_TITLE = "Primeiros passos no LivrUSP"
-DEMO_CHAPTERS = (
-    (
-        "chapter-1",
-        "Abrindo o livro",
-        (
-            "Este é o livro de demonstração do LivrUSP.",
-            "Use os controles do leitor para navegar entre os capítulos e acompanhar o progresso.",
+DEMO_BOOKS = (
+    {
+        "title": "Primeiros passos no LivrUSP",
+        "author": "Equipe LivrUSP",
+        "genre": "Introdução",
+        "description": "Um guia de 5 capítulos para testar o leitor.",
+        "published_on": date(2026, 1, 1),
+        "chapters": (
+            (
+                "chapter-1",
+                "Abrindo o livro",
+                (
+                    "Este é o livro de demonstração do LivrUSP.",
+                    "Use os controles do leitor para navegar entre os capítulos e acompanhar "
+                    "o progresso.",
+                ),
+            ),
+            (
+                "chapter-2",
+                "Conhecendo o catálogo",
+                (
+                    "O catálogo reúne livros publicados e permite buscar por título, autor "
+                    "e gênero.",
+                    "Você também pode ordenar os resultados por popularidade, avaliação e data.",
+                ),
+            ),
+            (
+                "chapter-3",
+                "Sua estante",
+                (
+                    "Favoritos, livros para ler depois e leituras em andamento ficam em "
+                    "estantes separadas.",
+                    "Ao começar a ler, o livro deixa a lista de leitura futura.",
+                ),
+            ),
+            (
+                "chapter-4",
+                "Acompanhando o progresso",
+                (
+                    "O leitor salva a última posição e mostra quanto da obra já foi percorrido.",
+                    "Os livros concluídos alimentam o dashboard de leitura.",
+                ),
+            ),
+            (
+                "chapter-5",
+                "Próximos passos",
+                (
+                    "Explore o catálogo, avalie os livros que terminou e compartilhe suas "
+                    "descobertas.",
+                    "Este capítulo encerra o livro de demonstração.",
+                ),
+            ),
         ),
-    ),
-    (
-        "chapter-2",
-        "Conhecendo o catálogo",
-        (
-            "O catálogo reúne livros publicados e permite buscar por título, autor e gênero.",
-            "Você também pode ordenar os resultados por popularidade, avaliação e data.",
+    },
+    {
+        "title": "Segundo livro de teste no LivrUSP",
+        "author": "Autora de Teste",
+        "genre": "Gênero de Teste",
+        "description": "Livro de 4 capítulos para testar buscas por título, autora e gênero.",
+        "published_on": date(2026, 2, 1),
+        "chapters": (
+            (
+                "chapter-1",
+                "Busca por título",
+                (
+                    "Este livro existe para testar a busca por título no catálogo.",
+                    "Pesquise por 'Segundo livro de teste' e ele deve aparecer.",
+                ),
+            ),
+            (
+                "chapter-2",
+                "Busca por autora",
+                (
+                    "Pesquise por 'Autora de Teste' para validar a busca por autor.",
+                    "O resultado deve incluir este livro.",
+                ),
+            ),
+            (
+                "chapter-3",
+                "Busca por gênero",
+                (
+                    "Filtre o catálogo por 'Gênero de Teste'.",
+                    "Este livro deve ser o único resultado do filtro.",
+                ),
+            ),
+            (
+                "chapter-4",
+                "Resultado esperado",
+                (
+                    "As buscas por título, autora e gênero devem retornar este mesmo livro.",
+                    "Use este fixture para validar filtros e combinações no catálogo.",
+                ),
+            ),
         ),
-    ),
-    (
-        "chapter-3",
-        "Sua estante",
-        (
-            "Favoritos, livros para ler depois e leituras em andamento ficam em "
-            "estantes separadas.",
-            "Ao começar a ler, o livro deixa a lista de leitura futura.",
-        ),
-    ),
-    (
-        "chapter-4",
-        "Acompanhando o progresso",
-        (
-            "O leitor salva a última posição e mostra quanto da obra já foi percorrido.",
-            "Os livros concluídos alimentam o dashboard de leitura.",
-        ),
-    ),
-    (
-        "chapter-5",
-        "Próximos passos",
-        (
-            "Explore o catálogo, avalie os livros que terminou e compartilhe suas descobertas.",
-            "Este capítulo encerra o livro de demonstração.",
-        ),
-    ),
+    },
 )
-DEMO_PAGES = len(DEMO_CHAPTERS)
 
 
-def write_demo_epub(path: Path) -> None:
+def write_epub(
+    path: Path,
+    *,
+    title: str,
+    chapters: tuple[tuple[str, str, tuple[str, ...]], ...],
+) -> None:
     """Create a valid multi-chapter EPUB3 fixture without storing a binary in Git."""
     manifest_items = [
         '<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>'
     ]
     spine_items: list[str] = []
     toc_items: list[str] = []
-    for chapter_id, title, _ in DEMO_CHAPTERS:
+    for chapter_id, chapter_title, _ in chapters:
         manifest_items.append(
             f'<item id="{chapter_id}" href="{chapter_id}.xhtml" '
             'media-type="application/xhtml+xml"/>'
         )
         spine_items.append(f'<itemref idref="{chapter_id}"/>')
-        toc_items.append(f'<li><a href="{chapter_id}.xhtml">{title}</a></li>')
+        toc_items.append(f'<li><a href="{chapter_id}.xhtml">{chapter_title}</a></li>')
 
     with zipfile.ZipFile(path, "w") as archive:
         archive.writestr("mimetype", "application/epub+zip", compress_type=zipfile.ZIP_STORED)
@@ -97,8 +153,8 @@ def write_demo_epub(path: Path) -> None:
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
             "<package version=\"3.0\" xmlns=\"http://www.idpf.org/2007/opf\" "
             "unique-identifier=\"book-id\"><metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\">"
-            "<dc:identifier id=\"book-id\">livrusp-demo</dc:identifier>"
-            f"<dc:title>{DEMO_TITLE}</dc:title><dc:language>pt-BR</dc:language>"
+            f"<dc:identifier id=\"book-id\">livrusp-{path.stem}</dc:identifier>"
+            f"<dc:title>{title}</dc:title><dc:language>pt-BR</dc:language>"
             '<meta property="dcterms:modified">2026-01-01T00:00:00Z</meta>'
             "</metadata><manifest>"
             + "".join(manifest_items)
@@ -116,14 +172,14 @@ def write_demo_epub(path: Path) -> None:
             + "".join(toc_items)
             + "</ol></nav></body></html>",
         )
-        for chapter_id, title, paragraphs in DEMO_CHAPTERS:
+        for chapter_id, chapter_title, paragraphs in chapters:
             body = "".join(f"<p>{paragraph}</p>" for paragraph in paragraphs)
             archive.writestr(
                 f"OEBPS/{chapter_id}.xhtml",
                 "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
                 '<html xmlns="http://www.w3.org/1999/xhtml">'
-                f"<head><title>{title}</title></head><body>"
-                f"<h1>{title}</h1>{body}</body></html>",
+                f"<head><title>{chapter_title}</title></head><body>"
+                f"<h1>{chapter_title}</h1>{body}</body></html>",
             )
 
 
@@ -145,29 +201,34 @@ def seed():
         get_or_create(
             AssetPerfil, dict(arquivo="/v2/demo/avatar.svg"), tipo="avatar", nome="Leitor"
         )
-        author = get_or_create(Autor, nome="Equipe LivrUSP")
-        genre = get_or_create(Genero, nome="Introdução")
-        description = f"Um guia de {DEMO_PAGES} capítulos para testar o leitor."
-        row = get_or_create(
-            Livro,
-            dict(
-                descricao=description,
-                data_publicacao=date(2026, 1, 1),
-                arquivo_conteudo="pending",
-                total_paginas=DEMO_PAGES,
-                origem="catalogo",
-                status_publicacao="publicado",
-            ),
-            titulo=DEMO_TITLE,
-            id_publicador=None,
-        )
-        get_or_create(LivroAutor, id_livro=row.id_livro, id_autor=author.id_autor)
-        get_or_create(LivroGenero, id_livro=row.id_livro, id_genero=genre.id_genero)
-        row.descricao = description
-        row.total_paginas = DEMO_PAGES
-        row.arquivo_conteudo = f"/v2/books/{row.id_livro}/content"
         CONTENT.mkdir(exist_ok=True)
-        write_demo_epub(CONTENT / f"{row.id_livro}.epub")
+
+        for book in DEMO_BOOKS:
+            author = get_or_create(Autor, nome=book["author"])
+            genre = get_or_create(Genero, nome=book["genre"])
+            row = get_or_create(
+                Livro,
+                dict(
+                    descricao=book["description"],
+                    data_publicacao=book["published_on"],
+                    arquivo_conteudo="pending",
+                    total_paginas=len(book["chapters"]),
+                    origem="catalogo",
+                    status_publicacao="publicado",
+                ),
+                titulo=book["title"],
+                id_publicador=None,
+            )
+            get_or_create(LivroAutor, id_livro=row.id_livro, id_autor=author.id_autor)
+            get_or_create(LivroGenero, id_livro=row.id_livro, id_genero=genre.id_genero)
+            row.descricao = book["description"]
+            row.total_paginas = len(book["chapters"])
+            row.arquivo_conteudo = f"/v2/books/{row.id_livro}/content"
+            write_epub(
+                CONTENT / f"{row.id_livro}.epub",
+                title=book["title"],
+                chapters=book["chapters"],
+            )
 
 
 if __name__ == "__main__":
