@@ -602,6 +602,7 @@ export type SocialActivityItem = {
 
 export type SignedHomeData = {
   myReadings: BookSearchResult[];
+  favorites: BookSearchResult[];
   myStories: BookSearchResult[];
   toBeRead: BookSearchResult[];
   myReviews: { book: BookSearchResult; review: Review }[];
@@ -743,28 +744,31 @@ export async function getSignedHomeData(
     }
   }
 
-  // Reading progress IDs
-  const readingBookIds: number[] = [];
+  // Books the reader has actually started, including finished books.
+  const startedBookIds = new Set<number>();
 
   if (v2ProgressResponse.ok && Array.isArray(v2ProgressResponse.data)) {
     for (const item of v2ProgressResponse.data) {
-      readingBookIds.push(item.id_livro);
+      startedBookIds.add(item.id_livro);
     }
   }
 
   if (v2SessionsResponse.ok && Array.isArray(v2SessionsResponse.data)) {
     for (const session of v2SessionsResponse.data) {
-      readingBookIds.push(session.id_livro);
+      startedBookIds.add(session.id_livro);
     }
   }
 
+  const myReadings = await resolveBooksByIds(Array.from(startedBookIds), bookMap);
+
+  // Favorites are a separate shelf from reading progress.
+  const favoriteIds: number[] = [];
   if (v2FavoritesResponse.ok && Array.isArray(v2FavoritesResponse.data)) {
     for (const item of v2FavoritesResponse.data) {
-      readingBookIds.push(item.id_livro);
+      favoriteIds.push(item.id_livro);
     }
   }
-
-  const myReadings = await resolveBooksByIds(readingBookIds, bookMap);
+  const favorites = await resolveBooksByIds(favoriteIds, bookMap);
 
   // My stories (books published/created by the current user)
   const myStoryIds: number[] = [];
@@ -788,11 +792,13 @@ export async function getSignedHomeData(
   }
   const myStories = await resolveBooksByIds(myStoryIds, bookMap);
 
-  // To-be-read
+  // To-be-read only holds books that have not been started yet.
   const toReadIds: number[] = [];
   if (v2ToReadResponse.ok && Array.isArray(v2ToReadResponse.data)) {
     for (const item of v2ToReadResponse.data) {
-      toReadIds.push(item.id_livro);
+      if (!startedBookIds.has(item.id_livro)) {
+        toReadIds.push(item.id_livro);
+      }
     }
   }
   const toBeRead = await resolveBooksByIds(toReadIds, bookMap);
@@ -837,6 +843,7 @@ export async function getSignedHomeData(
 
   return {
     myReadings,
+    favorites,
     myStories,
     toBeRead,
     myReviews,
