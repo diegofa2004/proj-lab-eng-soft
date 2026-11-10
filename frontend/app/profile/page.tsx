@@ -8,6 +8,7 @@ import {
   requireUserProfile,
 } from "@/app/lib/profile";
 import { SIGNED_NAV_LINKS } from "@/app/lib/navigation";
+import { pageBody, pageContainer } from "@/app/lib/ui";
 import { LivruspFooterLogo } from "@/components/home/livrusp-logos";
 import SiteHeader from "@/components/layout/site-header";
 import ProfileEditor from "@/components/profile/profile-editor";
@@ -25,8 +26,8 @@ export default async function ProfilePage() {
   ]);
 
   return (
-    <div className="min-h-screen bg-[#D9E1F1] font-sans text-black selection:bg-[#1E2E4F] selection:text-white">
-      <div className="mx-auto max-w-[1280px] px-6 sm:px-10 lg:px-12">
+    <div className={pageBody}>
+      <div className={pageContainer}>
         <SiteHeader
           activeHref="/profile"
           currentUser={{ username: profile.nome_perfil, is_admin: Boolean(profile.is_admin) }}

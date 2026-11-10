@@ -1,3 +1,8 @@
+export const pageBody =
+  "min-h-screen bg-[#D9E1F1] font-sans text-black selection:bg-[#1E2E4F] selection:text-white";
+
+export const pageContainer = "mx-auto max-w-[1280px] px-6 sm:px-10 lg:px-12";
+
 export const primaryPill =
   "inline-flex items-center justify-center rounded-full bg-[#1E2E4F] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#15223B] sm:px-6 sm:py-3 sm:text-sm";
 

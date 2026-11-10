@@ -6,6 +6,7 @@ import {
   getOptionalCurrentUser,
   getUserBookListsStatus,
 } from "@/app/lib/books";
+import { pageBody, pageContainer } from "@/app/lib/ui";
 import BookDetailsCard from "@/components/books/book-details-card";
 import ReviewForm from "@/components/books/review-form";
 import ReviewList from "@/components/books/review-list";
@@ -22,7 +23,7 @@ export default async function BookDetailsPage({ params }: BookDetailsPageProps) 
 
   if (!Number.isInteger(bookId) || bookId <= 0) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#D9E1F1] px-6 py-10 text-slate-900">
+      <main className={`${pageBody} flex items-center justify-center px-6 py-10`}>
         <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
           <LivruspLogo className="block h-6 w-auto" />
           <h1 className="mt-4 text-2xl font-bold tracking-tight">Invalid book link</h1>
@@ -48,7 +49,7 @@ export default async function BookDetailsPage({ params }: BookDetailsPageProps) 
 
   if (bookResult.status === "not_found") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#D9E1F1] px-6 py-10 text-slate-900">
+      <main className={`${pageBody} flex items-center justify-center px-6 py-10`}>
         <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
           <LivruspLogo className="block h-6 w-auto" />
           <h1 className="mt-4 text-2xl font-bold tracking-tight">Book not found</h1>
@@ -70,7 +71,7 @@ export default async function BookDetailsPage({ params }: BookDetailsPageProps) 
 
   if (bookResult.status === "unavailable") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#D9E1F1] px-6 py-10 text-slate-900">
+      <main className={`${pageBody} flex items-center justify-center px-6 py-10`}>
         <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
           <LivruspLogo className="block h-6 w-auto" />
           <h1 className="mt-4 text-2xl font-bold tracking-tight">Catalog unavailable</h1>
@@ -91,33 +92,35 @@ export default async function BookDetailsPage({ params }: BookDetailsPageProps) 
     : null;
 
   return (
-    <main className="min-h-screen bg-[#D9E1F1] px-6 py-10 text-slate-900">
-      <div className="mx-auto max-w-4xl space-y-8">
+    <main className={pageBody}>
+      <div className={pageContainer}>
         <SiteHeader activeHref="/books" currentUser={currentUser} />
 
-        <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-sm">
-          <Link className="font-medium text-black/60 hover:text-black" href="/books">
-            Books
-          </Link>
-          <span aria-hidden="true" className="text-black/30">/</span>
-          <span className="max-w-xs truncate font-medium text-black">{book.titulo}</span>
-        </nav>
+        <div className="space-y-8 pt-4 pb-16 sm:pt-8 sm:pb-20">
+          <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-sm">
+            <Link className="font-medium text-black/60 hover:text-black" href="/books">
+              Books
+            </Link>
+            <span aria-hidden="true" className="text-black/30">/</span>
+            <span className="max-w-xs truncate font-medium text-black">{book.titulo}</span>
+          </nav>
 
-        <BookDetailsCard
-          book={book}
-          currentUser={currentUser}
-          isFavorite={listStatus.isFavorite}
-          isToRead={listStatus.isToRead}
-          reviews={reviews}
-        />
+          <BookDetailsCard
+            book={book}
+            currentUser={currentUser}
+            isFavorite={listStatus.isFavorite}
+            isToRead={listStatus.isToRead}
+            reviews={reviews}
+          />
 
-        <ReviewForm
-          bookId={book.id_livro}
-          currentUser={currentUser}
-          existingUserReview={existingUserReview}
-        />
+          <ReviewForm
+            bookId={book.id_livro}
+            currentUser={currentUser}
+            existingUserReview={existingUserReview}
+          />
 
-        <ReviewList currentUser={currentUser} reviews={reviews} />
+          <ReviewList currentUser={currentUser} reviews={reviews} />
+        </div>
       </div>
     </main>
   );

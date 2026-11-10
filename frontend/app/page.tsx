@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { getOptionalCurrentUser, getSignedHomeData } from "@/app/lib/books";
+import { pageBody, pageContainer } from "@/app/lib/ui";
 import { LivruspFooterLogo } from "@/components/home/livrusp-logos";
 import HeroBookStack from "@/components/home/hero-book-stack";
 import SiteHeader from "@/components/layout/site-header";
@@ -126,8 +127,8 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#D9E1F1] font-sans text-black selection:bg-[#1E2E4F] selection:text-white">
-      <div className="mx-auto max-w-[1280px] px-6 sm:px-10 lg:px-12">
+    <div className={pageBody}>
+      <div className={pageContainer}>
         <SiteHeader />
 
         <main>

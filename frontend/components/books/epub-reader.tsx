@@ -4,6 +4,8 @@ import Link from "next/link";
 import type { Book as EpubBook, Location, NavItem, Rendition } from "epubjs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { pageContainer } from "@/app/lib/ui";
+
 type Props = { bookId: number; title: string; userId: number | null };
 const MIN_FONT_SIZE_PT = 8;
 const MAX_FONT_SIZE_PT = 36;
@@ -397,7 +399,7 @@ export default function EpubReader({ bookId, title, userId }: Props) {
   }, [bookId, bookReady, handleKeyboard, settingsReady, userId]);
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-[960px] flex-col gap-3 px-2 py-3 sm:px-4 sm:py-5">
+    <div className={`${pageContainer} flex min-h-screen flex-col gap-3 py-3 sm:py-5`}>
       <header className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 shadow-sm">
         <div className="min-w-0">
           <Link className="text-sm font-medium text-[#1E2E4F] hover:underline" href={`/books/${bookId}`}>← Back to book</Link>
