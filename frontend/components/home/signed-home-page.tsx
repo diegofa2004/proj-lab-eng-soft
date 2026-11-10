@@ -113,7 +113,7 @@ function BookCoverItem({
 
   return (
     <Link
-      className={`group flex w-fit shrink-0 ${card} ${cardInteractive} p-3 sm:p-4`}
+      className={`group flex w-fit shrink-0 ${card} ${cardInteractive} p-5`}
       href={`/books/${book.id_livro}`}
     >
       <div
@@ -206,7 +206,7 @@ function BookShelfSection({
       ) : (
         <div className="mt-8 sm:mt-10">
           <Link
-            className={`group flex w-fit ${card} ${cardInteractive} p-3 sm:p-4`}
+            className={`group flex w-fit ${card} ${cardInteractive} p-5`}
             href="/books"
           >
             <div className="flex aspect-[2/3] w-[150px] flex-col justify-between rounded-lg border border-dashed border-black/25 bg-white/60 p-4 text-left sm:w-[185px] sm:p-5">
