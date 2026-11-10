@@ -67,8 +67,14 @@ def test_frontend_journey():
     api("DELETE", f"/me/notes/{note['id_nota']}", 204, token)
     review = api("PUT", f"/books/{book}/review", token=token, json={"nota": 4})
     api("GET", f"/books/{book}/reviews")
-    assert api("GET", f"/admin/users/{reader['id']}/reviews", token=admin)[0]["id_avaliacao"] == review["id_avaliacao"]
-    assert any(item["id_avaliacao"] == review["id_avaliacao"] for item in api("GET", "/admin/reviews/feed", token=admin))
+    assert (
+        api("GET", f"/admin/users/{reader['id']}/reviews", token=admin)[0]["id_avaliacao"]
+        == review["id_avaliacao"]
+    )
+    assert any(
+        item["id_avaliacao"] == review["id_avaliacao"]
+        for item in api("GET", "/admin/reviews/feed", token=admin)
+    )
     api("PUT", f"/me/progress/{book}", 422, token, json={"paginas_distintas_lidas": 3})
     for _ in range(2):
         api("PUT", f"/me/progress/{book}", token=token, json={"paginas_distintas_lidas": 2})
