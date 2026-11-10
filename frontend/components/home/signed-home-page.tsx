@@ -113,7 +113,7 @@ function BookCoverItem({
 
   return (
     <Link
-      className={`group relative flex aspect-[2/3] w-[150px] shrink-0 flex-col justify-between overflow-hidden border ${theme.border} ${theme.bg} ${theme.text} p-4 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E2E4F] sm:w-[185px] sm:p-5`}
+      className={`group relative flex aspect-[2/3] w-[150px] shrink-0 flex-col justify-between overflow-hidden rounded-[24px] border ${theme.border} ${theme.bg} ${theme.text} p-4 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E2E4F] sm:w-[185px] sm:p-5`}
       href={`/books/${book.id_livro}`}
     >
       {book.capa_url ? (
@@ -203,7 +203,7 @@ function BookShelfSection({
         ) : (
           <div className="mt-8 sm:mt-10">
             <Link
-              className="group flex aspect-[2/3] w-[150px] flex-col justify-between border border-dashed border-black/25 bg-[#E6EBF5]/50 p-4 text-left transition hover:border-[#1E2E4F] hover:bg-[#E6EBF5]/80 sm:w-[185px] sm:p-5"
+              className="group flex aspect-[2/3] w-[150px] flex-col justify-between rounded-[24px] border border-dashed border-black/25 bg-[#E6EBF5]/50 p-4 text-left transition hover:border-[#1E2E4F] hover:bg-[#E6EBF5]/80 sm:w-[185px] sm:p-5"
               href="/books"
             >
               <span className="font-mono text-[10px] uppercase tracking-wider text-[#556B45]">
