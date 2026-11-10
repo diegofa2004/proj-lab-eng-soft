@@ -8,9 +8,11 @@ import {
   parseBookSearchParams,
   type SearchParamsRecord,
 } from "@/app/lib/books";
+import { GUEST_NAV_LINKS, SIGNED_NAV_LINKS } from "@/app/lib/navigation";
 import { pageBody, pageContainer } from "@/app/lib/ui";
 import BookResults, { BookResultsSkeleton } from "@/components/books/book-results";
 import BookSearchForm from "@/components/books/book-search-form";
+import SiteFooter from "@/components/layout/site-footer";
 import SiteHeader from "@/components/layout/site-header";
 
 export const metadata: Metadata = {
@@ -25,12 +27,14 @@ export default async function BooksPage({ searchParams }: BooksPageProps) {
   const filters = parseBookSearchParams(await searchParams);
   const [genres, currentUser] = await Promise.all([getGenres(), getOptionalCurrentUser()]);
 
+  const navLinks = currentUser ? SIGNED_NAV_LINKS : GUEST_NAV_LINKS;
+
   return (
-    <main className={pageBody}>
+    <div className={pageBody}>
       <div className={pageContainer}>
         <SiteHeader activeHref="/books" currentUser={currentUser} />
 
-        <div className="space-y-8 pt-4 pb-16 sm:pt-8 sm:pb-20">
+        <main className="space-y-8 pt-4 pb-16 sm:pt-8 sm:pb-20">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-wider text-[#556B45]">
               Catalog
@@ -52,9 +56,11 @@ export default async function BooksPage({ searchParams }: BooksPageProps) {
           <Suspense fallback={<BookResultsSkeleton />} key={JSON.stringify(filters)}>
             <BookResults filters={filters} />
           </Suspense>
-        </div>
+        </main>
+
+        <SiteFooter links={navLinks} />
       </div>
-    </main>
+    </div>
   );
 }
 

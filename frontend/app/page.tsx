@@ -2,9 +2,10 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { getOptionalCurrentUser, getSignedHomeData } from "@/app/lib/books";
+import { GUEST_NAV_LINKS } from "@/app/lib/navigation";
 import { pageBody, pageContainer } from "@/app/lib/ui";
-import { LivruspFooterLogo } from "@/components/home/livrusp-logos";
 import HeroBookStack from "@/components/home/hero-book-stack";
+import SiteFooter from "@/components/layout/site-footer";
 import SiteHeader from "@/components/layout/site-header";
 import SignedHomePage from "@/components/home/signed-home-page";
 
@@ -230,32 +231,7 @@ export default async function Home() {
           </section>
         </main>
 
-        {/* Footer */}
-        <footer className="pt-12 pb-10">
-          <div className="flex items-center gap-6 text-xs font-semibold text-black sm:text-sm">
-            <Link className="transition hover:opacity-70" href="/books">
-              Search
-            </Link>
-            <Link className="transition hover:opacity-70" href="/books">
-              Reviews
-            </Link>
-          </div>
-
-          <div className="mt-14 flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
-            <div className="flex flex-wrap items-baseline gap-6 sm:gap-10">
-              <Link aria-label="LivrUSP Home" href="/">
-                <LivruspFooterLogo />
-              </Link>
-              <span className="font-mono text-[11px] text-[#556B45]">
-                © livrUSP. &nbsp; {new Date().getFullYear()}
-              </span>
-            </div>
-
-            <p className="font-mono text-[11px] text-[#556B45]">
-              All Rights Reserved
-            </p>
-          </div>
-        </footer>
+        <SiteFooter links={GUEST_NAV_LINKS} />
       </div>
     </div>
   );

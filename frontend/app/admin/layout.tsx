@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import { requireAdmin } from "@/app/lib/admin";
 import { pageBody, pageContainer } from "@/app/lib/ui";
+import SiteFooter from "@/components/layout/site-footer";
 import SiteHeader from "@/components/layout/site-header";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
@@ -40,6 +41,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           </nav>
           {children}
         </div>
+
+        <SiteFooter />
       </div>
     </div>
   );

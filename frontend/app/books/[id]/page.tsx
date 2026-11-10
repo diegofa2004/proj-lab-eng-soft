@@ -6,11 +6,13 @@ import {
   getOptionalCurrentUser,
   getUserBookListsStatus,
 } from "@/app/lib/books";
+import { GUEST_NAV_LINKS, SIGNED_NAV_LINKS } from "@/app/lib/navigation";
 import { pageBody, pageContainer } from "@/app/lib/ui";
 import BookDetailsCard from "@/components/books/book-details-card";
 import ReviewForm from "@/components/books/review-form";
 import ReviewList from "@/components/books/review-list";
 import { LivruspLogo } from "@/components/home/livrusp-logos";
+import SiteFooter from "@/components/layout/site-footer";
 import SiteHeader from "@/components/layout/site-header";
 
 type BookDetailsPageProps = {
@@ -91,12 +93,14 @@ export default async function BookDetailsPage({ params }: BookDetailsPageProps) 
     ? (reviews.find((review) => review.id_usuario === currentUser.id) ?? null)
     : null;
 
+  const navLinks = currentUser ? SIGNED_NAV_LINKS : GUEST_NAV_LINKS;
+
   return (
-    <main className={pageBody}>
+    <div className={pageBody}>
       <div className={pageContainer}>
         <SiteHeader activeHref="/books" currentUser={currentUser} />
 
-        <div className="space-y-8 pt-4 pb-16 sm:pt-8 sm:pb-20">
+        <main className="space-y-8 pt-4 pb-16 sm:pt-8 sm:pb-20">
           <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-sm">
             <Link className="font-medium text-black/60 hover:text-black" href="/books">
               Books
@@ -120,9 +124,11 @@ export default async function BookDetailsPage({ params }: BookDetailsPageProps) 
           />
 
           <ReviewList currentUser={currentUser} reviews={reviews} />
-        </div>
+        </main>
+
+        <SiteFooter links={navLinks} />
       </div>
-    </main>
+    </div>
   );
 }
 
