@@ -52,6 +52,51 @@ export type AdminStats = {
   reviews: number;
 };
 
+export type AdminActionType =
+  | "bloquear_usuario"
+  | "desbloquear_usuario"
+  | "bloquear_livro"
+  | "desbloquear_livro"
+  | "moderar_avaliacao"
+  | "editar_livro";
+
+export type AdminActivity = {
+  id_log: number;
+  id_admin: number;
+  id_usuario_alvo: number | null;
+  id_livro_alvo: number | null;
+  id_avaliacao_alvo: number | null;
+  tipo_acao: AdminActionType;
+  descricao: string;
+  data_hora: string;
+};
+
+export type EnrichedAdminActivity = AdminActivity & {
+  admin_username?: string | null;
+  target_user?: {
+    id: number;
+    username: string;
+    email: string;
+    is_blocked: boolean;
+  } | null;
+  target_book?: {
+    id_livro: number;
+    titulo: string;
+    status_publicacao: StatusPublicacao;
+    status_bloqueado: boolean;
+  } | null;
+  target_review?: {
+    id_avaliacao: number;
+    id_livro: number;
+    id_usuario: number;
+    nota: number;
+    texto_revisao: string | null;
+    is_removida: boolean;
+    titulo_livro?: string;
+    nome_usuario?: string;
+  } | null;
+};
+
 export async function requireAdmin() {
   const user = await requireCurrentUser();
   if (!user.is_admin) redirect("/profile");
@@ -202,3 +247,113 @@ export async function getAdminBookById(bookId: number): Promise<AdminBook | null
 
   return matchedBook;
 }
+
+export async function getAdminActivities(options?: {
+  limit?: number;
+  offset?: number;
+}): Promise<AdminActivity[] | null> {
+  const safeLimit = Math.min(Math.max(1, options?.limit ?? 50), 100);
+  const safeOffset = Math.max(0, options?.offset ?? 0);
+  const query = new URLSearchParams({
+    limit: String(safeLimit),
+    offset: String(safeOffset),
+  });
+
+  const v2Actions = await getAdminData<AdminActivity[]>(`/v2/admin/actions?${query}`);
+  if (Array.isArray(v2Actions)) {
+    return v2Actions;
+  }
+
+  const legacyActivities = await getAdminData<AdminActivity[]>("/admin/activities");
+  if (Array.isArray(legacyActivities)) {
+    return legacyActivities.slice(safeOffset, safeOffset + safeLimit);
+  }
+
+  return null;
+}
+
+export async function enrichAdminActivities(
+  activities: AdminActivity[],
+): Promise<EnrichedAdminActivity[]> {
+  if (activities.length === 0) return [];
+
+  const [users, books, reviews] = await Promise.all([
+    getAdminData<AdminUser[]>("/v2/admin/users?limit=100"),
+    getAdminData<AdminBook[]>("/v2/admin/books?limit=100"),
+    getAdminData<Review[]>("/v2/admin/reviews?limit=100"),
+  ]);
+
+  const userMap = new Map<number, AdminUser>();
+  if (Array.isArray(users)) {
+    for (const user of users) {
+      if (user && typeof user.id === "number") {
+        userMap.set(user.id, user);
+      }
+    }
+  }
+
+  const bookMap = new Map<number, AdminBook>();
+  if (Array.isArray(books)) {
+    for (const book of books) {
+      if (book && typeof book.id_livro === "number") {
+        bookMap.set(book.id_livro, book);
+      }
+    }
+  }
+
+  const reviewMap = new Map<number, Review>();
+  if (Array.isArray(reviews)) {
+    for (const review of reviews) {
+      if (review && typeof review.id_avaliacao === "number") {
+        reviewMap.set(review.id_avaliacao, review);
+      }
+    }
+  }
+
+  return activities.map((activity) => {
+    const adminUser = userMap.get(activity.id_admin);
+    const targetUser =
+      activity.id_usuario_alvo !== null ? userMap.get(activity.id_usuario_alvo) : undefined;
+    const targetBook =
+      activity.id_livro_alvo !== null ? bookMap.get(activity.id_livro_alvo) : undefined;
+    const targetReview =
+      activity.id_avaliacao_alvo !== null ? reviewMap.get(activity.id_avaliacao_alvo) : undefined;
+
+    const reviewBook = targetReview ? bookMap.get(targetReview.id_livro) : undefined;
+    const reviewAuthor = targetReview ? userMap.get(targetReview.id_usuario) : undefined;
+
+    return {
+      ...activity,
+      admin_username: adminUser?.username ?? null,
+      target_user: targetUser
+        ? {
+            id: targetUser.id,
+            username: targetUser.username,
+            email: targetUser.email,
+            is_blocked: targetUser.is_blocked,
+          }
+        : null,
+      target_book: targetBook
+        ? {
+            id_livro: targetBook.id_livro,
+            titulo: targetBook.titulo,
+            status_publicacao: targetBook.status_publicacao,
+            status_bloqueado: targetBook.status_bloqueado,
+          }
+        : null,
+      target_review: targetReview
+        ? {
+            id_avaliacao: targetReview.id_avaliacao,
+            id_livro: targetReview.id_livro,
+            id_usuario: targetReview.id_usuario,
+            nota: targetReview.nota,
+            texto_revisao: targetReview.texto_revisao,
+            is_removida: targetReview.is_removida,
+            titulo_livro: reviewBook?.titulo,
+            nome_usuario: reviewAuthor?.username,
+          }
+        : null,
+    };
+  });
+}
+

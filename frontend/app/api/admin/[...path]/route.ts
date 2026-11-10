@@ -323,6 +323,49 @@ async function forwardAction(request: Request, context: RouteContext, method: "P
   }
 }
 
+export async function GET(request: Request, context: RouteContext) {
+  const { path } = await context.params;
+
+  if (path.length !== 1 || (path[0] !== "activities" && path[0] !== "actions")) {
+    return NextResponse.json({ detail: "Invalid administration action." }, { status: 404 });
+  }
+
+  const token = await getAdminToken();
+  if (!token) {
+    return NextResponse.json({ detail: "Sign in as an administrator." }, { status: 401 });
+  }
+
+  const search = new URL(request.url).searchParams;
+  const rawLimit = Number(search.get("limit") ?? 50);
+  const rawOffset = Number(search.get("offset") ?? 0);
+  const limit = Number.isSafeInteger(rawLimit) ? Math.min(Math.max(1, rawLimit), 100) : 50;
+  const offset = Number.isSafeInteger(rawOffset) ? Math.max(0, rawOffset) : 0;
+
+  const backendEndpoint =
+    path[0] === "actions"
+      ? `${getBackendUrl()}/v2/admin/actions?limit=${limit}&offset=${offset}`
+      : `${getBackendUrl()}/admin/activities`;
+
+  try {
+    const backendResponse = await fetch(backendEndpoint, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    const responseBody = await backendResponse.text();
+    return new NextResponse(responseBody, {
+      status: backendResponse.status,
+      headers: {
+        "Content-Type": backendResponse.headers.get("Content-Type") ?? "application/json",
+      },
+    });
+  } catch {
+    return NextResponse.json(
+      { detail: "Administration service is unavailable." },
+      { status: 502 },
+    );
+  }
+}
+
 export async function POST(request: Request, context: RouteContext) {
   return forwardAction(request, context, "POST");
 }
