@@ -17,7 +17,9 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.add_column("livro", sa.Column("gutenberg_id", sa.BigInteger(), nullable=True), schema="plataforma")
+    op.add_column(
+        "livro", sa.Column("gutenberg_id", sa.BigInteger(), nullable=True), schema="plataforma"
+    )
     op.execute(
         """
         UPDATE plataforma.livro
