@@ -13,6 +13,7 @@ type CurrentUser = {
   id_icone?: number | null;
   nivel?: string | null;
   pontos_leitura?: number;
+  onboarding_generos_concluido?: boolean;
 };
 
 function getBackendUrl() {
@@ -42,6 +43,7 @@ export const requireCurrentUser = cache(async (): Promise<CurrentUser> => {
         id_icone: number | null;
         nivel: string | null;
         pontos_leitura: number;
+        onboarding_generos_concluido: boolean;
       };
       return {
         id: profile.id_usuario,
@@ -52,6 +54,7 @@ export const requireCurrentUser = cache(async (): Promise<CurrentUser> => {
         id_icone: profile.id_icone,
         nivel: profile.nivel,
         pontos_leitura: profile.pontos_leitura,
+        onboarding_generos_concluido: profile.onboarding_generos_concluido,
       };
     }
 

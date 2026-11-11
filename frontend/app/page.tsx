@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { getForYouHomeData, getOptionalCurrentUser } from "@/app/lib/books";
@@ -123,6 +124,9 @@ export default async function Home() {
   const currentUser = await getOptionalCurrentUser();
 
   if (currentUser) {
+    if (!currentUser.onboarding_generos_concluido) {
+      redirect("/onboarding");
+    }
     const forYouData = await getForYouHomeData(currentUser);
     return <ForYouHomePage currentUser={currentUser} data={forYouData} />;
   }

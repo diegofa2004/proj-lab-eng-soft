@@ -19,6 +19,7 @@ from app.models.nivel import Nivel
 from app.models.nota_pessoal import NotaPessoal
 from app.models.pagamento import Pagamento
 from app.models.plano import Plano
+from app.models.preferencia_genero_usuario import PreferenciaGeneroUsuario
 from app.models.progresso_leitura import ProgressoLeitura
 from app.models.regra_genero_canonico import RegraGeneroCanonico
 from app.models.sessao_leitura import SessaoLeitura
@@ -46,6 +47,7 @@ __all__ = [
     "NotaPessoal",
     "Pagamento",
     "Plano",
+    "PreferenciaGeneroUsuario",
     "ProgressoLeitura",
     "RegraGeneroCanonico",
     "SessaoLeitura",

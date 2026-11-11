@@ -18,6 +18,7 @@ from app.db.base import (
     Livro,
     LivroAutor,
     LivroGeneroCanonico,
+    PreferenciaGeneroUsuario,
     ProgressoLeitura,
     SessaoLeitura,
 )
@@ -262,6 +263,14 @@ def recommendations(
 
     interaction_weights: Counter[int] = Counter()
     completed_ids: set[int] = set()
+    preference_rows = db.execute(
+        select(
+            PreferenciaGeneroUsuario.id_genero_canonico,
+            PreferenciaGeneroUsuario.tipo,
+        ).where(PreferenciaGeneroUsuario.id_usuario == user.id)
+    ).all()
+    interested_genres = {genre_id for genre_id, kind in preference_rows if kind == "interesse"}
+    excluded_genres = {genre_id for genre_id, kind in preference_rows if kind == "nao_interessa"}
     for progress in db.scalars(
         select(ProgressoLeitura).where(ProgressoLeitura.id_usuario == user.id)
     ):
@@ -286,6 +295,17 @@ def recommendations(
 
     genre_affinity: Counter[int] = Counter()
     author_affinity: Counter[int] = Counter()
+    genre_names = {
+        genre_id: name
+        for genre_id, name in db.execute(
+            select(GeneroCanonico.id_genero_canonico, GeneroCanonico.nome).where(
+                GeneroCanonico.id_genero_canonico.in_(interested_genres)
+            )
+        )
+    }
+    for genre_id in interested_genres:
+        # Explicit onboarding choices are a strong signal until reading history takes over.
+        genre_affinity[genre_id] += 4
     for book_id, weight in interaction_weights.items():
         for genre_id, name in genres_by_book[book_id]:
             if len(name.strip()) < 3:
@@ -304,7 +324,14 @@ def recommendations(
         if ratings
         else 0
     )
-    candidates = [book for book in books if book.id_livro not in completed_ids]
+    candidates = [
+        book
+        for book in books
+        if book.id_livro not in completed_ids
+        and not {genre_id for genre_id, _name in genres_by_book[book.id_livro]}.intersection(
+            excluded_genres
+        )
+    ]
     ranked: list[tuple[float, int, str, str]] = []
 
     for book in candidates:
@@ -331,7 +358,8 @@ def recommendations(
                 0.5 * genre_score + 0.25 * author_score + 0.15 * weekly_score + 0.1 * rating_score
             )
             if genre_score >= author_score and genre_score > 0:
-                reason, reason_type = f"Because you enjoy {best_genre[1]}", "genre"
+                genre_name = genre_names.get(best_genre[0], best_genre[1])
+                reason, reason_type = f"Because you enjoy {genre_name}", "genre"
             elif author_score > 0:
                 reason, reason_type = f"Because you read {best_author[1]}", "author"
             elif weekly_score > 0:

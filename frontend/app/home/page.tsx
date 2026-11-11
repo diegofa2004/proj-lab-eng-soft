@@ -13,6 +13,9 @@ export default async function SignedHomeRoutePage() {
   if (!currentUser) {
     redirect("/login");
   }
+  if (!currentUser.onboarding_generos_concluido) {
+    redirect("/onboarding");
+  }
   const data = await getForYouHomeData(currentUser);
 
   return <ForYouHomePage currentUser={currentUser} data={data} />;

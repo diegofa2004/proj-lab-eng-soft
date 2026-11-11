@@ -3,14 +3,26 @@ from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from app.api.platform import DB, Reader, lock_reader, profile_stats, require, save
 from app.core.config import settings
-from app.db.base import AssetPerfil, Assinatura, Nivel, Pagamento, Plano
+from app.db.base import (
+    AssetPerfil,
+    Assinatura,
+    GeneroCanonico,
+    Nivel,
+    Pagamento,
+    Plano,
+    PreferenciaGeneroUsuario,
+)
 from app.schemas.assinatura import AssinaturaPublic
 from app.schemas.common import PositiveId
 from app.schemas.pagamento import PagamentoPublic
+from app.schemas.preferencia_genero_usuario import (
+    PreferenciasGeneroPublic,
+    PreferenciasGeneroUpdate,
+)
 
 router = APIRouter(tags=["Account"])
 
@@ -28,6 +40,7 @@ class Profile(BaseModel):
     nivel: str | None
     is_premium: bool
     pode_publicar: bool
+    onboarding_generos_concluido: bool
 
 
 class ProfileEdit(BaseModel):
@@ -44,7 +57,61 @@ def profile(db: DB, user: Reader):
         biografia=user.biography,
         id_avatar=user.avatar_id,
         id_icone=user.icon_id,
+        onboarding_generos_concluido=user.genre_onboarding_complete,
     )
+
+
+@router.get("/me/genre-preferences", response_model=PreferenciasGeneroPublic)
+def genre_preferences(db: DB, user: Reader):
+    rows = db.execute(
+        select(
+            PreferenciaGeneroUsuario.id_genero_canonico,
+            PreferenciaGeneroUsuario.tipo,
+        ).where(PreferenciaGeneroUsuario.id_usuario == user.id)
+    ).all()
+    return {
+        "concluido": user.genre_onboarding_complete,
+        "interesses": [genre_id for genre_id, kind in rows if kind == "interesse"],
+        "nao_interessa": [genre_id for genre_id, kind in rows if kind == "nao_interessa"],
+    }
+
+
+@router.put("/me/genre-preferences", response_model=PreferenciasGeneroPublic)
+def update_genre_preferences(data: PreferenciasGeneroUpdate, db: DB, user: Reader):
+    genre_ids = set(data.interesses) | set(data.nao_interessa)
+    if genre_ids:
+        existing = set(
+            db.scalars(
+                select(GeneroCanonico.id_genero_canonico).where(
+                    GeneroCanonico.id_genero_canonico.in_(genre_ids),
+                    GeneroCanonico.ativo.is_(True),
+                )
+            ).all()
+        )
+        if existing != genre_ids:
+            raise HTTPException(422, "Unknown or inactive canonical genre")
+    db.execute(
+        delete(PreferenciaGeneroUsuario).where(PreferenciaGeneroUsuario.id_usuario == user.id)
+    )
+    db.add_all(
+        PreferenciaGeneroUsuario(id_usuario=user.id, id_genero_canonico=genre_id, tipo="interesse")
+        for genre_id in data.interesses
+    )
+    db.add_all(
+        PreferenciaGeneroUsuario(
+            id_usuario=user.id,
+            id_genero_canonico=genre_id,
+            tipo="nao_interessa",
+        )
+        for genre_id in data.nao_interessa
+    )
+    user.genre_onboarding_complete = True
+    db.commit()
+    return {
+        "concluido": True,
+        "interesses": data.interesses,
+        "nao_interessa": data.nao_interessa,
+    }
 
 
 @router.patch("/me/profile", response_model=Profile)
