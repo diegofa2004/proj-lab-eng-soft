@@ -48,6 +48,29 @@ export function getProfileBackground(background?: string | null) {
   return PROFILE_BACKGROUNDS.find((item) => item.id === background) ?? null;
 }
 
+const AVATAR_ROOT = "/LivrUSP_avatares_humanoides_8/LivrUSP_avatares_humanoides/176px_retina";
+
+export const PROFILE_AVATARS = [
+  { id: "editorial-reader", label: "Editorial Reader", src: `${AVATAR_ROOT}/01_papel_editorial.png` },
+  { id: "researcher", label: "Researcher", src: `${AVATAR_ROOT}/02_paginas_abstratas.png` },
+  { id: "literary-guardian", label: "Literary Guardian", src: `${AVATAR_ROOT}/03_biblioteca_azul_escura.png` },
+  { id: "astronomer", label: "Astronomer", src: `${AVATAR_ROOT}/04_biblioteca_cosmica.png` },
+  { id: "explorer", label: "Explorer", src: `${AVATAR_ROOT}/05_aquarela_literaria.png` },
+  { id: "detective", label: "Detective", src: `${AVATAR_ROOT}/06_detetive_noir.png` },
+  { id: "romantic-reader", label: "Romantic Reader", src: `${AVATAR_ROOT}/07_romance.png` },
+  { id: "academic", label: "Academic", src: `${AVATAR_ROOT}/08_educacao_academia.png` },
+] as const;
+
+export type ProfileAvatarId = (typeof PROFILE_AVATARS)[number]["id"];
+
+export function isProfileAvatar(value: unknown): value is ProfileAvatarId {
+  return typeof value === "string" && PROFILE_AVATARS.some((item) => item.id === value);
+}
+
+export function getProfileAvatar(avatar?: string | null) {
+  return PROFILE_AVATARS.find((item) => item.id === avatar) ?? null;
+}
+
 export type ProfileAsset = {
   id_asset: number;
   tipo: ProfileAssetType;
@@ -73,6 +96,7 @@ export type UserProfile = {
   id_icone: number | null;
   profile_ring: ProfileRingId | null;
   profile_background: ProfileBackgroundId | null;
+  profile_avatar: ProfileAvatarId | null;
   is_admin: boolean;
   pontos_leitura: number;
   id_nivel: number | null;
@@ -88,6 +112,7 @@ export type ProfileEditPayload = {
   id_icone?: number | null;
   profile_ring?: ProfileRingId | null;
   profile_background?: ProfileBackgroundId | null;
+  profile_avatar?: ProfileAvatarId | null;
 };
 
 export type ProfileDashboardStats = {

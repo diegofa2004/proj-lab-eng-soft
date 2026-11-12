@@ -73,6 +73,7 @@ class User(Base):
     )
     profile_ring: Mapped[str | None] = mapped_column("profile_ring", String(32))
     profile_background: Mapped[str | None] = mapped_column("profile_background", String(32))
+    profile_avatar: Mapped[str | None] = mapped_column("profile_avatar", String(32))
     genre_onboarding_complete: Mapped[bool] = mapped_column(
         "onboarding_generos_concluido", Boolean, nullable=False, server_default=text("false")
     )

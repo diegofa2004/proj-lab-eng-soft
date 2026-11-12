@@ -13,6 +13,7 @@ import { accessTokenCookieName } from "@/app/lib/session";
 
 export {
   MAX_BIOGRAPHY_LENGTH,
+  PROFILE_AVATARS,
   PROFILE_BACKGROUNDS,
   PROFILE_RINGS,
   getAssetLockState,
@@ -105,6 +106,7 @@ export const requireUserProfile = cache(async (): Promise<UserProfile> => {
       id_icone: null,
       profile_ring: null,
       profile_background: null,
+      profile_avatar: null,
       is_admin: Boolean(me.is_admin),
       pontos_leitura: typeof pointsData?.points === "number" ? pointsData.points : 0,
       id_nivel: null,

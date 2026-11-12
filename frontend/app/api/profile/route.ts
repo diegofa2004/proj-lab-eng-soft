@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 
 import { getBackendUrl } from "@/app/lib/books";
 import { MAX_BIOGRAPHY_LENGTH, type ProfileEditPayload } from "@/app/lib/profile";
-import { isProfileBackground, isProfileRing } from "@/app/lib/profile-utils";
+import {
+  isProfileAvatar,
+  isProfileBackground,
+  isProfileRing,
+} from "@/app/lib/profile-utils";
 import { accessTokenCookieName } from "@/app/lib/session";
 
 function isPositiveIntegerOrNull(value: unknown): value is number | null {
@@ -120,6 +124,13 @@ export async function PATCH(request: Request) {
       );
     }
     payload.profile_background = body.profile_background;
+  }
+
+  if ("profile_avatar" in body) {
+    if (body.profile_avatar !== null && !isProfileAvatar(body.profile_avatar)) {
+      return NextResponse.json({ detail: "Invalid profile avatar selection." }, { status: 422 });
+    }
+    payload.profile_avatar = body.profile_avatar;
   }
 
   try {

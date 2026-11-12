@@ -6,6 +6,7 @@ import { useId } from "react";
 
 import {
   formatProfileLevel,
+  getProfileAvatar,
   getProfileRing,
   resolveAssetImageUrl,
 } from "@/app/lib/profile-utils";
@@ -16,6 +17,7 @@ type UserAvatarMenuProps = {
   isAdmin: boolean;
   level?: string | null;
   profileRing?: string | null;
+  profileAvatar?: string | null;
   avatarPath?: string | null;
   iconPath?: string | null;
 };
@@ -88,12 +90,14 @@ export default function UserAvatarMenu({
   isAdmin,
   level,
   profileRing,
+  profileAvatar,
   avatarPath,
   iconPath,
 }: UserAvatarMenuProps) {
   const menuId = useId();
   const style = levelStyle(level);
   const selectedRing = getProfileRing(profileRing);
+  const selectedAvatar = getProfileAvatar(profileAvatar);
   const avatarUrl = avatarPath ? resolveAssetImageUrl(avatarPath) : "";
   const iconUrl = iconPath ? resolveAssetImageUrl(iconPath) : "";
 
@@ -125,7 +129,16 @@ export default function UserAvatarMenu({
             </span>
           ) : null}
           <span className="grid h-full w-full place-items-center overflow-hidden rounded-full bg-[#F7F4EE] text-sm font-bold text-[#1E2E4F]">
-            {avatarUrl ? (
+            {selectedAvatar ? (
+              <Image
+                alt=""
+                className="h-full w-full object-cover"
+                height={176}
+                src={selectedAvatar.src}
+                unoptimized
+                width={176}
+              />
+            ) : avatarUrl ? (
               // The asset proxy validates backend-owned image paths.
               // eslint-disable-next-line @next/next/no-img-element
               <img alt="" className="h-full w-full object-cover" src={avatarUrl} />
