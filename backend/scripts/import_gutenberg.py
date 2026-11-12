@@ -28,6 +28,11 @@ GUTENBERG_HOSTS = {"gutenberg.org", "www.gutenberg.org"}
 
 
 def get_json(url: str, user_agent: str) -> dict:
+    # Gutendex currently redirects `/books` to `/books/`, but query-string
+    # requests to the former may stall in containerized clients. Its `next`
+    # links can still use the non-canonical form, so normalize every page.
+    if url.startswith("https://gutendex.com/books?"):
+        url = url.replace("/books?", "/books/?", 1)
     request = Request(url, headers={"User-Agent": user_agent, "Accept": "application/json"})
     with urlopen(request, timeout=30) as response:  # noqa: S310 - URL is the known API or its next URL
         return json.load(response)
