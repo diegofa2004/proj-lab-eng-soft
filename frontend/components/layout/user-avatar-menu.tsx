@@ -113,11 +113,11 @@ export default function UserAvatarMenu({
             <Image
               alt=""
               aria-hidden="true"
-              className="pointer-events-none absolute -inset-1 z-10 h-14 w-14 max-w-none"
-              height={56}
+              className="pointer-events-none absolute -inset-1.5 z-10 h-15 w-15 max-w-none"
+              height={60}
               src={selectedRing.src}
               unoptimized
-              width={56}
+              width={60}
             />
           ) : null}
           <span className="grid h-full w-full place-items-center overflow-hidden rounded-full bg-[#F7F4EE] text-sm font-bold text-[#1E2E4F]">

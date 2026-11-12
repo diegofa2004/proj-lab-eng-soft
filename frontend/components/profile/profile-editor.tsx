@@ -268,11 +268,11 @@ export default function ProfileEditor({
                 <Image
                   alt=""
                   aria-hidden="true"
-                  className="pointer-events-none absolute -inset-2 z-10 h-[calc(100%+16px)] w-[calc(100%+16px)] max-w-none"
-                  height={112}
+                  className="pointer-events-none absolute -inset-2.5 z-10 h-[calc(100%+20px)] w-[calc(100%+20px)] max-w-none"
+                  height={116}
                   src={selectedRing.src}
                   unoptimized
-                  width={112}
+                  width={116}
                 />
               ) : null}
               {selectedIconAsset ? (
