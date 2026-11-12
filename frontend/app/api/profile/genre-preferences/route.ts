@@ -11,9 +11,21 @@ function isPositiveIntegerList(value: unknown): value is number[] {
   );
 }
 
-export async function PUT(request: Request) {
+function isSameOriginRequest(request: Request): boolean {
   const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin) {
+  if (!origin) return true;
+
+  // In Docker, Next can see its internal hostname in request.url while the
+  // Host header still identifies the public browser address (localhost:3000).
+  const requestUrl = new URL(request.url);
+  const host = request.headers.get("host");
+  const expectedOrigin = host ? `${requestUrl.protocol}//${host}` : requestUrl.origin;
+
+  return origin === expectedOrigin;
+}
+
+export async function PUT(request: Request) {
+  if (!isSameOriginRequest(request)) {
     return NextResponse.json({ detail: "Invalid request origin." }, { status: 403 });
   }
   const token = (await cookies()).get(accessTokenCookieName)?.value;
