@@ -8,11 +8,14 @@ import { type SyntheticEvent, useMemo, useState } from "react";
 import {
   formatProfileLevel,
   getAssetLockState,
+  getProfileBackground,
   getProfileRing,
   MAX_BIOGRAPHY_LENGTH,
+  PROFILE_BACKGROUNDS,
   PROFILE_RINGS,
   resolveAssetImageUrl,
   type ProfileAsset,
+  type ProfileBackgroundId,
   type ProfileDashboardStats,
   type ProfileLevel,
   type ProfileRingId,
@@ -122,6 +125,9 @@ export default function ProfileEditor({
   const [selectedRingId, setSelectedRingId] = useState<ProfileRingId | null>(
     initialProfile.profile_ring ?? null,
   );
+  const [selectedBackgroundId, setSelectedBackgroundId] = useState<ProfileBackgroundId | null>(
+    initialProfile.profile_background ?? null,
+  );
   const [formStatus, setFormStatus] = useState<FormStatus>("idle");
   const [message, setMessage] = useState<string>("");
 
@@ -143,6 +149,7 @@ export default function ProfileEditor({
     [iconAssets, selectedIconId],
   );
   const selectedRing = getProfileRing(selectedRingId);
+  const selectedBackground = getProfileBackground(selectedBackgroundId);
 
   const nextLevel = useMemo(() => {
     const sorted = [...levels].sort((a, b) => a.pontos_minimos - b.pontos_minimos);
@@ -155,7 +162,8 @@ export default function ProfileEditor({
     biografia !== (savedProfile.biografia ?? "") ||
     selectedAvatarId !== (savedProfile.id_avatar ?? null) ||
     selectedIconId !== (savedProfile.id_icone ?? null) ||
-    selectedRingId !== (savedProfile.profile_ring ?? null);
+    selectedRingId !== (savedProfile.profile_ring ?? null) ||
+    selectedBackgroundId !== (savedProfile.profile_background ?? null);
 
   const isSubmitting = formStatus === "submitting";
   const remainingChars = MAX_BIOGRAPHY_LENGTH - biografia.length;
@@ -166,6 +174,7 @@ export default function ProfileEditor({
     setSelectedAvatarId(savedProfile.id_avatar ?? null);
     setSelectedIconId(savedProfile.id_icone ?? null);
     setSelectedRingId(savedProfile.profile_ring ?? null);
+    setSelectedBackgroundId(savedProfile.profile_background ?? null);
     setFormStatus("idle");
     setMessage("");
   }
@@ -191,6 +200,7 @@ export default function ProfileEditor({
           id_avatar: selectedAvatarId,
           id_icone: selectedIconId,
           profile_ring: selectedRingId,
+          profile_background: selectedBackgroundId,
         }),
       });
 
@@ -215,6 +225,7 @@ export default function ProfileEditor({
         setSelectedAvatarId(data.id_avatar ?? null);
         setSelectedIconId(data.id_icone ?? null);
         setSelectedRingId(data.profile_ring ?? null);
+        setSelectedBackgroundId(data.profile_background ?? null);
       } else {
         setSavedProfile((prev) => ({
           ...prev,
@@ -222,6 +233,7 @@ export default function ProfileEditor({
           id_avatar: selectedAvatarId,
           id_icone: selectedIconId,
           profile_ring: selectedRingId,
+          profile_background: selectedBackgroundId,
         }));
       }
 
@@ -331,7 +343,7 @@ export default function ProfileEditor({
           </div>
 
           {/* Equipped cosmetics summary */}
-          <div className={`mt-6 grid grid-cols-3 gap-3 p-3.5 text-xs ${cardInset}`}>
+          <div className={`mt-6 grid grid-cols-2 gap-3 p-3.5 text-xs sm:grid-cols-4 ${cardInset}`}>
             <div>
               <span className="font-mono text-[10px] uppercase tracking-wider text-[#556B45]">
                 Avatar
@@ -354,6 +366,14 @@ export default function ProfileEditor({
               </span>
               <p className="mt-0.5 truncate font-semibold text-[#1E2E4F]">
                 {selectedRing ? selectedRing.label : "No ring equipped"}
+              </p>
+            </div>
+            <div>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[#556B45]">
+                Background
+              </span>
+              <p className="mt-0.5 truncate font-semibold text-[#1E2E4F]">
+                {selectedBackground ? selectedBackground.label : "Default background"}
               </p>
             </div>
           </div>
@@ -782,6 +802,100 @@ export default function ProfileEditor({
                       <p className="mt-0.5 font-mono text-[11px] text-[#556B45]">
                         Available to all readers
                       </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          {/* Background Theme Selector */}
+          <fieldset className="border-t border-black/10 pt-6">
+            <legend className={labelClassName}>Background Theme</legend>
+            <p className="mt-1 text-xs leading-relaxed text-black/60">
+              Choose the background used across your signed-in experience. All themes are available to every reader for now.
+            </p>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <button
+                aria-pressed={selectedBackgroundId === null}
+                className={`overflow-hidden rounded-2xl border text-left transition ${
+                  selectedBackgroundId === null
+                    ? "border-[#1E2E4F] bg-white ring-2 ring-[#1E2E4F]/20 shadow-xs"
+                    : "border-black/15 bg-white/70 hover:border-[#1E2E4F]/50 hover:bg-white"
+                }`}
+                onClick={() => {
+                  setSelectedBackgroundId(null);
+                  if (formStatus !== "idle") {
+                    setFormStatus("idle");
+                    setMessage("");
+                  }
+                }}
+                type="button"
+              >
+                <div className="flex aspect-video items-center justify-center bg-[#D9E1F1]">
+                  <span className="font-serif text-2xl text-[#1E2E4F]">LivrUSP</span>
+                </div>
+                <div className="flex items-center justify-between gap-3 p-3.5">
+                  <div className="min-w-0">
+                    <span className="block truncate font-serif text-lg text-black">Default background</span>
+                    <span className="mt-0.5 block font-mono text-[11px] text-[#556B45]">
+                      Standard LivrUSP palette
+                    </span>
+                  </div>
+                  {selectedBackgroundId === null ? (
+                    <span className="shrink-0 rounded-full bg-[#1E2E4F] px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-white">
+                      Selected
+                    </span>
+                  ) : null}
+                </div>
+              </button>
+
+              {PROFILE_BACKGROUNDS.map((background) => {
+                const isSelected = selectedBackgroundId === background.id;
+                return (
+                  <button
+                    aria-pressed={isSelected}
+                    className={`overflow-hidden rounded-2xl border text-left transition ${
+                      isSelected
+                        ? "border-[#1E2E4F] bg-white ring-2 ring-[#1E2E4F]/20 shadow-xs"
+                        : "border-black/15 bg-white/70 hover:border-[#1E2E4F]/50 hover:bg-white"
+                    }`}
+                    key={background.id}
+                    onClick={() => {
+                      setSelectedBackgroundId(background.id);
+                      if (formStatus !== "idle") {
+                        setFormStatus("idle");
+                        setMessage("");
+                      }
+                    }}
+                    type="button"
+                  >
+                    <div className="relative aspect-video overflow-hidden bg-[#D9E1F1]">
+                      <Image
+                        alt=""
+                        aria-hidden="true"
+                        className="object-cover"
+                        fill
+                        sizes="(max-width: 640px) 100vw, 420px"
+                        src={background.src}
+                        unoptimized
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-3 p-3.5">
+                      <div className="min-w-0">
+                        <span className="block truncate font-serif text-lg text-black">
+                          {background.label}
+                        </span>
+                        <span className="mt-0.5 block font-mono text-[11px] text-[#556B45]">
+                          Available to all readers
+                        </span>
+                      </div>
+                      {isSelected ? (
+                        <span className="shrink-0 rounded-full bg-[#1E2E4F] px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-white">
+                          Selected
+                        </span>
+                      ) : null}
                     </div>
                   </button>
                 );

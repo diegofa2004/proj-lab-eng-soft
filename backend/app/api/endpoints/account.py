@@ -38,6 +38,17 @@ ProfileRing = Literal[
     "publisher",
 ]
 
+ProfileBackground = Literal[
+    "editorial-paper",
+    "abstract-pages",
+    "dark-library",
+    "cosmic-library",
+    "literary-watercolor",
+    "noir-detective",
+    "romance",
+    "academic-education",
+]
+
 
 class Profile(BaseModel):
     id_usuario: int
@@ -47,6 +58,7 @@ class Profile(BaseModel):
     id_avatar: int | None
     id_icone: int | None
     profile_ring: ProfileRing | None
+    profile_background: ProfileBackground | None
     is_admin: bool
     pontos_leitura: int
     id_nivel: int | None
@@ -61,6 +73,7 @@ class ProfileEdit(BaseModel):
     id_avatar: PositiveId | None = None
     id_icone: PositiveId | None = None
     profile_ring: ProfileRing | None = None
+    profile_background: ProfileBackground | None = None
 
 
 @router.get("/me/profile", response_model=Profile)
@@ -72,6 +85,7 @@ def profile(db: DB, user: Reader):
         id_avatar=user.avatar_id,
         id_icone=user.icon_id,
         profile_ring=user.profile_ring,
+        profile_background=user.profile_background,
         onboarding_generos_concluido=user.genre_onboarding_complete,
     )
 
@@ -154,6 +168,8 @@ def update_profile(data: ProfileEdit, db: DB, user: Reader):
         user.biography = data.biografia
     if "profile_ring" in changes:
         user.profile_ring = data.profile_ring
+    if "profile_background" in changes:
+        user.profile_background = data.profile_background
     save(db, user)
     return profile(db, user)
 
@@ -262,6 +278,7 @@ class PublicProfile(BaseModel):
     id_avatar: int | None
     id_icone: int | None
     profile_ring: ProfileRing | None
+    profile_background: ProfileBackground | None
     nivel: str | None
 
 
@@ -276,4 +293,5 @@ def public_profile(user_id: int, db: DB):
         id_avatar=reader.avatar_id,
         id_icone=reader.icon_id,
         profile_ring=reader.profile_ring,
+        profile_background=reader.profile_background,
     )

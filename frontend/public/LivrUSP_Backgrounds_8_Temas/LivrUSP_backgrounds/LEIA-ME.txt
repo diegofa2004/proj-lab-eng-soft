@@ -1,0 +1,23 @@
+LivrUSP — 8 backgrounds para o fundo da página
+
+As imagens são independentes, sem títulos, botões ou texto, e foram preparadas em proporção aproximada de 16:9.
+
+Temas originais:
+01 - Papel editorial
+02 - Páginas abstratas
+03 - Biblioteca azul-escura
+04 - Biblioteca cósmica
+05 - Aquarela literária
+
+Novos temas:
+06 - Detetive noir (investigação)
+07 - Romance
+08 - Educação / academia
+
+Exemplo CSS:
+body {
+  min-height: 100vh;
+  background: url('/backgrounds/06_detetive_noir.png') center top / cover fixed no-repeat;
+}
+
+Observação: use um overlay translúcido se necessário para garantir contraste de leitura. Para melhor desempenho, converta os PNGs a WebP/AVIF na sua pipeline frontend.
