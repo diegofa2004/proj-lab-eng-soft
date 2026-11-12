@@ -16,6 +16,7 @@ type Metric = {
   label: string;
   value: string;
   hint: string;
+  note?: string;
 };
 
 function buildMetrics(dashboard: ReadingDashboard): Metric[] {
@@ -28,7 +29,8 @@ function buildMetrics(dashboard: ReadingDashboard): Metric[] {
     {
       label: "Reading pages",
       value: dashboard.paginas_padrao_lidas.toLocaleString("en-US"),
-      hint: "A consistent estimate of the reading volume across your books.",
+      hint: "Reading volume across your books.",
+      note: "A consistent estimate",
     },
     {
       label: "Active time",
@@ -103,9 +105,14 @@ export default async function DashboardPage() {
                     className={`flex flex-col justify-between p-6 sm:p-7 ${card}`}
                     key={metric.label}
                   >
-                    <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#556B45]">
-                      {metric.label}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#556B45]">
+                        {metric.label}
+                      </p>
+                      {metric.note ? (
+                        <span className="text-[11px] text-black/45">{metric.note}</span>
+                      ) : null}
+                    </div>
                     <p className="mt-4 font-serif text-5xl leading-none tracking-tight text-black sm:text-6xl">
                       {metric.value}
                     </p>
