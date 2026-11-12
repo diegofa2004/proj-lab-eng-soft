@@ -154,7 +154,7 @@ async function forwardBookMetadataUpdate(
       body.total_paginas > MAX_BOOK_PAGES
     ) {
       return NextResponse.json(
-        { detail: `Position count must be an integer between 1 and ${MAX_BOOK_PAGES}.` },
+        { detail: `Reading pages must be an integer between 1 and ${MAX_BOOK_PAGES}.` },
         { status: 422 },
       );
     }
@@ -167,7 +167,7 @@ async function forwardBookMetadataUpdate(
       !VALID_PUBLICATION_STATUSES.includes(body.status_publicacao as StatusPublicacao)
     ) {
       return NextResponse.json(
-        { detail: "Publication status must be rascunho, publicado, or arquivado." },
+        { detail: "Publication status must be Draft, Published, or Archived." },
         { status: 422 },
       );
     }

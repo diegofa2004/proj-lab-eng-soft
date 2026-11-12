@@ -20,7 +20,7 @@ from app.api.endpoints.catalog import CONTENT, MAX_BYTES, validate_epub
 from app.canonical_genres import classify_book
 from app.db.base import Autor, Genero, Livro, LivroAutor, LivroGenero
 from app.db.session import SessionLocal
-from app.epub_progress import epub_progress_positions
+from app.epub_progress import epub_progress_positions, epub_standard_pages
 from app.gutenberg_metadata import fetch_gutenberg_synopsis
 
 GUTENDEX_URL = "https://gutendex.com/books/"
@@ -93,6 +93,7 @@ def import_book(book: dict, epub: Path, catalog_date: date, max_genres: int) -> 
     if not title:
         raise ValueError("missing title")
     total_positions = epub_progress_positions(epub)
+    standard_pages = epub_standard_pages(epub)
 
     target: Path | None = None
     try:
@@ -105,6 +106,7 @@ def import_book(book: dict, epub: Path, catalog_date: date, max_genres: int) -> 
                 arquivo_conteudo="pending",
                 # EPUBs are reflowable, so this stores stable reading positions, not physical pages.
                 total_paginas=total_positions,
+                paginas_padrao=standard_pages,
                 origem="catalogo",
                 status_publicacao="publicado",
                 id_publicador=None,

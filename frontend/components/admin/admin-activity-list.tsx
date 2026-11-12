@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import type { AdminActionType, EnrichedAdminActivity } from "@/app/lib/admin";
+import { PUBLICATION_STATUS_LABELS } from "@/app/lib/book-presentation";
 import { card, cardInset, secondaryCompact } from "@/app/lib/ui";
 
 type CategoryFilter = "all" | "users" | "books" | "reviews";
@@ -63,12 +64,12 @@ const ACTION_METADATA: Record<AdminActionType, ActionMetadata> = {
 
 const ACTION_FILTER_OPTIONS: { value: "all" | AdminActionType; label: string }[] = [
   { value: "all", label: "All action types" },
-  { value: "bloquear_usuario", label: "User suspended (bloquear_usuario)" },
-  { value: "desbloquear_usuario", label: "User restored (desbloquear_usuario)" },
-  { value: "bloquear_livro", label: "Book removed (bloquear_livro)" },
-  { value: "desbloquear_livro", label: "Book restored (desbloquear_livro)" },
-  { value: "editar_livro", label: "Metadata updated (editar_livro)" },
-  { value: "moderar_avaliacao", label: "Comment removed (moderar_avaliacao)" },
+  { value: "bloquear_usuario", label: "User suspended" },
+  { value: "desbloquear_usuario", label: "User restored" },
+  { value: "bloquear_livro", label: "Book removed" },
+  { value: "desbloquear_livro", label: "Book restored" },
+  { value: "editar_livro", label: "Metadata updated" },
+  { value: "moderar_avaliacao", label: "Comment removed" },
 ];
 
 const CATEGORY_TABS: { value: CategoryFilter; label: string }[] = [
@@ -162,7 +163,9 @@ function renderTargetSummary(activity: EnrichedAdminActivity) {
                 : "bg-white/80 text-slate-600"
             }`}
           >
-            {targetBook.status_bloqueado ? "Removed" : targetBook.status_publicacao}
+            {targetBook.status_bloqueado
+              ? "Removed"
+              : PUBLICATION_STATUS_LABELS[targetBook.status_publicacao]}
           </span>
         )}
         {targetBook && !targetBook.status_bloqueado && targetBook.status_publicacao === "publicado" && (

@@ -5,7 +5,13 @@ import { useRouter } from "next/navigation";
 import { type SyntheticEvent, useMemo, useState } from "react";
 
 import type { AdminBook } from "@/app/lib/admin";
-import type { Author, Book, Genre, StatusPublicacao } from "@/app/lib/books";
+import { PUBLICATION_STATUS_LABELS } from "@/app/lib/book-presentation";
+import {
+  type Author,
+  type Book,
+  type Genre,
+  type StatusPublicacao,
+} from "@/app/lib/books";
 import {
   card,
   cardInset,
@@ -35,17 +41,17 @@ const PUBLICATION_STATUS_OPTIONS: {
 }[] = [
   {
     value: "publicado",
-    label: "Published (publicado)",
+    label: "Published",
     description: "Visible in the public catalog when not removed.",
   },
   {
     value: "rascunho",
-    label: "Draft (rascunho)",
+    label: "Draft",
     description: "Work in progress; hidden from public search.",
   },
   {
     value: "arquivado",
-    label: "Archived (arquivado)",
+    label: "Archived",
     description: "Retired from active catalog browsing.",
   },
 ];
@@ -290,7 +296,7 @@ export default function AdminBookMetadataEditor({
       parsedPages > MAX_BOOK_PAGES
     ) {
       setFormStatus("error");
-      setMessage(`Position count must be a whole number between 1 and ${MAX_BOOK_PAGES}.`);
+      setMessage(`Reading pages must be a whole number between 1 and ${MAX_BOOK_PAGES}.`);
       return;
     }
 
@@ -472,7 +478,7 @@ export default function AdminBookMetadataEditor({
             className={labelClassName}
             htmlFor={`book-pages-${savedBook.id_livro}`}
           >
-            Reading positions
+            Reading pages
           </label>
           <input
             className={fieldClassName}
@@ -826,8 +832,10 @@ export default function AdminBookMetadataEditor({
           <p className="mt-0.5 text-sm text-slate-500">
             #{savedBook.id_livro} ·{" "}
             {savedBook.origem === "usuario" ? "Community book" : "Catalog book"} ·{" "}
-            {savedBook.status_bloqueado ? "Removed" : savedBook.status_publicacao} ·{" "}
-            {savedBook.total_paginas} reading positions ·{" "}
+            {savedBook.status_bloqueado
+              ? "Removed"
+              : PUBLICATION_STATUS_LABELS[savedBook.status_publicacao]} ·{" "}
+            {savedBook.total_paginas} reading pages ·{" "}
             Published {normalizeDateInput(savedBook.data_publicacao)}
           </p>
 

@@ -1,5 +1,6 @@
 from calendar import monthrange
 from datetime import UTC, datetime
+from typing import Literal
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
@@ -26,6 +27,39 @@ from app.schemas.preferencia_genero_usuario import (
 
 router = APIRouter(tags=["Account"])
 
+ProfileRing = Literal[
+    "subscriber",
+    "bronze",
+    "diamond",
+    "emerald",
+    "master",
+    "gold",
+    "silver",
+    "publisher",
+]
+
+ProfileBackground = Literal[
+    "editorial-paper",
+    "abstract-pages",
+    "dark-library",
+    "cosmic-library",
+    "literary-watercolor",
+    "noir-detective",
+    "romance",
+    "academic-education",
+]
+
+ProfileAvatar = Literal[
+    "editorial-reader",
+    "researcher",
+    "literary-guardian",
+    "astronomer",
+    "explorer",
+    "detective",
+    "romantic-reader",
+    "academic",
+]
+
 
 class Profile(BaseModel):
     id_usuario: int
@@ -34,6 +68,9 @@ class Profile(BaseModel):
     biografia: str
     id_avatar: int | None
     id_icone: int | None
+    profile_ring: ProfileRing | None
+    profile_background: ProfileBackground | None
+    profile_avatar: ProfileAvatar | None
     is_admin: bool
     pontos_leitura: int
     id_nivel: int | None
@@ -47,6 +84,9 @@ class ProfileEdit(BaseModel):
     biografia: str = Field(default="", max_length=5000)
     id_avatar: PositiveId | None = None
     id_icone: PositiveId | None = None
+    profile_ring: ProfileRing | None = None
+    profile_background: ProfileBackground | None = None
+    profile_avatar: ProfileAvatar | None = None
 
 
 @router.get("/me/profile", response_model=Profile)
@@ -57,6 +97,9 @@ def profile(db: DB, user: Reader):
         biografia=user.biography,
         id_avatar=user.avatar_id,
         id_icone=user.icon_id,
+        profile_ring=user.profile_ring,
+        profile_background=user.profile_background,
+        profile_avatar=user.profile_avatar,
         onboarding_generos_concluido=user.genre_onboarding_complete,
     )
 
@@ -137,6 +180,12 @@ def update_profile(data: ProfileEdit, db: DB, user: Reader):
         setattr(user, attr, value)
     if "biografia" in changes:
         user.biography = data.biografia
+    if "profile_ring" in changes:
+        user.profile_ring = data.profile_ring
+    if "profile_background" in changes:
+        user.profile_background = data.profile_background
+    if "profile_avatar" in changes:
+        user.profile_avatar = data.profile_avatar
     save(db, user)
     return profile(db, user)
 
@@ -244,6 +293,9 @@ class PublicProfile(BaseModel):
     biografia: str
     id_avatar: int | None
     id_icone: int | None
+    profile_ring: ProfileRing | None
+    profile_background: ProfileBackground | None
+    profile_avatar: ProfileAvatar | None
     nivel: str | None
 
 
@@ -257,4 +309,7 @@ def public_profile(user_id: int, db: DB):
         biografia=reader.biography,
         id_avatar=reader.avatar_id,
         id_icone=reader.icon_id,
+        profile_ring=reader.profile_ring,
+        profile_background=reader.profile_background,
+        profile_avatar=reader.profile_avatar,
     )

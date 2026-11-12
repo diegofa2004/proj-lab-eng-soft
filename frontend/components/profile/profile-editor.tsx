@@ -6,12 +6,22 @@ import { useRouter } from "next/navigation";
 import { type SyntheticEvent, useMemo, useState } from "react";
 
 import {
+  formatProfileLevel,
   getAssetLockState,
+  getProfileAvatar,
+  getProfileBackground,
+  getProfileRing,
   MAX_BIOGRAPHY_LENGTH,
+  PROFILE_BACKGROUNDS,
+  PROFILE_AVATARS,
+  PROFILE_RINGS,
   resolveAssetImageUrl,
   type ProfileAsset,
+  type ProfileAvatarId,
+  type ProfileBackgroundId,
   type ProfileDashboardStats,
   type ProfileLevel,
+  type ProfileRingId,
   type UserProfile,
 } from "@/app/lib/profile-utils";
 import { card, cardInset, cardInsetMuted } from "@/app/lib/ui";
@@ -61,10 +71,12 @@ function AssetGraphic({
   asset,
   fallbackText,
   sizeClassName = "h-14 w-14",
+  shapeClassName = "rounded-2xl",
 }: {
   asset: ProfileAsset | null;
   fallbackText: string;
   sizeClassName?: string;
+  shapeClassName?: string;
 }) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const resolvedUrl = asset ? resolveAssetImageUrl(asset.arquivo) : "";
@@ -73,7 +85,7 @@ function AssetGraphic({
   if (showImage && asset) {
     return (
       <div
-        className={`relative overflow-hidden rounded-2xl border border-black/10 bg-[#1E2E4F]/10 ${sizeClassName}`}
+        className={`relative overflow-hidden border border-black/10 bg-[#1E2E4F]/10 ${shapeClassName} ${sizeClassName}`}
       >
         <Image
           alt={asset.nome}
@@ -91,7 +103,7 @@ function AssetGraphic({
   return (
     <div
       aria-hidden="true"
-      className={`flex items-center justify-center rounded-2xl border border-black/15 bg-[#1E2E4F] font-serif text-xl font-normal tracking-tight text-[#F7F3E8] shadow-xs ${sizeClassName}`}
+      className={`flex items-center justify-center border border-black/15 bg-[#1E2E4F] font-serif text-xl font-normal tracking-tight text-[#F7F3E8] shadow-xs ${shapeClassName} ${sizeClassName}`}
     >
       {fallbackText}
     </div>
@@ -113,6 +125,15 @@ export default function ProfileEditor({
   const [selectedIconId, setSelectedIconId] = useState<number | null>(
     initialProfile.id_icone ?? null,
   );
+  const [selectedRingId, setSelectedRingId] = useState<ProfileRingId | null>(
+    initialProfile.profile_ring ?? null,
+  );
+  const [selectedBackgroundId, setSelectedBackgroundId] = useState<ProfileBackgroundId | null>(
+    initialProfile.profile_background ?? null,
+  );
+  const [selectedProfileAvatarId, setSelectedProfileAvatarId] = useState<ProfileAvatarId | null>(
+    initialProfile.profile_avatar ?? null,
+  );
   const [formStatus, setFormStatus] = useState<FormStatus>("idle");
   const [message, setMessage] = useState<string>("");
 
@@ -133,6 +154,9 @@ export default function ProfileEditor({
     () => iconAssets.find((item) => item.id_asset === selectedIconId) ?? null,
     [iconAssets, selectedIconId],
   );
+  const selectedRing = getProfileRing(selectedRingId);
+  const selectedBackground = getProfileBackground(selectedBackgroundId);
+  const selectedIllustratedAvatar = getProfileAvatar(selectedProfileAvatarId);
 
   const nextLevel = useMemo(() => {
     const sorted = [...levels].sort((a, b) => a.pontos_minimos - b.pontos_minimos);
@@ -144,7 +168,10 @@ export default function ProfileEditor({
   const hasChanges =
     biografia !== (savedProfile.biografia ?? "") ||
     selectedAvatarId !== (savedProfile.id_avatar ?? null) ||
-    selectedIconId !== (savedProfile.id_icone ?? null);
+    selectedIconId !== (savedProfile.id_icone ?? null) ||
+    selectedRingId !== (savedProfile.profile_ring ?? null) ||
+    selectedBackgroundId !== (savedProfile.profile_background ?? null) ||
+    selectedProfileAvatarId !== (savedProfile.profile_avatar ?? null);
 
   const isSubmitting = formStatus === "submitting";
   const remainingChars = MAX_BIOGRAPHY_LENGTH - biografia.length;
@@ -154,6 +181,9 @@ export default function ProfileEditor({
     setBiografia(savedProfile.biografia ?? "");
     setSelectedAvatarId(savedProfile.id_avatar ?? null);
     setSelectedIconId(savedProfile.id_icone ?? null);
+    setSelectedRingId(savedProfile.profile_ring ?? null);
+    setSelectedBackgroundId(savedProfile.profile_background ?? null);
+    setSelectedProfileAvatarId(savedProfile.profile_avatar ?? null);
     setFormStatus("idle");
     setMessage("");
   }
@@ -178,6 +208,9 @@ export default function ProfileEditor({
           biografia,
           id_avatar: selectedAvatarId,
           id_icone: selectedIconId,
+          profile_ring: selectedRingId,
+          profile_background: selectedBackgroundId,
+          profile_avatar: selectedProfileAvatarId,
         }),
       });
 
@@ -201,12 +234,18 @@ export default function ProfileEditor({
         setBiografia(data.biografia ?? "");
         setSelectedAvatarId(data.id_avatar ?? null);
         setSelectedIconId(data.id_icone ?? null);
+        setSelectedRingId(data.profile_ring ?? null);
+        setSelectedBackgroundId(data.profile_background ?? null);
+        setSelectedProfileAvatarId(data.profile_avatar ?? null);
       } else {
         setSavedProfile((prev) => ({
           ...prev,
           biografia,
           id_avatar: selectedAvatarId,
           id_icone: selectedIconId,
+          profile_ring: selectedRingId,
+          profile_background: selectedBackgroundId,
+          profile_avatar: selectedProfileAvatarId,
         }));
       }
 
@@ -243,14 +282,43 @@ export default function ProfileEditor({
           {/* Avatar + Identity */}
           <div className="mt-6 flex items-start gap-5">
             <div className="relative shrink-0">
-              <AssetGraphic
-                asset={selectedAvatarAsset}
-                fallbackText={userInitials}
-                sizeClassName="h-20 w-20 sm:h-24 sm:w-24 text-2xl sm:text-3xl"
-              />
+              {selectedIllustratedAvatar ? (
+                <div className="h-20 w-20 overflow-hidden rounded-full border border-black/10 bg-[#1E2E4F]/10 sm:h-24 sm:w-24">
+                  <Image
+                    alt=""
+                    className="h-full w-full object-cover"
+                    height={176}
+                    src={selectedIllustratedAvatar.src}
+                    unoptimized
+                    width={176}
+                  />
+                </div>
+              ) : (
+                <AssetGraphic
+                  asset={selectedAvatarAsset}
+                  fallbackText={userInitials}
+                  shapeClassName="rounded-full"
+                  sizeClassName="h-20 w-20 sm:h-24 sm:w-24 text-2xl sm:text-3xl"
+                />
+              )}
+              {selectedRing ? (
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -inset-2 z-10 block h-[calc(100%+16px)] w-[calc(100%+16px)] overflow-hidden rounded-full"
+                >
+                  <Image
+                    alt=""
+                    className="h-full w-full scale-[1.08]"
+                    height={112}
+                    src={selectedRing.src}
+                    unoptimized
+                    width={112}
+                  />
+                </span>
+              ) : null}
               {selectedIconAsset ? (
                 <div
-                  className=" -bottom-2 -right-2 absolute flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-2 border-[#E6EBF5] bg-white shadow-sm"
+                  className=" -bottom-2 -right-2 absolute z-20 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-2 border-[#E6EBF5] bg-white shadow-sm"
                   title={`Icon: ${selectedIconAsset.nome}`}
                 >
                   <AssetGraphic
@@ -274,7 +342,7 @@ export default function ProfileEditor({
 
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <span className="inline-flex items-center rounded-full border border-[#1E2E4F]/20 bg-[#D9E1F1] px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[#1E2E4F]">
-                  Level · {savedProfile.nivel ?? "Leitor"}
+                  Level · {formatProfileLevel(savedProfile.nivel)}
                 </span>
                 {savedProfile.is_premium ? (
                   <span className="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-100/90 px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-amber-900">
@@ -300,13 +368,17 @@ export default function ProfileEditor({
           </div>
 
           {/* Equipped cosmetics summary */}
-          <div className={`mt-6 grid grid-cols-2 gap-3 p-3.5 text-xs ${cardInset}`}>
+          <div className={`mt-6 grid grid-cols-2 gap-3 p-3.5 text-xs sm:grid-cols-5 ${cardInset}`}>
             <div>
               <span className="font-mono text-[10px] uppercase tracking-wider text-[#556B45]">
                 Avatar
               </span>
               <p className="mt-0.5 truncate font-semibold text-[#1E2E4F]">
-                {selectedAvatarAsset ? selectedAvatarAsset.nome : "Default monogram"}
+                {selectedIllustratedAvatar
+                  ? selectedIllustratedAvatar.label
+                  : selectedAvatarAsset
+                    ? selectedAvatarAsset.nome
+                    : "Default monogram"}
               </p>
             </div>
             <div>
@@ -315,6 +387,22 @@ export default function ProfileEditor({
               </span>
               <p className="mt-0.5 truncate font-semibold text-[#1E2E4F]">
                 {selectedIconAsset ? selectedIconAsset.nome : "No icon equipped"}
+              </p>
+            </div>
+            <div>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[#556B45]">
+                Profile Ring
+              </span>
+              <p className="mt-0.5 truncate font-semibold text-[#1E2E4F]">
+                {selectedRing ? selectedRing.label : "No ring equipped"}
+              </p>
+            </div>
+            <div>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[#556B45]">
+                Background
+              </span>
+              <p className="mt-0.5 truncate font-semibold text-[#1E2E4F]">
+                {selectedBackground ? selectedBackground.label : "Default background"}
               </p>
             </div>
           </div>
@@ -355,7 +443,7 @@ export default function ProfileEditor({
             </div>
             <div className={`px-3 py-3 ${cardInset}`}>
               <dt className="font-mono text-[10px] uppercase tracking-wider text-[#556B45]">
-                Positions
+                Pages
               </dt>
               <dd className="mt-1 font-serif text-2xl leading-none text-black">
                 {stats.pagesRead}
@@ -367,7 +455,7 @@ export default function ProfileEditor({
             <div className={`mt-4 px-4 py-3 text-xs text-black/75 ${cardInsetMuted}`}>
               <div className="flex items-center justify-between gap-2 font-mono text-[11px]">
                 <span className="font-semibold text-[#1E2E4F]">
-                  Next level: {nextLevel.nome}
+                  Next level: {formatProfileLevel(nextLevel.nome)}
                 </span>
                 <span className="text-[#556B45]">
                   {Math.max(0, savedProfile.pontos_leitura)} / {nextLevel.pontos_minimos} pts
@@ -399,7 +487,7 @@ export default function ProfileEditor({
                 {nextLevel.pontos_minimos - savedProfile.pontos_leitura === 1
                   ? "point"
                   : "points"}{" "}
-                by completing books to unlock {nextLevel.nome}
+                by completing books to unlock {formatProfileLevel(nextLevel.nome)}
                 {nextLevel.permite_publicar ? " and book publishing" : ""}.
               </p>
             </div>
@@ -529,24 +617,25 @@ export default function ProfileEditor({
             </div>
           </div>
 
-          {/* Avatar Selector */}
+          {/* Platform Avatar Selector */}
           <fieldset className="border-t border-black/10 pt-6">
-            <legend className={labelClassName}>Profile Avatar</legend>
+            <legend className={labelClassName}>Additional Profile Avatars</legend>
             <p className="mt-1 text-xs leading-relaxed text-black/60">
-              Choose an avatar for your profile card. Some avatars unlock at higher reading levels or with a Premium subscription.
+              Use a platform avatar or the default monogram. Choosing one here removes any illustrated avatar selection.
             </p>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {/* Default Monogram Option */}
               <button
-                aria-pressed={selectedAvatarId === null}
+                aria-pressed={selectedAvatarId === null && selectedProfileAvatarId === null}
                 className={`flex items-center gap-3.5 rounded-2xl border p-3.5 text-left transition ${
-                  selectedAvatarId === null
+                  selectedAvatarId === null && selectedProfileAvatarId === null
                     ? "border-[#1E2E4F] bg-white ring-2 ring-[#1E2E4F]/20 shadow-xs"
                     : "border-black/15 bg-white/70 hover:border-[#1E2E4F]/50 hover:bg-white"
                 }`}
                 onClick={() => {
                   setSelectedAvatarId(null);
+                  setSelectedProfileAvatarId(null);
                   if (formStatus !== "idle") {
                     setFormStatus("idle");
                     setMessage("");
@@ -564,7 +653,7 @@ export default function ProfileEditor({
                     <span className="truncate font-serif text-lg text-black">
                       Default monogram
                     </span>
-                    {selectedAvatarId === null ? (
+                    {selectedAvatarId === null && selectedProfileAvatarId === null ? (
                       <span className="shrink-0 rounded-full bg-[#1E2E4F] px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-white">
                         Selected
                       </span>
@@ -579,7 +668,8 @@ export default function ProfileEditor({
               {/* Platform Avatar Assets */}
               {avatarAssets.map((asset) => {
                 const lockState = getAssetLockState(asset, savedProfile, levels);
-                const isSelected = selectedAvatarId === asset.id_asset;
+                const isSelected =
+                  selectedAvatarId === asset.id_asset && selectedProfileAvatarId === null;
                 const isDisabled = lockState.isLocked && !isSelected;
 
                 return (
@@ -597,6 +687,7 @@ export default function ProfileEditor({
                     onClick={() => {
                       if (isDisabled) return;
                       setSelectedAvatarId(asset.id_asset);
+                      setSelectedProfileAvatarId(null);
                       if (formStatus !== "idle") {
                         setFormStatus("idle");
                         setMessage("");
@@ -633,7 +724,7 @@ export default function ProfileEditor({
                         ) : null}
                         {lockState.requiredLevel ? (
                           <span className="rounded-full border border-[#1E2E4F]/20 bg-[#D9E1F1] px-2 py-0.5 font-mono text-[10px] font-medium text-[#1E2E4F]">
-                            Level: {lockState.requiredLevel.nome} ({lockState.requiredLevel.pontos_minimos} pts)
+                            Level: {formatProfileLevel(lockState.requiredLevel.nome)} ({lockState.requiredLevel.pontos_minimos} pts)
                           </span>
                         ) : null}
                         {!asset.exige_premium && !lockState.requiredLevel ? (
@@ -647,6 +738,290 @@ export default function ProfileEditor({
                         <p className="mt-1 text-[11px] text-amber-900/90">
                           {lockState.reason}
                         </p>
+                      ) : null}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          {/* Illustrated Avatar Selector */}
+          <fieldset className="border-t border-black/10 pt-6">
+            <legend className={labelClassName}>Illustrated Profile Avatar</legend>
+            <p className="mt-1 text-xs leading-relaxed text-black/60">
+              Choose the illustrated portrait shown inside your profile ring. All avatars are available to every reader for now.
+            </p>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <button
+                aria-pressed={selectedProfileAvatarId === null}
+                className={`flex items-center gap-3.5 rounded-2xl border p-3.5 text-left transition ${
+                  selectedProfileAvatarId === null
+                    ? "border-[#1E2E4F] bg-white ring-2 ring-[#1E2E4F]/20 shadow-xs"
+                    : "border-black/15 bg-white/70 hover:border-[#1E2E4F]/50 hover:bg-white"
+                }`}
+                onClick={() => {
+                  setSelectedProfileAvatarId(null);
+                  if (formStatus !== "idle") {
+                    setFormStatus("idle");
+                    setMessage("");
+                  }
+                }}
+                type="button"
+              >
+                <div
+                  aria-hidden="true"
+                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-dashed border-black/25 bg-[#D9E1F1]/60 font-mono text-xs font-semibold text-[#1E2E4F]"
+                >
+                  —
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate font-serif text-lg text-black">No illustrated avatar</span>
+                    {selectedProfileAvatarId === null ? (
+                      <span className="shrink-0 rounded-full bg-[#1E2E4F] px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-white">
+                        Selected
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-0.5 font-mono text-[11px] text-[#556B45]">
+                    Use your selected platform avatar
+                  </p>
+                </div>
+              </button>
+
+              {PROFILE_AVATARS.map((avatar) => {
+                const isSelected = selectedProfileAvatarId === avatar.id;
+                return (
+                  <button
+                    aria-pressed={isSelected}
+                    className={`flex items-center gap-3.5 rounded-2xl border p-3.5 text-left transition ${
+                      isSelected
+                        ? "border-[#1E2E4F] bg-white ring-2 ring-[#1E2E4F]/20 shadow-xs"
+                        : "border-black/15 bg-white/70 hover:border-[#1E2E4F]/50 hover:bg-white"
+                    }`}
+                    key={avatar.id}
+                    onClick={() => {
+                      setSelectedProfileAvatarId(avatar.id);
+                      if (formStatus !== "idle") {
+                        setFormStatus("idle");
+                        setMessage("");
+                      }
+                    }}
+                    type="button"
+                  >
+                    <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-black/10 bg-[#D9E1F1]">
+                      <Image
+                        alt=""
+                        aria-hidden="true"
+                        className="h-full w-full object-cover"
+                        height={176}
+                        src={avatar.src}
+                        unoptimized
+                        width={176}
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate font-serif text-lg text-black">{avatar.label}</span>
+                        {isSelected ? (
+                          <span className="shrink-0 rounded-full bg-[#1E2E4F] px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-white">
+                            Selected
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="mt-0.5 font-mono text-[11px] text-[#556B45]">
+                        Available to all readers
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          {/* Profile Ring Selector */}
+          <fieldset className="border-t border-black/10 pt-6">
+            <legend className={labelClassName}>Profile Ring</legend>
+            <p className="mt-1 text-xs leading-relaxed text-black/60">
+              Pick a decorative ring for your avatar. All rings are available to every reader for now.
+            </p>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <button
+                aria-pressed={selectedRingId === null}
+                className={`flex items-center gap-3.5 rounded-2xl border p-3.5 text-left transition ${
+                  selectedRingId === null
+                    ? "border-[#1E2E4F] bg-white ring-2 ring-[#1E2E4F]/20 shadow-xs"
+                    : "border-black/15 bg-white/70 hover:border-[#1E2E4F]/50 hover:bg-white"
+                }`}
+                onClick={() => {
+                  setSelectedRingId(null);
+                  if (formStatus !== "idle") {
+                    setFormStatus("idle");
+                    setMessage("");
+                  }
+                }}
+                type="button"
+              >
+                <div
+                  aria-hidden="true"
+                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-dashed border-black/25 bg-[#D9E1F1]/60 font-mono text-xs font-semibold text-[#1E2E4F]"
+                >
+                  —
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate font-serif text-lg text-black">No profile ring</span>
+                    {selectedRingId === null ? (
+                      <span className="shrink-0 rounded-full bg-[#1E2E4F] px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-white">
+                        Selected
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-0.5 font-mono text-[11px] text-[#556B45]">
+                    Use the standard avatar outline
+                  </p>
+                </div>
+              </button>
+
+              {PROFILE_RINGS.map((ring) => {
+                const isSelected = selectedRingId === ring.id;
+                return (
+                  <button
+                    aria-pressed={isSelected}
+                    className={`flex items-center gap-3.5 rounded-2xl border p-3.5 text-left transition ${
+                      isSelected
+                        ? "border-[#1E2E4F] bg-white ring-2 ring-[#1E2E4F]/20 shadow-xs"
+                        : "border-black/15 bg-white/70 hover:border-[#1E2E4F]/50 hover:bg-white"
+                    }`}
+                    key={ring.id}
+                    onClick={() => {
+                      setSelectedRingId(ring.id);
+                      if (formStatus !== "idle") {
+                        setFormStatus("idle");
+                        setMessage("");
+                      }
+                    }}
+                    type="button"
+                  >
+                    <div className="relative h-14 w-14 shrink-0 rounded-full bg-[#D9E1F1]">
+                      <Image
+                        alt=""
+                        aria-hidden="true"
+                        className="h-full w-full object-contain"
+                        height={56}
+                        src={ring.src}
+                        unoptimized
+                        width={56}
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate font-serif text-lg text-black">{ring.label}</span>
+                        {isSelected ? (
+                          <span className="shrink-0 rounded-full bg-[#1E2E4F] px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-white">
+                            Selected
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="mt-0.5 font-mono text-[11px] text-[#556B45]">
+                        Available to all readers
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          {/* Background Theme Selector */}
+          <fieldset className="border-t border-black/10 pt-6">
+            <legend className={labelClassName}>Background Theme</legend>
+            <p className="mt-1 text-xs leading-relaxed text-black/60">
+              Choose the background used across your signed-in experience. All themes are available to every reader for now.
+            </p>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <button
+                aria-pressed={selectedBackgroundId === null}
+                className={`overflow-hidden rounded-2xl border text-left transition ${
+                  selectedBackgroundId === null
+                    ? "border-[#1E2E4F] bg-white ring-2 ring-[#1E2E4F]/20 shadow-xs"
+                    : "border-black/15 bg-white/70 hover:border-[#1E2E4F]/50 hover:bg-white"
+                }`}
+                onClick={() => {
+                  setSelectedBackgroundId(null);
+                  if (formStatus !== "idle") {
+                    setFormStatus("idle");
+                    setMessage("");
+                  }
+                }}
+                type="button"
+              >
+                <div className="flex aspect-video items-center justify-center bg-[#D9E1F1]">
+                  <span className="font-serif text-2xl text-[#1E2E4F]">LivrUSP</span>
+                </div>
+                <div className="flex items-center justify-between gap-3 p-3.5">
+                  <div className="min-w-0">
+                    <span className="block truncate font-serif text-lg text-black">Default background</span>
+                    <span className="mt-0.5 block font-mono text-[11px] text-[#556B45]">
+                      Standard LivrUSP palette
+                    </span>
+                  </div>
+                  {selectedBackgroundId === null ? (
+                    <span className="shrink-0 rounded-full bg-[#1E2E4F] px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-white">
+                      Selected
+                    </span>
+                  ) : null}
+                </div>
+              </button>
+
+              {PROFILE_BACKGROUNDS.map((background) => {
+                const isSelected = selectedBackgroundId === background.id;
+                return (
+                  <button
+                    aria-pressed={isSelected}
+                    className={`overflow-hidden rounded-2xl border text-left transition ${
+                      isSelected
+                        ? "border-[#1E2E4F] bg-white ring-2 ring-[#1E2E4F]/20 shadow-xs"
+                        : "border-black/15 bg-white/70 hover:border-[#1E2E4F]/50 hover:bg-white"
+                    }`}
+                    key={background.id}
+                    onClick={() => {
+                      setSelectedBackgroundId(background.id);
+                      if (formStatus !== "idle") {
+                        setFormStatus("idle");
+                        setMessage("");
+                      }
+                    }}
+                    type="button"
+                  >
+                    <div className="relative aspect-video overflow-hidden bg-[#D9E1F1]">
+                      <Image
+                        alt=""
+                        aria-hidden="true"
+                        className="object-cover"
+                        fill
+                        sizes="(max-width: 640px) 100vw, 420px"
+                        src={background.src}
+                        unoptimized
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-3 p-3.5">
+                      <div className="min-w-0">
+                        <span className="block truncate font-serif text-lg text-black">
+                          {background.label}
+                        </span>
+                        <span className="mt-0.5 block font-mono text-[11px] text-[#556B45]">
+                          Available to all readers
+                        </span>
+                      </div>
+                      {isSelected ? (
+                        <span className="shrink-0 rounded-full bg-[#1E2E4F] px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-white">
+                          Selected
+                        </span>
                       ) : null}
                     </div>
                   </button>
@@ -760,7 +1135,7 @@ export default function ProfileEditor({
                         ) : null}
                         {lockState.requiredLevel ? (
                           <span className="rounded-full border border-[#1E2E4F]/20 bg-[#D9E1F1] px-2 py-0.5 font-mono text-[10px] font-medium text-[#1E2E4F]">
-                            Level: {lockState.requiredLevel.nome} ({lockState.requiredLevel.pontos_minimos} pts)
+                            Level: {formatProfileLevel(lockState.requiredLevel.nome)} ({lockState.requiredLevel.pontos_minimos} pts)
                           </span>
                         ) : null}
                         {!asset.exige_premium && !lockState.requiredLevel ? (

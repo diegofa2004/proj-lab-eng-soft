@@ -5,7 +5,7 @@ import { accessTokenCookieName } from "@/app/lib/session";
 
 export type ReadingDashboard = {
   livros_concluidos: number;
-  paginas_lidas: number;
+  paginas_padrao_lidas: number;
   tempo_ativo_segundos: number;
   generos_lidos: number;
   autores_lidos: number;
@@ -17,7 +17,7 @@ export type ReadingDashboardResult =
 
 type RawDashboardResponse = {
   livros_concluidos?: unknown;
-  paginas_lidas?: unknown;
+  paginas_padrao_lidas?: unknown;
   tempo_ativo_segundos?: unknown;
   generos_lidos?: unknown;
   autores_lidos?: unknown;
@@ -31,7 +31,7 @@ function toCount(value: unknown): number {
 function normalizeDashboard(raw: RawDashboardResponse): ReadingDashboard {
   return {
     livros_concluidos: toCount(raw.livros_concluidos),
-    paginas_lidas: toCount(raw.paginas_lidas),
+    paginas_padrao_lidas: toCount(raw.paginas_padrao_lidas),
     tempo_ativo_segundos: toCount(raw.tempo_ativo_segundos),
     generos_lidos: toCount(raw.generos_lidos),
     autores_lidos: toCount(raw.autores_lidos),

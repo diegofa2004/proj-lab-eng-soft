@@ -136,7 +136,7 @@ export default function BookResultCard({ book }: BookResultCardProps) {
 
           <p className="mt-auto pt-3 font-mono text-[11px] text-[#556B45]">
             {publicationYear ? `${publicationYear} · ` : ""}
-            {book.total_paginas} progress positions
+            {book.total_paginas} reading pages
           </p>
         </div>
       </Link>

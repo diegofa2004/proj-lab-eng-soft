@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 
 import { getBackendUrl } from "@/app/lib/books";
 import { MAX_BIOGRAPHY_LENGTH, type ProfileEditPayload } from "@/app/lib/profile";
+import {
+  isProfileAvatar,
+  isProfileBackground,
+  isProfileRing,
+} from "@/app/lib/profile-utils";
 import { accessTokenCookieName } from "@/app/lib/session";
 
 function isPositiveIntegerOrNull(value: unknown): value is number | null {
@@ -102,6 +107,30 @@ export async function PATCH(request: Request) {
       );
     }
     payload.id_icone = body.id_icone;
+  }
+
+  if ("profile_ring" in body) {
+    if (body.profile_ring !== null && !isProfileRing(body.profile_ring)) {
+      return NextResponse.json({ detail: "Invalid profile ring selection." }, { status: 422 });
+    }
+    payload.profile_ring = body.profile_ring;
+  }
+
+  if ("profile_background" in body) {
+    if (body.profile_background !== null && !isProfileBackground(body.profile_background)) {
+      return NextResponse.json(
+        { detail: "Invalid profile background selection." },
+        { status: 422 },
+      );
+    }
+    payload.profile_background = body.profile_background;
+  }
+
+  if ("profile_avatar" in body) {
+    if (body.profile_avatar !== null && !isProfileAvatar(body.profile_avatar)) {
+      return NextResponse.json({ detail: "Invalid profile avatar selection." }, { status: 422 });
+    }
+    payload.profile_avatar = body.profile_avatar;
   }
 
   try {

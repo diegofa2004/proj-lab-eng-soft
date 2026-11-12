@@ -25,7 +25,7 @@ from app.db.base import (
     LivroGeneroCanonico,
     ProgressoLeitura,
 )
-from app.epub_progress import epub_progress_positions
+from app.epub_progress import epub_progress_positions, epub_standard_pages
 from app.models.user import User
 from app.schemas.autor import AutorPublic
 from app.schemas.common import BookTitle, PositiveId
@@ -284,11 +284,13 @@ def upload(book_id: int, db: DB, user: Reader, file: UploadFile = File()):
         validate_epub(tmp)
         try:
             total_positions = epub_progress_positions(tmp)
+            standard_pages = epub_standard_pages(tmp)
         except ValueError as exc:
-            raise HTTPException(422, "Unable to calculate EPUB reading positions") from exc
+            raise HTTPException(422, "Unable to calculate EPUB reading metrics") from exc
         validate_page_count(db, row, total_positions)
         tmp.replace(CONTENT / f"{book_id}.epub")
         row.total_paginas = total_positions
+        row.paginas_padrao = standard_pages
         db.commit()
     finally:
         tmp.unlink(missing_ok=True)

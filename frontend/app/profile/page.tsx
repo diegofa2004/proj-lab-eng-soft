@@ -35,6 +35,8 @@ export default async function ProfilePage() {
             is_admin: Boolean(profile.is_admin),
             id_avatar: profile.id_avatar,
             id_icone: profile.id_icone,
+            profile_ring: profile.profile_ring,
+            profile_avatar: profile.profile_avatar,
             nivel: profile.nivel,
           }}
         />

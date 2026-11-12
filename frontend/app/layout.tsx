@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import type { CSSProperties } from "react";
+import { getOptionalCurrentUser } from "@/app/lib/books";
+import { getProfileBackground } from "@/app/lib/profile-utils";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -23,13 +26,23 @@ export const metadata: Metadata = {
   description: "Book reading and publishing",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const currentUser = await getOptionalCurrentUser();
+  const background = getProfileBackground(currentUser?.profile_background);
+  const bodyStyle = background
+    ? ({ "--livrusp-background-image": `url("${background.src}")` } as CSSProperties)
+    : undefined;
+
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+      <body
+        className="min-h-full flex flex-col"
+        style={bodyStyle}
+        suppressHydrationWarning
+      >
         {children}
       </body>
     </html>

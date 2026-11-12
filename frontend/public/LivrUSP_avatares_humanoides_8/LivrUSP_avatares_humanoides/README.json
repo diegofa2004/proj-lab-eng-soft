@@ -1,0 +1,85 @@
+{
+  "usage": "44px image inside 2px padding each side => 48px total area. Circle alpha outside.",
+  "avatars": [
+    {
+      "theme": "Papel editorial",
+      "character": "Leitor ilustrado",
+      "file": "01_papel_editorial.png",
+      "sizes": [
+        44,
+        176,
+        512
+      ]
+    },
+    {
+      "theme": "Páginas abstratas",
+      "character": "Pesquisadora",
+      "file": "02_paginas_abstratas.png",
+      "sizes": [
+        44,
+        176,
+        512
+      ]
+    },
+    {
+      "theme": "Biblioteca azul-escura",
+      "character": "Guardião literário",
+      "file": "03_biblioteca_azul_escura.png",
+      "sizes": [
+        44,
+        176,
+        512
+      ]
+    },
+    {
+      "theme": "Biblioteca cósmica",
+      "character": "Astrônoma",
+      "file": "04_biblioteca_cosmica.png",
+      "sizes": [
+        44,
+        176,
+        512
+      ]
+    },
+    {
+      "theme": "Aquarela literária",
+      "character": "Exploradora",
+      "file": "05_aquarela_literaria.png",
+      "sizes": [
+        44,
+        176,
+        512
+      ]
+    },
+    {
+      "theme": "Detetive noir",
+      "character": "Detetive",
+      "file": "06_detetive_noir.png",
+      "sizes": [
+        44,
+        176,
+        512
+      ]
+    },
+    {
+      "theme": "Romance",
+      "character": "Leitora romântica",
+      "file": "07_romance.png",
+      "sizes": [
+        44,
+        176,
+        512
+      ]
+    },
+    {
+      "theme": "Educação / academia",
+      "character": "Acadêmico",
+      "file": "08_educacao_academia.png",
+      "sizes": [
+        44,
+        176,
+        512
+      ]
+    }
+  ]
+}

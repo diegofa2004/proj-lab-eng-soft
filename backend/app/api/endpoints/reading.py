@@ -208,7 +208,7 @@ def points(db: DB, user: Reader):
 class Dashboard(BaseModel):
     id_usuario: int
     livros_concluidos: int
-    paginas_lidas: int
+    paginas_padrao_lidas: int
     tempo_ativo_segundos: int
     generos_lidos: int
     autores_lidos: int

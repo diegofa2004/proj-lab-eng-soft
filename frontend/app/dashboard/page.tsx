@@ -16,6 +16,7 @@ type Metric = {
   label: string;
   value: string;
   hint: string;
+  note?: string;
 };
 
 function buildMetrics(dashboard: ReadingDashboard): Metric[] {
@@ -26,9 +27,10 @@ function buildMetrics(dashboard: ReadingDashboard): Metric[] {
       hint: "Stories you finished from start to end.",
     },
     {
-      label: "Reading positions",
-      value: dashboard.paginas_lidas.toLocaleString("en-US"),
-      hint: "Progress positions reached across your readings.",
+      label: "Reading pages",
+      value: dashboard.paginas_padrao_lidas.toLocaleString("en-US"),
+      hint: "Reading volume across your books.",
+      note: "A consistent estimate",
     },
     {
       label: "Active time",
@@ -51,7 +53,7 @@ function buildMetrics(dashboard: ReadingDashboard): Metric[] {
 function isNewReader(dashboard: ReadingDashboard): boolean {
   return (
     dashboard.livros_concluidos === 0 &&
-    dashboard.paginas_lidas === 0 &&
+    dashboard.paginas_padrao_lidas === 0 &&
     dashboard.tempo_ativo_segundos === 0 &&
     dashboard.generos_lidos === 0 &&
     dashboard.autores_lidos === 0
@@ -103,9 +105,14 @@ export default async function DashboardPage() {
                     className={`flex flex-col justify-between p-6 sm:p-7 ${card}`}
                     key={metric.label}
                   >
-                    <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#556B45]">
-                      {metric.label}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#556B45]">
+                        {metric.label}
+                      </p>
+                      {metric.note ? (
+                        <span className="text-[11px] text-black/45">{metric.note}</span>
+                      ) : null}
+                    </div>
                     <p className="mt-4 font-serif text-5xl leading-none tracking-tight text-black sm:text-6xl">
                       {metric.value}
                     </p>
@@ -121,7 +128,7 @@ export default async function DashboardPage() {
                   </h2>
                   <p className="mt-3 max-w-xl text-sm leading-relaxed text-black/60 sm:text-base">
                     You have not started reading yet. Pick a book from the catalog and your
-                    progress, reading positions, and active time will show up here.
+                    progress, reading pages, and active time will show up here.
                   </p>
                   <Link
                     className="mt-5 inline-flex rounded-full bg-[#1E2E4F] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#15223B]"

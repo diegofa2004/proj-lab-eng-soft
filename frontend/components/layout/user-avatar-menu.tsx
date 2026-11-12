@@ -1,15 +1,23 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useId } from "react";
 
-import { resolveAssetImageUrl } from "@/app/lib/profile-utils";
+import {
+  formatProfileLevel,
+  getProfileAvatar,
+  getProfileRing,
+  resolveAssetImageUrl,
+} from "@/app/lib/profile-utils";
 import LogoutButton from "@/components/auth/logout-button";
 
 type UserAvatarMenuProps = {
   username: string;
   isAdmin: boolean;
   level?: string | null;
+  profileRing?: string | null;
+  profileAvatar?: string | null;
   avatarPath?: string | null;
   iconPath?: string | null;
 };
@@ -81,11 +89,15 @@ export default function UserAvatarMenu({
   username,
   isAdmin,
   level,
+  profileRing,
+  profileAvatar,
   avatarPath,
   iconPath,
 }: UserAvatarMenuProps) {
   const menuId = useId();
   const style = levelStyle(level);
+  const selectedRing = getProfileRing(profileRing);
+  const selectedAvatar = getProfileAvatar(profileAvatar);
   const avatarUrl = avatarPath ? resolveAssetImageUrl(avatarPath) : "";
   const iconUrl = iconPath ? resolveAssetImageUrl(iconPath) : "";
 
@@ -93,14 +105,40 @@ export default function UserAvatarMenu({
     <details className="group relative">
       <summary
         aria-controls={menuId}
-        className="flex cursor-pointer list-none items-center gap-2 rounded-full p-1 outline-none transition hover:bg-white/65 focus-visible:ring-2 focus-visible:ring-[#1E2E4F] focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden"
+        className="flex cursor-pointer list-none items-center gap-2.5 rounded-full p-1 outline-none transition hover:bg-white/65 focus-visible:ring-2 focus-visible:ring-[#1E2E4F] focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden"
       >
         <span
           aria-label={`Open ${username}'s menu`}
-          className={`relative grid h-11 w-11 place-items-center overflow-visible rounded-full p-0.5 shadow-sm ring-2 ring-offset-2 ring-offset-[#FBFAF7] ${style.shell} ${style.ring}`}
+          className={`relative grid h-12 w-12 place-items-center overflow-visible rounded-full p-0.5 shadow-sm ${
+            selectedRing ? "" : `ring-2 ring-offset-2 ring-offset-[#FBFAF7] ${style.ring}`
+          } ${style.shell}`}
         >
+          {selectedRing ? (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute -inset-1 z-10 block h-14 w-14 overflow-hidden rounded-full"
+            >
+              <Image
+                alt=""
+                className="h-full w-full scale-[1.08]"
+                height={56}
+                src={selectedRing.src}
+                unoptimized
+                width={56}
+              />
+            </span>
+          ) : null}
           <span className="grid h-full w-full place-items-center overflow-hidden rounded-full bg-[#F7F4EE] text-sm font-bold text-[#1E2E4F]">
-            {avatarUrl ? (
+            {selectedAvatar ? (
+              <Image
+                alt=""
+                className="h-full w-full object-cover"
+                height={176}
+                src={selectedAvatar.src}
+                unoptimized
+                width={176}
+              />
+            ) : avatarUrl ? (
               // The asset proxy validates backend-owned image paths.
               // eslint-disable-next-line @next/next/no-img-element
               <img alt="" className="h-full w-full object-cover" src={avatarUrl} />
@@ -110,14 +148,14 @@ export default function UserAvatarMenu({
           </span>
           {iconUrl ? (
             <span
-              className={`absolute -right-2 -bottom-1 grid h-5 w-5 place-items-center overflow-hidden rounded-full border shadow-sm ${style.badge}`}
+              className={`absolute -right-2 -bottom-1 z-20 grid h-5 w-5 place-items-center overflow-hidden rounded-full border shadow-sm ${style.badge}`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img alt="" className="h-3.5 w-3.5 object-contain" src={iconUrl} />
             </span>
           ) : null}
         </span>
-        <span className="hidden max-w-28 truncate text-sm font-semibold text-[#1E2E4F] lg:block">
+        <span className="hidden max-w-32 truncate text-sm font-semibold text-[#1E2E4F] sm:block">
           {username}
         </span>
       </summary>
@@ -128,7 +166,7 @@ export default function UserAvatarMenu({
       >
         <div className="border-b border-black/8 px-3 py-2.5">
           <p className="truncate text-sm font-semibold text-black">{username}</p>
-          <p className="mt-0.5 text-xs text-black/55">{level ?? "Reader"}</p>
+          <p className="mt-0.5 text-xs text-black/55">{formatProfileLevel(level)}</p>
         </div>
         <nav aria-label="User menu" className="py-1">
           <Link className="block rounded-xl px-3 py-2 text-sm text-black/75 hover:bg-[#E6EBF5]" href="/profile">

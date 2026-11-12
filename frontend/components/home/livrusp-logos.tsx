@@ -19,7 +19,7 @@ export function LivruspLogo({ alt = "LivrUSP", className }: LivruspLogoProps) {
 }
 
 export function LivruspHeaderLogo() {
-  return <LivruspLogo className="block h-10 w-auto sm:h-12" />;
+  return <LivruspLogo className="block h-auto w-36 sm:w-[170px]" />;
 }
 
 export function LivruspFooterLogo() {

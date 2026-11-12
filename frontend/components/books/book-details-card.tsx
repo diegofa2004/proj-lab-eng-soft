@@ -68,7 +68,7 @@ export default function BookDetailsCard({
             </span>
             <div>
               <p className="line-clamp-4 text-lg font-bold leading-snug">{book.titulo}</p>
-              <p className="mt-2 text-xs text-indigo-200">{book.total_paginas} progress positions</p>
+              <p className="mt-2 text-xs text-indigo-200">{book.total_paginas} reading pages</p>
             </div>
           </div>
         )}
@@ -131,7 +131,7 @@ export default function BookDetailsCard({
             <div>
               <dt className="font-medium text-slate-500">Length</dt>
               <dd className="mt-1 font-semibold text-slate-900">
-                {book.total_paginas} progress positions
+                {book.total_paginas} reading pages
               </dd>
             </div>
             <div>

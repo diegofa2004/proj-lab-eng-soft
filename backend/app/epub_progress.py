@@ -8,6 +8,7 @@ from urllib.parse import unquote
 from xml.etree import ElementTree
 
 LOCATION_BREAK_SIZE = 1600
+WORDS_PER_STANDARD_PAGE = 300
 
 
 def _local_name(tag: str) -> str:
@@ -22,11 +23,11 @@ def _safe_archive_path(base: str, href: str) -> str:
     return path
 
 
-def _readable_text_length(document: bytes) -> int:
+def _readable_text(document: bytes) -> str:
     try:
         root = ElementTree.fromstring(document)
     except ElementTree.ParseError:
-        return 0
+        return ""
 
     parts: list[str] = []
 
@@ -41,14 +42,11 @@ def _readable_text_length(document: bytes) -> int:
                 parts.append(child.tail)
 
     collect(root)
-    return len(" ".join("".join(parts).split()))
+    return " ".join("".join(parts).split())
 
 
-def epub_progress_positions(path: Path, break_size: int = LOCATION_BREAK_SIZE) -> int:
-    """Return an approximate EPUB.js location count, never a physical page count."""
-    if break_size <= 0:
-        raise ValueError("break_size must be positive")
-
+def _epub_text_metrics(path: Path) -> tuple[int, int]:
+    """Return readable character and word counts from an EPUB spine."""
     try:
         with zipfile.ZipFile(path) as archive:
             container = ElementTree.fromstring(archive.read("META-INF/container.xml"))
@@ -80,12 +78,31 @@ def epub_progress_positions(path: Path, break_size: int = LOCATION_BREAK_SIZE) -
                 for element in package.iter()
                 if _local_name(element.tag) == "itemref" and element.attrib.get("idref")
             ]
-            text_length = 0
+            text_length = word_count = 0
             for item_id in spine_ids:
                 document_path = manifest.get(item_id)
                 if document_path:
-                    text_length += _readable_text_length(archive.read(document_path))
+                    text = _readable_text(archive.read(document_path))
+                    text_length += len(text)
+                    word_count += len(text.split())
     except (ElementTree.ParseError, KeyError, OSError, zipfile.BadZipFile) as exc:
-        raise ValueError("Unable to calculate EPUB reading positions") from exc
+        raise ValueError("Unable to calculate EPUB reading metrics") from exc
+    return text_length, word_count
+
+
+def epub_progress_positions(path: Path, break_size: int = LOCATION_BREAK_SIZE) -> int:
+    """Return an approximate EPUB.js location count, never a physical page count."""
+    if break_size <= 0:
+        raise ValueError("break_size must be positive")
+
+    text_length, _ = _epub_text_metrics(path)
 
     return max(1, ceil(text_length / break_size))
+
+
+def epub_standard_pages(path: Path, words_per_page: int = WORDS_PER_STANDARD_PAGE) -> int:
+    """Return the stable reading-volume estimate used in user-facing metrics."""
+    if words_per_page <= 0:
+        raise ValueError("words_per_page must be positive")
+    _, word_count = _epub_text_metrics(path)
+    return max(1, ceil(word_count / words_per_page))
