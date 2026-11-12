@@ -11,6 +11,15 @@ From the `proj-lab-eng-soft` root directory, run:
 ./scripts/dev-up.sh
 ```
 
+Use this script instead of running `docker compose up` directly. It requests
+the shared database password without displaying or storing it, exports the
+connection only for that Compose session, and then starts the stack. To run in
+the background, pass `-d`:
+
+```bash
+./scripts/dev-up.sh -d
+```
+
 The root file includes `infra/docker-compose.dev.yml`. On first startup, the
 backend generates a private JWT key in the `jwt-secret-dev` Docker volume.
 The key survives container restarts and `docker compose down`; no local env
