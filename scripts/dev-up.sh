@@ -14,8 +14,7 @@ if [[ -z "${DATABASE_URL:-}" ]]; then
   fi
 
   echo "LivrUSP connects to the shared PostgreSQL server at ${database_host}:${database_port}."
-  read -r -s -p "Shared database password: " database_password
-  echo
+  read -r -p "Shared database password: " database_password
 
   if [[ -z "${database_password}" ]]; then
     echo "A database password is required." >&2
