@@ -8,7 +8,7 @@ because the root file uses `include`.
 From the `proj-lab-eng-soft` root directory, run:
 
 ```bash
-docker compose up --build
+./scripts/dev-up.sh
 ```
 
 The root file includes `infra/docker-compose.dev.yml`. On first startup, the
@@ -22,7 +22,7 @@ shell before running Compose.
 | Frontend Next.js | http://localhost:3000 |
 | Backend FastAPI | http://localhost:8000 |
 | API documentation | http://localhost:8000/docs |
-| PostgreSQL 16 | localhost:5432 |
+| PostgreSQL compartilhado | 143.107.102.29:65432 |
 
 The backend uses Python 3.14 and starts the `app` application in
 `backend/app/main.py`. Dependencies are installed from
@@ -30,9 +30,9 @@ The backend uses Python 3.14 and starts the `app` application in
 Changes in `backend/app` automatically restart the API, and the frontend runs
 with `next dev`.
 
-Compose waits for PostgreSQL before starting the backend and waits for the API
-before starting the frontend. Database data persists in the `pgdata-dev` volume.
-This configuration is for local development.
+Compose connects the backend to the PostgreSQL compartilhado before starting the
+frontend. This configuration is for local development against the shared
+database.
 
 ## Administrator dashboard
 
@@ -50,10 +50,11 @@ is reversible: it does not delete EPUB files or reading history. The API checks
 administrator privileges for every action; hiding the dashboard from readers
 is not the security boundary.
 
-The backend receives `DATABASE_URL`, with the database at `db:5432`, and the
-Next.js server receives `BACKEND_URL=http://backend:8000`. These names work
-inside the Docker network; use `localhost:8000` in the browser to access the
-API. The backend uses SQLAlchemy and one PostgreSQL session per request.
+The development launcher asks for the shared PostgreSQL password without
+echoing or storing it. The host, port, user and database are configured in
+`infra/.env.dev`. The Next.js server receives `BACKEND_URL=http://backend:8000`.
+Use `localhost:8000` in the browser to access the API. The backend uses
+SQLAlchemy and one PostgreSQL session per request.
 
 ## Database
 
@@ -84,7 +85,7 @@ After changing dependencies, rebuild images and renew the frontend anonymous
 dependency volumes. The named PostgreSQL volume is preserved:
 
 ```bash
-docker compose up --build --renew-anon-volumes
+./scripts/dev-up.sh --renew-anon-volumes
 ```
 
 To stop and remove containers while preserving database data:

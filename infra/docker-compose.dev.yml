@@ -1,42 +1,21 @@
-# Desenvolvimento local: PostgreSQL + FastAPI + Next.js.
+# Desenvolvimento: FastAPI + Next.js usando o PostgreSQL compartilhado.
 # Na raiz do projeto:
-#   docker compose up --build
-# Ou usando este arquivo diretamente, também a partir da raiz:
+#   ./scripts/dev-up.sh
+# Ou definindo DATABASE_URL no ambiente, também a partir da raiz:
 #   docker compose --env-file infra/.env.dev -f infra/docker-compose.dev.yml up --build
 
 name: proj-lab-eng-soft
 
 services:
-  db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-login}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-senha}
-      POSTGRES_DB: ${POSTGRES_DB:-pcs3443}
-    ports:
-      - "127.0.0.1:5432:5432"
-    volumes:
-      - pgdata-dev:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
-
   backend:
     build:
       context: ../backend
       target: development
     restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
     env_file:
       - .env.dev
     environment:
-      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-login}:${POSTGRES_PASSWORD:-senha}@db:5432/${POSTGRES_DB:-pcs3443}
+      DATABASE_URL: ${DATABASE_URL:?configure DATABASE_URL in infra/.env.dev}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-}
       JWT_SECRET_KEY_FILE: /run/livrusp-dev/jwt-secret
     ports:
@@ -75,6 +54,5 @@ services:
       - /app/.next
 
 volumes:
-  pgdata-dev:
   books-dev:
   jwt-secret-dev:
