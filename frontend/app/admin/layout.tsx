@@ -30,6 +30,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
               { href: "/admin/books", label: "Books" },
               { href: "/admin/genres", label: "Genres" },
               { href: "/admin/reviews", label: "Comments" },
+              { href: "/admin/activity", label: "Activity" },
             ].map((item) => (
               <Link
                 className="rounded-full border border-[#1E2E4F]/20 bg-white/75 px-4 py-2 text-sm font-semibold text-[#1E2E4F] hover:bg-white"

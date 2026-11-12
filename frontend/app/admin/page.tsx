@@ -1,10 +1,20 @@
 import Link from "next/link";
 
-import { getAdminData, type AdminStats } from "@/app/lib/admin";
+import {
+  enrichAdminActivities,
+  getAdminActivities,
+  getAdminData,
+  type AdminStats,
+} from "@/app/lib/admin";
 import { card } from "@/app/lib/ui";
+import AdminActivityList from "@/components/admin/admin-activity-list";
 
 export default async function AdminOverviewPage() {
-  const stats = await getAdminData<AdminStats>("/admin/stats");
+  const [stats, rawActivities] = await Promise.all([
+    getAdminData<AdminStats>("/admin/stats"),
+    getAdminActivities({ limit: 5, offset: 0 }),
+  ]);
+  const recentActivities = rawActivities ? await enrichAdminActivities(rawActivities) : null;
 
   return (
     <section>
@@ -30,6 +40,31 @@ export default async function AdminOverviewPage() {
         Removing a book hides it from the public catalog without erasing its file or reading history.
         Suspended accounts cannot sign in or use their existing sessions.
       </p>
+
+      <div className="mt-10">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold text-black">Recent administrative activity</h3>
+            <p className="mt-1 text-sm text-slate-600">
+              Latest moderation and catalog actions recorded in the audit log.
+            </p>
+          </div>
+          <Link
+            className="text-sm font-semibold text-[#1E2E4F] hover:underline"
+            href="/admin/activity"
+          >
+            View full activity log →
+          </Link>
+        </div>
+
+        <div className="mt-4">
+          {recentActivities === null ? (
+            <p className={`p-5 text-red-700 ${card}`}>Could not load recent activity.</p>
+          ) : (
+            <AdminActivityList activities={recentActivities} compact />
+          )}
+        </div>
+      </div>
     </section>
   );
 }
