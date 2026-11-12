@@ -23,7 +23,7 @@ from app.db.session import SessionLocal
 from app.epub_progress import epub_progress_positions
 from app.gutenberg_metadata import fetch_gutenberg_synopsis
 
-GUTENDEX_URL = "https://gutendex.com/books"
+GUTENDEX_URL = "https://gutendex.com/books/"
 GUTENBERG_HOSTS = {"gutenberg.org", "www.gutenberg.org"}
 
 
