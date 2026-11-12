@@ -11,7 +11,6 @@ services:
     build:
       context: ../backend
       target: development
-    restart: unless-stopped
     env_file:
       - .env.dev
     environment:
