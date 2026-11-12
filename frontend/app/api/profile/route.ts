@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { getBackendUrl } from "@/app/lib/books";
 import { MAX_BIOGRAPHY_LENGTH, type ProfileEditPayload } from "@/app/lib/profile";
+import { isProfileRing } from "@/app/lib/profile-utils";
 import { accessTokenCookieName } from "@/app/lib/session";
 
 function isPositiveIntegerOrNull(value: unknown): value is number | null {
@@ -102,6 +103,13 @@ export async function PATCH(request: Request) {
       );
     }
     payload.id_icone = body.id_icone;
+  }
+
+  if ("profile_ring" in body) {
+    if (body.profile_ring !== null && !isProfileRing(body.profile_ring)) {
+      return NextResponse.json({ detail: "Invalid profile ring selection." }, { status: 422 });
+    }
+    payload.profile_ring = body.profile_ring;
   }
 
   try {

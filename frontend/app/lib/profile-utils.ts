@@ -1,5 +1,30 @@
 export type ProfileAssetType = "avatar" | "icone";
 
+export const PROFILE_RINGS = [
+  {
+    id: "subscriber",
+    label: "Subscriber",
+    src: "/ring_assets/56px_decorativo/ring-assinante.png",
+  },
+  { id: "bronze", label: "Bronze", src: "/ring_assets/56px_decorativo/ring-bronze.png" },
+  { id: "diamond", label: "Diamond", src: "/ring_assets/56px_decorativo/ring-diamante.png" },
+  { id: "emerald", label: "Emerald", src: "/ring_assets/56px_decorativo/ring-esmeralda.png" },
+  { id: "master", label: "Master", src: "/ring_assets/56px_decorativo/ring-mestre.png" },
+  { id: "gold", label: "Gold", src: "/ring_assets/56px_decorativo/ring-ouro.png" },
+  { id: "silver", label: "Silver", src: "/ring_assets/56px_decorativo/ring-prata.png" },
+  { id: "publisher", label: "Publisher", src: "/ring_assets/56px_decorativo/ring-publicador.png" },
+] as const;
+
+export type ProfileRingId = (typeof PROFILE_RINGS)[number]["id"];
+
+export function isProfileRing(value: unknown): value is ProfileRingId {
+  return typeof value === "string" && PROFILE_RINGS.some((item) => item.id === value);
+}
+
+export function getProfileRing(ring?: string | null) {
+  return PROFILE_RINGS.find((item) => item.id === ring) ?? null;
+}
+
 export type ProfileAsset = {
   id_asset: number;
   tipo: ProfileAssetType;
@@ -23,6 +48,7 @@ export type UserProfile = {
   biografia: string;
   id_avatar: number | null;
   id_icone: number | null;
+  profile_ring: ProfileRingId | null;
   is_admin: boolean;
   pontos_leitura: number;
   id_nivel: number | null;
@@ -36,6 +62,7 @@ export type ProfileEditPayload = {
   biografia?: string;
   id_avatar?: number | null;
   id_icone?: number | null;
+  profile_ring?: ProfileRingId | null;
 };
 
 export type ProfileDashboardStats = {
@@ -66,7 +93,7 @@ export function formatProfileLevel(level?: string | null): string {
   if (normalized === "autor") {
     return "Author";
   }
-  return level.trim();
+  return level?.trim() || "Reader";
 }
 
 /**

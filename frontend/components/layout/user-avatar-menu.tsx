@@ -1,15 +1,21 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useId } from "react";
 
-import { formatProfileLevel, resolveAssetImageUrl } from "@/app/lib/profile-utils";
+import {
+  formatProfileLevel,
+  getProfileRing,
+  resolveAssetImageUrl,
+} from "@/app/lib/profile-utils";
 import LogoutButton from "@/components/auth/logout-button";
 
 type UserAvatarMenuProps = {
   username: string;
   isAdmin: boolean;
   level?: string | null;
+  profileRing?: string | null;
   avatarPath?: string | null;
   iconPath?: string | null;
 };
@@ -81,11 +87,13 @@ export default function UserAvatarMenu({
   username,
   isAdmin,
   level,
+  profileRing,
   avatarPath,
   iconPath,
 }: UserAvatarMenuProps) {
   const menuId = useId();
   const style = levelStyle(level);
+  const selectedRing = getProfileRing(profileRing);
   const avatarUrl = avatarPath ? resolveAssetImageUrl(avatarPath) : "";
   const iconUrl = iconPath ? resolveAssetImageUrl(iconPath) : "";
 
@@ -97,8 +105,21 @@ export default function UserAvatarMenu({
       >
         <span
           aria-label={`Open ${username}'s menu`}
-          className={`relative grid h-12 w-12 place-items-center overflow-visible rounded-full p-0.5 shadow-sm ring-2 ring-offset-2 ring-offset-[#FBFAF7] ${style.shell} ${style.ring}`}
+          className={`relative grid h-12 w-12 place-items-center overflow-visible rounded-full p-0.5 shadow-sm ${
+            selectedRing ? "" : `ring-2 ring-offset-2 ring-offset-[#FBFAF7] ${style.ring}`
+          } ${style.shell}`}
         >
+          {selectedRing ? (
+            <Image
+              alt=""
+              aria-hidden="true"
+              className="pointer-events-none absolute -inset-1 z-10 h-14 w-14 max-w-none"
+              height={56}
+              src={selectedRing.src}
+              unoptimized
+              width={56}
+            />
+          ) : null}
           <span className="grid h-full w-full place-items-center overflow-hidden rounded-full bg-[#F7F4EE] text-sm font-bold text-[#1E2E4F]">
             {avatarUrl ? (
               // The asset proxy validates backend-owned image paths.
@@ -110,7 +131,7 @@ export default function UserAvatarMenu({
           </span>
           {iconUrl ? (
             <span
-              className={`absolute -right-2 -bottom-1 grid h-5 w-5 place-items-center overflow-hidden rounded-full border shadow-sm ${style.badge}`}
+              className={`absolute -right-2 -bottom-1 z-20 grid h-5 w-5 place-items-center overflow-hidden rounded-full border shadow-sm ${style.badge}`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img alt="" className="h-3.5 w-3.5 object-contain" src={iconUrl} />

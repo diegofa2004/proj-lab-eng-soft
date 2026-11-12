@@ -71,6 +71,7 @@ class User(Base):
     icon_id: Mapped[int | None] = mapped_column(
         "id_icone", BigInteger, ForeignKey(f"{SCHEMA}.asset_perfil.id_asset", ondelete="RESTRICT")
     )
+    profile_ring: Mapped[str | None] = mapped_column("profile_ring", String(32))
     genre_onboarding_complete: Mapped[bool] = mapped_column(
         "onboarding_generos_concluido", Boolean, nullable=False, server_default=text("false")
     )

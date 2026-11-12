@@ -16,6 +16,7 @@ type SiteHeaderProps = {
     is_admin: boolean;
     id_avatar?: number | null;
     id_icone?: number | null;
+    profile_ring?: string | null;
     nivel?: string | null;
   } | null;
   activeHref?: string;
@@ -71,6 +72,7 @@ export default async function SiteHeader({
               }
               isAdmin={currentUser.is_admin}
               level={currentUser.nivel}
+              profileRing={currentUser.profile_ring}
               username={currentUser.username}
             />
           </>

@@ -54,6 +54,7 @@ export type CurrentUser = {
   is_admin: boolean;
   id_avatar?: number | null;
   id_icone?: number | null;
+  profile_ring?: string | null;
   nivel?: string | null;
   pontos_leitura?: number;
   onboarding_generos_concluido?: boolean;
@@ -175,6 +176,7 @@ export const getOptionalCurrentUser = cache(async (): Promise<CurrentUser | null
         is_admin: boolean;
         id_avatar: number | null;
         id_icone: number | null;
+        profile_ring: string | null;
         nivel: string | null;
         pontos_leitura: number;
         onboarding_generos_concluido: boolean;
@@ -186,6 +188,7 @@ export const getOptionalCurrentUser = cache(async (): Promise<CurrentUser | null
         is_admin: profile.is_admin,
         id_avatar: profile.id_avatar,
         id_icone: profile.id_icone,
+        profile_ring: profile.profile_ring,
         nivel: profile.nivel,
         pontos_leitura: profile.pontos_leitura,
         onboarding_generos_concluido: profile.onboarding_generos_concluido,

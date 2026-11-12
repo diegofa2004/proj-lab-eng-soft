@@ -8,11 +8,14 @@ import { type SyntheticEvent, useMemo, useState } from "react";
 import {
   formatProfileLevel,
   getAssetLockState,
+  getProfileRing,
   MAX_BIOGRAPHY_LENGTH,
+  PROFILE_RINGS,
   resolveAssetImageUrl,
   type ProfileAsset,
   type ProfileDashboardStats,
   type ProfileLevel,
+  type ProfileRingId,
   type UserProfile,
 } from "@/app/lib/profile-utils";
 import { card, cardInset, cardInsetMuted } from "@/app/lib/ui";
@@ -62,10 +65,12 @@ function AssetGraphic({
   asset,
   fallbackText,
   sizeClassName = "h-14 w-14",
+  shapeClassName = "rounded-2xl",
 }: {
   asset: ProfileAsset | null;
   fallbackText: string;
   sizeClassName?: string;
+  shapeClassName?: string;
 }) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const resolvedUrl = asset ? resolveAssetImageUrl(asset.arquivo) : "";
@@ -74,7 +79,7 @@ function AssetGraphic({
   if (showImage && asset) {
     return (
       <div
-        className={`relative overflow-hidden rounded-2xl border border-black/10 bg-[#1E2E4F]/10 ${sizeClassName}`}
+        className={`relative overflow-hidden border border-black/10 bg-[#1E2E4F]/10 ${shapeClassName} ${sizeClassName}`}
       >
         <Image
           alt={asset.nome}
@@ -92,7 +97,7 @@ function AssetGraphic({
   return (
     <div
       aria-hidden="true"
-      className={`flex items-center justify-center rounded-2xl border border-black/15 bg-[#1E2E4F] font-serif text-xl font-normal tracking-tight text-[#F7F3E8] shadow-xs ${sizeClassName}`}
+      className={`flex items-center justify-center border border-black/15 bg-[#1E2E4F] font-serif text-xl font-normal tracking-tight text-[#F7F3E8] shadow-xs ${shapeClassName} ${sizeClassName}`}
     >
       {fallbackText}
     </div>
@@ -114,6 +119,9 @@ export default function ProfileEditor({
   const [selectedIconId, setSelectedIconId] = useState<number | null>(
     initialProfile.id_icone ?? null,
   );
+  const [selectedRingId, setSelectedRingId] = useState<ProfileRingId | null>(
+    initialProfile.profile_ring ?? null,
+  );
   const [formStatus, setFormStatus] = useState<FormStatus>("idle");
   const [message, setMessage] = useState<string>("");
 
@@ -134,6 +142,7 @@ export default function ProfileEditor({
     () => iconAssets.find((item) => item.id_asset === selectedIconId) ?? null,
     [iconAssets, selectedIconId],
   );
+  const selectedRing = getProfileRing(selectedRingId);
 
   const nextLevel = useMemo(() => {
     const sorted = [...levels].sort((a, b) => a.pontos_minimos - b.pontos_minimos);
@@ -145,7 +154,8 @@ export default function ProfileEditor({
   const hasChanges =
     biografia !== (savedProfile.biografia ?? "") ||
     selectedAvatarId !== (savedProfile.id_avatar ?? null) ||
-    selectedIconId !== (savedProfile.id_icone ?? null);
+    selectedIconId !== (savedProfile.id_icone ?? null) ||
+    selectedRingId !== (savedProfile.profile_ring ?? null);
 
   const isSubmitting = formStatus === "submitting";
   const remainingChars = MAX_BIOGRAPHY_LENGTH - biografia.length;
@@ -155,6 +165,7 @@ export default function ProfileEditor({
     setBiografia(savedProfile.biografia ?? "");
     setSelectedAvatarId(savedProfile.id_avatar ?? null);
     setSelectedIconId(savedProfile.id_icone ?? null);
+    setSelectedRingId(savedProfile.profile_ring ?? null);
     setFormStatus("idle");
     setMessage("");
   }
@@ -179,6 +190,7 @@ export default function ProfileEditor({
           biografia,
           id_avatar: selectedAvatarId,
           id_icone: selectedIconId,
+          profile_ring: selectedRingId,
         }),
       });
 
@@ -202,12 +214,14 @@ export default function ProfileEditor({
         setBiografia(data.biografia ?? "");
         setSelectedAvatarId(data.id_avatar ?? null);
         setSelectedIconId(data.id_icone ?? null);
+        setSelectedRingId(data.profile_ring ?? null);
       } else {
         setSavedProfile((prev) => ({
           ...prev,
           biografia,
           id_avatar: selectedAvatarId,
           id_icone: selectedIconId,
+          profile_ring: selectedRingId,
         }));
       }
 
@@ -247,11 +261,23 @@ export default function ProfileEditor({
               <AssetGraphic
                 asset={selectedAvatarAsset}
                 fallbackText={userInitials}
+                shapeClassName="rounded-full"
                 sizeClassName="h-20 w-20 sm:h-24 sm:w-24 text-2xl sm:text-3xl"
               />
+              {selectedRing ? (
+                <Image
+                  alt=""
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -inset-2 z-10 h-[calc(100%+16px)] w-[calc(100%+16px)] max-w-none"
+                  height={112}
+                  src={selectedRing.src}
+                  unoptimized
+                  width={112}
+                />
+              ) : null}
               {selectedIconAsset ? (
                 <div
-                  className=" -bottom-2 -right-2 absolute flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-2 border-[#E6EBF5] bg-white shadow-sm"
+                  className=" -bottom-2 -right-2 absolute z-20 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-2 border-[#E6EBF5] bg-white shadow-sm"
                   title={`Icon: ${selectedIconAsset.nome}`}
                 >
                   <AssetGraphic
@@ -301,7 +327,7 @@ export default function ProfileEditor({
           </div>
 
           {/* Equipped cosmetics summary */}
-          <div className={`mt-6 grid grid-cols-2 gap-3 p-3.5 text-xs ${cardInset}`}>
+          <div className={`mt-6 grid grid-cols-3 gap-3 p-3.5 text-xs ${cardInset}`}>
             <div>
               <span className="font-mono text-[10px] uppercase tracking-wider text-[#556B45]">
                 Avatar
@@ -316,6 +342,14 @@ export default function ProfileEditor({
               </span>
               <p className="mt-0.5 truncate font-semibold text-[#1E2E4F]">
                 {selectedIconAsset ? selectedIconAsset.nome : "No icon equipped"}
+              </p>
+            </div>
+            <div>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[#556B45]">
+                Profile Ring
+              </span>
+              <p className="mt-0.5 truncate font-semibold text-[#1E2E4F]">
+                {selectedRing ? selectedRing.label : "No ring equipped"}
               </p>
             </div>
           </div>
@@ -649,6 +683,101 @@ export default function ProfileEditor({
                           {lockState.reason}
                         </p>
                       ) : null}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          {/* Profile Ring Selector */}
+          <fieldset className="border-t border-black/10 pt-6">
+            <legend className={labelClassName}>Profile Ring</legend>
+            <p className="mt-1 text-xs leading-relaxed text-black/60">
+              Pick a decorative ring for your avatar. All rings are available to every reader for now.
+            </p>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <button
+                aria-pressed={selectedRingId === null}
+                className={`flex items-center gap-3.5 rounded-2xl border p-3.5 text-left transition ${
+                  selectedRingId === null
+                    ? "border-[#1E2E4F] bg-white ring-2 ring-[#1E2E4F]/20 shadow-xs"
+                    : "border-black/15 bg-white/70 hover:border-[#1E2E4F]/50 hover:bg-white"
+                }`}
+                onClick={() => {
+                  setSelectedRingId(null);
+                  if (formStatus !== "idle") {
+                    setFormStatus("idle");
+                    setMessage("");
+                  }
+                }}
+                type="button"
+              >
+                <div
+                  aria-hidden="true"
+                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-dashed border-black/25 bg-[#D9E1F1]/60 font-mono text-xs font-semibold text-[#1E2E4F]"
+                >
+                  —
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate font-serif text-lg text-black">No profile ring</span>
+                    {selectedRingId === null ? (
+                      <span className="shrink-0 rounded-full bg-[#1E2E4F] px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-white">
+                        Selected
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-0.5 font-mono text-[11px] text-[#556B45]">
+                    Use the standard avatar outline
+                  </p>
+                </div>
+              </button>
+
+              {PROFILE_RINGS.map((ring) => {
+                const isSelected = selectedRingId === ring.id;
+                return (
+                  <button
+                    aria-pressed={isSelected}
+                    className={`flex items-center gap-3.5 rounded-2xl border p-3.5 text-left transition ${
+                      isSelected
+                        ? "border-[#1E2E4F] bg-white ring-2 ring-[#1E2E4F]/20 shadow-xs"
+                        : "border-black/15 bg-white/70 hover:border-[#1E2E4F]/50 hover:bg-white"
+                    }`}
+                    key={ring.id}
+                    onClick={() => {
+                      setSelectedRingId(ring.id);
+                      if (formStatus !== "idle") {
+                        setFormStatus("idle");
+                        setMessage("");
+                      }
+                    }}
+                    type="button"
+                  >
+                    <div className="relative h-14 w-14 shrink-0 rounded-full bg-[#D9E1F1]">
+                      <Image
+                        alt=""
+                        aria-hidden="true"
+                        className="h-full w-full object-contain"
+                        height={56}
+                        src={ring.src}
+                        unoptimized
+                        width={56}
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate font-serif text-lg text-black">{ring.label}</span>
+                        {isSelected ? (
+                          <span className="shrink-0 rounded-full bg-[#1E2E4F] px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-white">
+                            Selected
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="mt-0.5 font-mono text-[11px] text-[#556B45]">
+                        Available to all readers
+                      </p>
                     </div>
                   </button>
                 );

@@ -1,5 +1,6 @@
 from calendar import monthrange
 from datetime import UTC, datetime
+from typing import Literal
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
@@ -26,6 +27,17 @@ from app.schemas.preferencia_genero_usuario import (
 
 router = APIRouter(tags=["Account"])
 
+ProfileRing = Literal[
+    "subscriber",
+    "bronze",
+    "diamond",
+    "emerald",
+    "master",
+    "gold",
+    "silver",
+    "publisher",
+]
+
 
 class Profile(BaseModel):
     id_usuario: int
@@ -34,6 +46,7 @@ class Profile(BaseModel):
     biografia: str
     id_avatar: int | None
     id_icone: int | None
+    profile_ring: ProfileRing | None
     is_admin: bool
     pontos_leitura: int
     id_nivel: int | None
@@ -47,6 +60,7 @@ class ProfileEdit(BaseModel):
     biografia: str = Field(default="", max_length=5000)
     id_avatar: PositiveId | None = None
     id_icone: PositiveId | None = None
+    profile_ring: ProfileRing | None = None
 
 
 @router.get("/me/profile", response_model=Profile)
@@ -57,6 +71,7 @@ def profile(db: DB, user: Reader):
         biografia=user.biography,
         id_avatar=user.avatar_id,
         id_icone=user.icon_id,
+        profile_ring=user.profile_ring,
         onboarding_generos_concluido=user.genre_onboarding_complete,
     )
 
@@ -137,6 +152,8 @@ def update_profile(data: ProfileEdit, db: DB, user: Reader):
         setattr(user, attr, value)
     if "biografia" in changes:
         user.biography = data.biografia
+    if "profile_ring" in changes:
+        user.profile_ring = data.profile_ring
     save(db, user)
     return profile(db, user)
 
@@ -244,6 +261,7 @@ class PublicProfile(BaseModel):
     biografia: str
     id_avatar: int | None
     id_icone: int | None
+    profile_ring: ProfileRing | None
     nivel: str | None
 
 
@@ -257,4 +275,5 @@ def public_profile(user_id: int, db: DB):
         biografia=reader.biography,
         id_avatar=reader.avatar_id,
         id_icone=reader.icon_id,
+        profile_ring=reader.profile_ring,
     )
