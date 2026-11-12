@@ -57,6 +57,18 @@ export type AssetLockState = {
 
 export const MAX_BIOGRAPHY_LENGTH = 5000;
 
+/** Translates legacy level names returned by the database for English UI copy. */
+export function formatProfileLevel(level?: string | null): string {
+  const normalized = level?.trim().toLocaleLowerCase();
+  if (!normalized || normalized === "leitor") {
+    return "Reader";
+  }
+  if (normalized === "autor") {
+    return "Author";
+  }
+  return level.trim();
+}
+
 /**
  * Resolves an asset file path into a browser-safe URL.
  * Relative backend paths (such as `/v2/demo/avatar.svg`) are routed through
@@ -103,11 +115,11 @@ export function getAssetLockState(
 
   let reason: string | null = null;
   if (missingPremium && missingLevel && requiredLevel) {
-    reason = `Requires Premium and ${requiredLevel.nome} (${requiredLevel.pontos_minimos} pts)`;
+    reason = `Requires Premium and ${formatProfileLevel(requiredLevel.nome)} (${requiredLevel.pontos_minimos} pts)`;
   } else if (missingPremium) {
     reason = "Requires an active Premium subscription";
   } else if (missingLevel && requiredLevel) {
-    reason = `Requires level ${requiredLevel.nome} (${requiredLevel.pontos_minimos} pts)`;
+    reason = `Requires level ${formatProfileLevel(requiredLevel.nome)} (${requiredLevel.pontos_minimos} pts)`;
   }
 
   return {

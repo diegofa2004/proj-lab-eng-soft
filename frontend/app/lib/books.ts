@@ -7,6 +7,13 @@ export type OrigemLivro = "catalogo" | "usuario";
 export type StatusPublicacao = "rascunho" | "publicado" | "arquivado";
 export type ListItemType = "favorito" | "ler_depois";
 
+/** Human-readable labels for the Portuguese publication-status values required by the API. */
+export const PUBLICATION_STATUS_LABELS: Record<StatusPublicacao, string> = {
+  rascunho: "Draft",
+  publicado: "Published",
+  arquivado: "Archived",
+};
+
 export type Book = {
   id_livro: number;
   titulo: string;

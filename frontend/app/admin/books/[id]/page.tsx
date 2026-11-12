@@ -5,6 +5,7 @@ import {
   getAdminBookById,
   getAdminGenres,
 } from "@/app/lib/admin";
+import { PUBLICATION_STATUS_LABELS } from "@/app/lib/books";
 import { card, secondaryCompact } from "@/app/lib/ui";
 import AdminActionButton from "@/components/admin/admin-action-button";
 import AdminBookMetadataEditor from "@/components/admin/admin-book-metadata-editor";
@@ -69,7 +70,7 @@ export default async function AdminBookDetailPage({ params }: AdminBookDetailPag
                     : "border border-amber-500/30 bg-amber-100 text-amber-900"
               }`}
             >
-              {book.status_bloqueado ? "Removed" : book.status_publicacao}
+              {book.status_bloqueado ? "Removed" : PUBLICATION_STATUS_LABELS[book.status_publicacao]}
             </span>
           </div>
 

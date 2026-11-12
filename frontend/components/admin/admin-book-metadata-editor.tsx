@@ -5,7 +5,13 @@ import { useRouter } from "next/navigation";
 import { type SyntheticEvent, useMemo, useState } from "react";
 
 import type { AdminBook } from "@/app/lib/admin";
-import type { Author, Book, Genre, StatusPublicacao } from "@/app/lib/books";
+import {
+  PUBLICATION_STATUS_LABELS,
+  type Author,
+  type Book,
+  type Genre,
+  type StatusPublicacao,
+} from "@/app/lib/books";
 import {
   card,
   cardInset,
@@ -35,17 +41,17 @@ const PUBLICATION_STATUS_OPTIONS: {
 }[] = [
   {
     value: "publicado",
-    label: "Published (publicado)",
+    label: "Published",
     description: "Visible in the public catalog when not removed.",
   },
   {
     value: "rascunho",
-    label: "Draft (rascunho)",
+    label: "Draft",
     description: "Work in progress; hidden from public search.",
   },
   {
     value: "arquivado",
-    label: "Archived (arquivado)",
+    label: "Archived",
     description: "Retired from active catalog browsing.",
   },
 ];
@@ -826,7 +832,9 @@ export default function AdminBookMetadataEditor({
           <p className="mt-0.5 text-sm text-slate-500">
             #{savedBook.id_livro} ·{" "}
             {savedBook.origem === "usuario" ? "Community book" : "Catalog book"} ·{" "}
-            {savedBook.status_bloqueado ? "Removed" : savedBook.status_publicacao} ·{" "}
+            {savedBook.status_bloqueado
+              ? "Removed"
+              : PUBLICATION_STATUS_LABELS[savedBook.status_publicacao]} ·{" "}
             {savedBook.total_paginas} reading pages ·{" "}
             Published {normalizeDateInput(savedBook.data_publicacao)}
           </p>

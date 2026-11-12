@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { type SyntheticEvent, useMemo, useState } from "react";
 
 import {
+  formatProfileLevel,
   getAssetLockState,
   MAX_BIOGRAPHY_LENGTH,
   resolveAssetImageUrl,
@@ -274,7 +275,7 @@ export default function ProfileEditor({
 
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <span className="inline-flex items-center rounded-full border border-[#1E2E4F]/20 bg-[#D9E1F1] px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[#1E2E4F]">
-                  Level · {savedProfile.nivel ?? "Leitor"}
+                  Level · {formatProfileLevel(savedProfile.nivel)}
                 </span>
                 {savedProfile.is_premium ? (
                   <span className="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-100/90 px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-amber-900">
@@ -367,7 +368,7 @@ export default function ProfileEditor({
             <div className={`mt-4 px-4 py-3 text-xs text-black/75 ${cardInsetMuted}`}>
               <div className="flex items-center justify-between gap-2 font-mono text-[11px]">
                 <span className="font-semibold text-[#1E2E4F]">
-                  Next level: {nextLevel.nome}
+                  Next level: {formatProfileLevel(nextLevel.nome)}
                 </span>
                 <span className="text-[#556B45]">
                   {Math.max(0, savedProfile.pontos_leitura)} / {nextLevel.pontos_minimos} pts
@@ -399,7 +400,7 @@ export default function ProfileEditor({
                 {nextLevel.pontos_minimos - savedProfile.pontos_leitura === 1
                   ? "point"
                   : "points"}{" "}
-                by completing books to unlock {nextLevel.nome}
+                by completing books to unlock {formatProfileLevel(nextLevel.nome)}
                 {nextLevel.permite_publicar ? " and book publishing" : ""}.
               </p>
             </div>
@@ -633,7 +634,7 @@ export default function ProfileEditor({
                         ) : null}
                         {lockState.requiredLevel ? (
                           <span className="rounded-full border border-[#1E2E4F]/20 bg-[#D9E1F1] px-2 py-0.5 font-mono text-[10px] font-medium text-[#1E2E4F]">
-                            Level: {lockState.requiredLevel.nome} ({lockState.requiredLevel.pontos_minimos} pts)
+                            Level: {formatProfileLevel(lockState.requiredLevel.nome)} ({lockState.requiredLevel.pontos_minimos} pts)
                           </span>
                         ) : null}
                         {!asset.exige_premium && !lockState.requiredLevel ? (
@@ -760,7 +761,7 @@ export default function ProfileEditor({
                         ) : null}
                         {lockState.requiredLevel ? (
                           <span className="rounded-full border border-[#1E2E4F]/20 bg-[#D9E1F1] px-2 py-0.5 font-mono text-[10px] font-medium text-[#1E2E4F]">
-                            Level: {lockState.requiredLevel.nome} ({lockState.requiredLevel.pontos_minimos} pts)
+                            Level: {formatProfileLevel(lockState.requiredLevel.nome)} ({lockState.requiredLevel.pontos_minimos} pts)
                           </span>
                         ) : null}
                         {!asset.exige_premium && !lockState.requiredLevel ? (

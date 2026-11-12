@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useId } from "react";
 
-import { resolveAssetImageUrl } from "@/app/lib/profile-utils";
+import { formatProfileLevel, resolveAssetImageUrl } from "@/app/lib/profile-utils";
 import LogoutButton from "@/components/auth/logout-button";
 
 type UserAvatarMenuProps = {
@@ -128,7 +128,7 @@ export default function UserAvatarMenu({
       >
         <div className="border-b border-black/8 px-3 py-2.5">
           <p className="truncate text-sm font-semibold text-black">{username}</p>
-          <p className="mt-0.5 text-xs text-black/55">{level ?? "Reader"}</p>
+          <p className="mt-0.5 text-xs text-black/55">{formatProfileLevel(level)}</p>
         </div>
         <nav aria-label="User menu" className="py-1">
           <Link className="block rounded-xl px-3 py-2 text-sm text-black/75 hover:bg-[#E6EBF5]" href="/profile">

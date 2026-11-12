@@ -167,7 +167,7 @@ async function forwardBookMetadataUpdate(
       !VALID_PUBLICATION_STATUSES.includes(body.status_publicacao as StatusPublicacao)
     ) {
       return NextResponse.json(
-        { detail: "Publication status must be rascunho, publicado, or arquivado." },
+        { detail: "Publication status must be Draft, Published, or Archived." },
         { status: 422 },
       );
     }

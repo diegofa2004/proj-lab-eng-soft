@@ -104,7 +104,7 @@ export const requireUserProfile = cache(async (): Promise<UserProfile> => {
       is_admin: Boolean(me.is_admin),
       pontos_leitura: typeof pointsData?.points === "number" ? pointsData.points : 0,
       id_nivel: null,
-      nivel: pointsData?.level ?? "Leitor",
+      nivel: pointsData?.level ?? "Reader",
       is_premium: false,
       pode_publicar: Boolean(pointsData?.publisher),
     };
