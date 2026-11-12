@@ -61,7 +61,7 @@ export async function PUT(request: Request, context: RouteContext) {
     pagesRead !== undefined &&
     (typeof pagesRead !== "number" || !Number.isInteger(pagesRead) || pagesRead < 0)
   ) {
-    return NextResponse.json({ detail: "Invalid page count." }, { status: 422 });
+    return NextResponse.json({ detail: "Invalid reading position count." }, { status: 422 });
   }
 
   try {

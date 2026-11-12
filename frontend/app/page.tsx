@@ -1,13 +1,14 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { getOptionalCurrentUser, getSignedHomeData } from "@/app/lib/books";
+import { getForYouHomeData, getOptionalCurrentUser } from "@/app/lib/books";
 import { GUEST_NAV_LINKS } from "@/app/lib/navigation";
 import { pageBody, pageContainer } from "@/app/lib/ui";
 import HeroBookStack from "@/components/home/hero-book-stack";
 import SiteFooter from "@/components/layout/site-footer";
 import SiteHeader from "@/components/layout/site-header";
-import SignedHomePage from "@/components/home/signed-home-page";
+import ForYouHomePage from "@/components/home/for-you-home-page";
 
 type BenefitItem = {
   title: string;
@@ -123,8 +124,11 @@ export default async function Home() {
   const currentUser = await getOptionalCurrentUser();
 
   if (currentUser) {
-    const signedHomeData = await getSignedHomeData(currentUser);
-    return <SignedHomePage currentUser={currentUser} data={signedHomeData} />;
+    if (!currentUser.onboarding_generos_concluido) {
+      redirect("/onboarding");
+    }
+    const forYouData = await getForYouHomeData(currentUser);
+    return <ForYouHomePage currentUser={currentUser} data={forYouData} />;
   }
 
   return (

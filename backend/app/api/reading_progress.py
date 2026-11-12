@@ -27,7 +27,7 @@ def apply_reading_progress(
     current_pages = row.paginas_distintas_lidas if row is not None else 0
     pages = max(pages if pages is not None else current_pages, current_pages)
     if pages > book.total_paginas:
-        raise HTTPException(422, "Page count exceeds book length")
+        raise HTTPException(422, "Reading position count exceeds book length")
     if (
         pages > 0
         and db.scalar(

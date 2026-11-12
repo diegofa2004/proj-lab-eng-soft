@@ -2,7 +2,16 @@ from fastapi import APIRouter
 
 from app.api import admin as existing_admin
 from app.api import books, users
-from app.api.endpoints import account, admin, auth, catalog, health, reading, reference
+from app.api.endpoints import (
+    account,
+    admin,
+    auth,
+    catalog,
+    health,
+    reading,
+    recommendations,
+    reference,
+)
 
 api_router = APIRouter()
 
@@ -18,6 +27,7 @@ api_router.include_router(users.premium_router)
 api_router.include_router(existing_admin.router)
 
 v2_router = APIRouter(prefix="/v2")
+v2_router.include_router(recommendations.router)
 for router in (
     auth.router,
     health.router,

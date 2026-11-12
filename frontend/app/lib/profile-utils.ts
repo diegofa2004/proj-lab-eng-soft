@@ -29,6 +29,7 @@ export type UserProfile = {
   nivel: string | null;
   is_premium: boolean;
   pode_publicar: boolean;
+  onboarding_generos_concluido?: boolean;
 };
 
 export type ProfileEditPayload = {

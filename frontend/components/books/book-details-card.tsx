@@ -1,14 +1,14 @@
 import Link from "next/link";
 import Image from "next/image";
 
-import type { Book, CurrentUser, Review } from "@/app/lib/books";
+import type { BookSearchResult, CurrentUser, Review } from "@/app/lib/books";
 import { card, cardInset, primaryCompact, secondaryCompact } from "@/app/lib/ui";
 import BookListActions from "@/components/books/book-list-actions";
 import { StarRatingDisplay } from "@/components/books/star-rating";
 import { LivruspLogo } from "@/components/home/livrusp-logos";
 
 type BookDetailsCardProps = {
-  book: Book;
+  book: BookSearchResult;
   reviews: Review[];
   currentUser: CurrentUser | null;
   isFavorite: boolean;
@@ -98,6 +98,18 @@ export default function BookDetailsCard({
                 ({reviewCount} {reviewCount === 1 ? "review" : "reviews"})
               </span>
             </div>
+            {book.generos_canonicos?.length ? (
+              <ul aria-label="Genres" className="mt-4 flex flex-wrap gap-2">
+                {book.generos_canonicos.map((genre) => (
+                  <li
+                    className="rounded-full border border-black/10 bg-white/80 px-3 py-1 text-xs font-medium text-black/70"
+                    key={genre.id_genero_canonico}
+                  >
+                    {genre.nome}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
 
           <div>

@@ -24,7 +24,7 @@ function getPublicationYear(dateString: string): string | null {
 
 export default function BookResultCard({ book }: BookResultCardProps) {
   const authorNames = (book.autores ?? []).map((author) => author.nome).filter(Boolean);
-  const genres = book.generos ?? [];
+  const genres = book.generos_canonicos ?? [];
   const visibleGenres = genres.slice(0, MAX_VISIBLE_GENRES);
   const hiddenGenreCount = genres.length - visibleGenres.length;
   const publicationYear = getPublicationYear(book.data_publicacao);
@@ -121,7 +121,7 @@ export default function BookResultCard({ book }: BookResultCardProps) {
               {visibleGenres.map((genre) => (
                 <li
                   className="rounded-full border border-black/10 bg-white/80 px-2.5 py-0.5 text-[11px] font-medium text-black/75"
-                  key={genre.id_genero}
+                  key={genre.id_genero_canonico}
                 >
                   {genre.nome}
                 </li>

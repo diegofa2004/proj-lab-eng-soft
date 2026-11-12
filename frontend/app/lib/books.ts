@@ -45,10 +45,15 @@ export type CurrentUser = {
   username: string;
   email: string;
   is_admin: boolean;
+  id_avatar?: number | null;
+  id_icone?: number | null;
+  nivel?: string | null;
+  pontos_leitura?: number;
+  onboarding_generos_concluido?: boolean;
 };
 
 export type FetchBookResult =
-  | { status: "ok"; book: Book }
+  | { status: "ok"; book: BookSearchResult }
   | { status: "not_found" }
   | { status: "unavailable"; detail: string };
 
@@ -62,6 +67,14 @@ export type Genre = {
   nome: string;
 };
 
+export type CanonicalGenre = {
+  id_genero_canonico: number;
+  slug: string;
+  nome: string;
+  descricao?: string;
+  ordem_exibicao?: number;
+};
+
 /**
  * A book returned by the catalog search. Authors and genres are optional
  * because the backend may or may not embed them in search results.
@@ -69,6 +82,7 @@ export type Genre = {
 export type BookSearchResult = Book & {
   autores?: Author[];
   generos?: Genre[];
+  generos_canonicos?: CanonicalGenre[];
   nota_media?: number;
   total_avaliacoes?: number;
   total_acessos?: number;
@@ -141,16 +155,41 @@ export const getOptionalCurrentUser = cache(async (): Promise<CurrentUser | null
   }
 
   try {
-    const response = await fetch(`${getBackendUrl()}/me`, {
+    const profileResponse = await fetch(`${getBackendUrl()}/v2/me/profile`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
     });
 
-    if (!response.ok) {
-      return null;
+    if (profileResponse.ok) {
+      const profile = (await profileResponse.json()) as {
+        id_usuario: number;
+        nome_perfil: string;
+        email: string;
+        is_admin: boolean;
+        id_avatar: number | null;
+        id_icone: number | null;
+        nivel: string | null;
+        pontos_leitura: number;
+        onboarding_generos_concluido: boolean;
+      };
+      return {
+        id: profile.id_usuario,
+        username: profile.nome_perfil,
+        email: profile.email,
+        is_admin: profile.is_admin,
+        id_avatar: profile.id_avatar,
+        id_icone: profile.id_icone,
+        nivel: profile.nivel,
+        pontos_leitura: profile.pontos_leitura,
+        onboarding_generos_concluido: profile.onboarding_generos_concluido,
+      };
     }
 
-    return (await response.json()) as CurrentUser;
+    const response = await fetch(`${getBackendUrl()}/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return response.ok ? ((await response.json()) as CurrentUser) : null;
   } catch {
     return null;
   }
@@ -174,7 +213,7 @@ export async function getBookById(bookId: number): Promise<FetchBookResult> {
       };
     }
 
-    const book = (await response.json()) as Book;
+    const book = (await response.json()) as BookSearchResult;
     return { status: "ok", book };
   } catch {
     return {
@@ -353,6 +392,9 @@ async function enrichBooksWithMetrics(
         typeof book.total_acessos === "number" ? book.total_acessos : v2Book.total_acessos,
       autores: book.autores?.length ? book.autores : v2Book.autores,
       generos: book.generos?.length ? book.generos : v2Book.generos,
+      generos_canonicos: book.generos_canonicos?.length
+        ? book.generos_canonicos
+        : v2Book.generos_canonicos,
     };
   });
 
@@ -536,10 +578,10 @@ export async function searchBooks(filters: BookSearchFilters): Promise<BookSearc
 }
 
 /** Lists the genres used by the search filters. Returns an empty list on failure. */
-export async function getGenres(): Promise<Genre[]> {
+export async function getGenres(): Promise<CanonicalGenre[]> {
   const backendUrl = getBackendUrl();
 
-  for (const endpoint of [`${backendUrl}/v2/genres`, `${backendUrl}/genres`]) {
+  for (const endpoint of [`${backendUrl}/v2/canonical-genres`]) {
     try {
       const response = await fetch(endpoint, {
         cache: "no-store",
@@ -549,7 +591,7 @@ export async function getGenres(): Promise<Genre[]> {
         continue;
       }
 
-      const genres = (await response.json()) as Genre[];
+      const genres = (await response.json()) as CanonicalGenre[];
       if (Array.isArray(genres)) {
         return [...genres].sort((a, b) => a.nome.localeCompare(b.nome));
       }
@@ -602,6 +644,7 @@ export type SocialActivityItem = {
 
 export type SignedHomeData = {
   myReadings: BookSearchResult[];
+  readingProgress: ReadingProgressItem[];
   favorites: BookSearchResult[];
   myStories: BookSearchResult[];
   toBeRead: BookSearchResult[];
@@ -843,10 +886,140 @@ export async function getSignedHomeData(
 
   return {
     myReadings,
+    readingProgress:
+      v2ProgressResponse.ok && Array.isArray(v2ProgressResponse.data)
+        ? v2ProgressResponse.data
+        : [],
     favorites,
     myStories,
     toBeRead,
     myReviews,
     socials,
+  };
+}
+
+export type RecommendationReason =
+  | "genre"
+  | "author"
+  | "trending"
+  | "rating"
+  | "discovery";
+
+export type BookRecommendation = {
+  book: BookSearchResult;
+  reason: string;
+  reason_type: RecommendationReason;
+};
+
+export type ContinueReadingItem = {
+  book: BookSearchResult;
+  pagesRead: number;
+  progressPercent: number;
+};
+
+export type GenreShelf = {
+  genre: CanonicalGenre;
+  books: BookSearchResult[];
+};
+
+export type ForYouHomeData = {
+  continueReading: ContinueReadingItem[];
+  recommendations: BookRecommendation[];
+  trending: BookRecommendation[];
+  genreShelves: GenreShelf[];
+  socials: SocialActivityItem[];
+  isColdStart: boolean;
+};
+
+export async function getForYouHomeData(
+  currentUser: CurrentUser,
+): Promise<ForYouHomeData> {
+  const backendUrl = getBackendUrl();
+  const token = (await cookies()).get(accessTokenCookieName)?.value;
+  const authHeaders: HeadersInit | undefined = token
+    ? { Authorization: `Bearer ${token}` }
+    : undefined;
+
+  const [library, recommendationsResponse, trendingResponse, catalogResponse] =
+    await Promise.all([
+      getSignedHomeData(currentUser),
+      authHeaders
+        ? fetchJsonOrNull<BookRecommendation[]>(
+            `${backendUrl}/v2/me/recommendations?limit=12`,
+            authHeaders,
+          )
+        : Promise.resolve({ ok: false as const, status: 401 }),
+      fetchJsonOrNull<BookRecommendation[]>(`${backendUrl}/v2/books/trending?limit=12`),
+      fetchJsonOrNull<BookSearchResult[] | PaginatedBooksResponse>(`${backendUrl}/books`),
+    ]);
+
+  const progressByBook = new Map(
+    library.readingProgress.map((progress) => [progress.id_livro, progress]),
+  );
+  const continueReading = library.myReadings
+    .flatMap((book): ContinueReadingItem[] => {
+      const progress = progressByBook.get(book.id_livro);
+      if (progress?.concluido_em) return [];
+      const pagesRead = Math.min(progress?.paginas_distintas_lidas ?? 0, book.total_paginas);
+      return [
+        {
+          book,
+          pagesRead,
+          progressPercent:
+            book.total_paginas > 0 ? Math.round((pagesRead / book.total_paginas) * 100) : 0,
+        },
+      ];
+    })
+    .sort((a, b) => b.progressPercent - a.progressPercent)
+    .slice(0, 6);
+
+  const recommendations =
+    recommendationsResponse.ok && Array.isArray(recommendationsResponse.data)
+      ? recommendationsResponse.data
+      : [];
+  const trending =
+    trendingResponse.ok && Array.isArray(trendingResponse.data)
+      ? trendingResponse.data
+      : [];
+  const catalog = catalogResponse.ok ? extractBookList(catalogResponse.data) : [];
+  const allBooks = new Map<number, BookSearchResult>();
+  for (const book of [
+    ...catalog,
+    ...recommendations.map((item) => item.book),
+    ...trending.map((item) => item.book),
+  ]) {
+    allBooks.set(book.id_livro, book);
+  }
+
+  const genreBooks = new Map<
+    number,
+    { genre: CanonicalGenre; books: BookSearchResult[] }
+  >();
+  for (const book of allBooks.values()) {
+    for (const genre of book.generos_canonicos ?? []) {
+      const shelf = genreBooks.get(genre.id_genero_canonico) ?? { genre, books: [] };
+      shelf.books.push(book);
+      genreBooks.set(genre.id_genero_canonico, shelf);
+    }
+  }
+  const genreShelves = Array.from(genreBooks.values())
+    .sort(
+      (a, b) =>
+        b.books.length - a.books.length || a.genre.nome.localeCompare(b.genre.nome),
+    )
+    .slice(0, 4)
+    .map((shelf) => ({ ...shelf, books: shelf.books.slice(0, 6) }));
+
+  return {
+    continueReading,
+    recommendations,
+    trending,
+    genreShelves,
+    socials: library.socials,
+    isColdStart:
+      recommendations.length === 0 ||
+      recommendations.every(
+        (item) => item.reason_type !== "genre" && item.reason_type !== "author",
+      ),
   };
 }

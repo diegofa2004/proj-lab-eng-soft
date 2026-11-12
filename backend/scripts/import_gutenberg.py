@@ -17,8 +17,10 @@ from urllib.request import Request, urlopen
 from sqlalchemy import select
 
 from app.api.endpoints.catalog import CONTENT, MAX_BYTES, validate_epub
+from app.canonical_genres import classify_book
 from app.db.base import Autor, Genero, Livro, LivroAutor, LivroGenero
 from app.db.session import SessionLocal
+from app.epub_progress import epub_progress_positions
 from app.gutenberg_metadata import fetch_gutenberg_synopsis
 
 GUTENDEX_URL = "https://gutendex.com/books"
@@ -48,9 +50,7 @@ def download_epub(url: str, user_agent: str) -> Path:
     request = Request(url, headers={"User-Agent": user_agent, "Accept": "application/epub+zip"})
     path: Path | None = None
     try:
-        with urlopen(
-            request, timeout=60
-        ) as response:  # noqa: S310 - hostname checked by gutenberg_epub_url
+        with urlopen(request, timeout=60) as response:  # noqa: S310 - hostname checked by gutenberg_epub_url
             size = response.headers.get("Content-Length")
             if size and int(size) > MAX_BYTES:
                 raise ValueError("file exceeds the 50 MiB limit")
@@ -87,6 +87,7 @@ def import_book(book: dict, epub: Path, catalog_date: date, max_genres: int) -> 
     title = str(book["title"]).strip()[:300]
     if not title:
         raise ValueError("missing title")
+    total_positions = epub_progress_positions(epub)
 
     target: Path | None = None
     try:
@@ -97,8 +98,8 @@ def import_book(book: dict, epub: Path, catalog_date: date, max_genres: int) -> 
                 gutenberg_id=book_id,
                 data_publicacao=catalog_date,
                 arquivo_conteudo="pending",
-                # EPUB é refluível; esta é uma unidade de progresso inicial, não uma página física.
-                total_paginas=1,
+                # EPUBs are reflowable, so this stores stable reading positions, not physical pages.
+                total_paginas=total_positions,
                 origem="catalogo",
                 status_publicacao="publicado",
                 id_publicador=None,
@@ -116,6 +117,8 @@ def import_book(book: dict, epub: Path, catalog_date: date, max_genres: int) -> 
             for name in dict.fromkeys(subjects[:max_genres]):
                 genre = get_or_create(db, Genero, name[:100])
                 db.add(LivroGenero(id_livro=row.id_livro, id_genero=genre.id_genero))
+            db.flush()
+            classify_book(db, row.id_livro)
             return row.id_livro
     except Exception:
         epub.unlink(missing_ok=True)

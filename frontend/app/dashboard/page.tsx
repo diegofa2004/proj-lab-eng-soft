@@ -26,9 +26,9 @@ function buildMetrics(dashboard: ReadingDashboard): Metric[] {
       hint: "Stories you finished from start to end.",
     },
     {
-      label: "Pages read",
+      label: "Reading positions",
       value: dashboard.paginas_lidas.toLocaleString("en-US"),
-      hint: "Distinct pages turned across your readings.",
+      hint: "Progress positions reached across your readings.",
     },
     {
       label: "Active time",
@@ -121,7 +121,7 @@ export default async function DashboardPage() {
                   </h2>
                   <p className="mt-3 max-w-xl text-sm leading-relaxed text-black/60 sm:text-base">
                     You have not started reading yet. Pick a book from the catalog and your
-                    progress, pages, and reading time will show up here.
+                    progress, reading positions, and active time will show up here.
                   </p>
                   <Link
                     className="mt-5 inline-flex rounded-full bg-[#1E2E4F] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#15223B]"

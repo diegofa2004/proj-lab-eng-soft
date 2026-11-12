@@ -5,13 +5,21 @@ import {
   SIGNED_NAV_LINKS,
   type NavLink,
 } from "@/app/lib/navigation";
+import { getProfileAssets } from "@/app/lib/profile";
 import { primaryPill, secondaryPill } from "@/app/lib/ui";
-import LogoutButton from "@/components/auth/logout-button";
 import { LivruspHeaderLogo } from "@/components/home/livrusp-logos";
+import UserAvatarMenu from "@/components/layout/user-avatar-menu";
 
 type SiteHeaderProps = {
-  currentUser?: { username: string; is_admin: boolean } | null;
+  currentUser?: {
+    username: string;
+    is_admin: boolean;
+    id_avatar?: number | null;
+    id_icone?: number | null;
+    nivel?: string | null;
+  } | null;
   activeHref?: string;
+  assets?: { id_asset: number; arquivo: string }[];
 };
 
 function isActive(link: NavLink, activeHref?: string): boolean {
@@ -19,8 +27,13 @@ function isActive(link: NavLink, activeHref?: string): boolean {
   return link.href === activeHref;
 }
 
-export default function SiteHeader({ currentUser = null, activeHref }: SiteHeaderProps) {
+export default async function SiteHeader({
+  currentUser = null,
+  activeHref,
+  assets = [],
+}: SiteHeaderProps) {
   const links = currentUser ? SIGNED_NAV_LINKS : GUEST_NAV_LINKS;
+  const profileAssets = currentUser && assets.length === 0 ? await getProfileAssets() : assets;
 
   return (
     <header className="flex flex-wrap items-center justify-between gap-4 py-6">
@@ -49,15 +62,17 @@ export default function SiteHeader({ currentUser = null, activeHref }: SiteHeade
       <div className="order-2 flex items-center gap-2 sm:order-3 sm:gap-3">
         {currentUser ? (
           <>
-            {currentUser.is_admin ? (
-              <Link className={secondaryPill} href="/admin">
-                Admin dashboard
-              </Link>
-            ) : null}
-            <Link className={primaryPill} href="/profile">
-              {currentUser.username}
-            </Link>
-            <LogoutButton />
+            <UserAvatarMenu
+              avatarPath={
+                profileAssets.find((asset) => asset.id_asset === currentUser.id_avatar)?.arquivo
+              }
+              iconPath={
+                profileAssets.find((asset) => asset.id_asset === currentUser.id_icone)?.arquivo
+              }
+              isAdmin={currentUser.is_admin}
+              level={currentUser.nivel}
+              username={currentUser.username}
+            />
           </>
         ) : (
           <>

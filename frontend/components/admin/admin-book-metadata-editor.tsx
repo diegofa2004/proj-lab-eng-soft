@@ -290,7 +290,7 @@ export default function AdminBookMetadataEditor({
       parsedPages > MAX_BOOK_PAGES
     ) {
       setFormStatus("error");
-      setMessage(`Page count must be a whole number between 1 and ${MAX_BOOK_PAGES}.`);
+      setMessage(`Position count must be a whole number between 1 and ${MAX_BOOK_PAGES}.`);
       return;
     }
 
@@ -472,7 +472,7 @@ export default function AdminBookMetadataEditor({
             className={labelClassName}
             htmlFor={`book-pages-${savedBook.id_livro}`}
           >
-            Total pages / positions
+            Reading positions
           </label>
           <input
             className={fieldClassName}
@@ -485,12 +485,13 @@ export default function AdminBookMetadataEditor({
               clearFeedback();
             }}
             required
+            readOnly
             step={1}
             type="number"
             value={totalPaginas}
           />
           <p className="mt-1 text-[11px] text-black/55">
-            Cannot be reduced below recorded reader progress or changed after a completed reading.
+            Calculated automatically from the uploaded EPUB content.
           </p>
         </div>
 
@@ -826,7 +827,7 @@ export default function AdminBookMetadataEditor({
             #{savedBook.id_livro} ·{" "}
             {savedBook.origem === "usuario" ? "Community book" : "Catalog book"} ·{" "}
             {savedBook.status_bloqueado ? "Removed" : savedBook.status_publicacao} ·{" "}
-            {savedBook.total_paginas} {savedBook.total_paginas === 1 ? "page" : "pages"} ·{" "}
+            {savedBook.total_paginas} reading positions ·{" "}
             Published {normalizeDateInput(savedBook.data_publicacao)}
           </p>
 

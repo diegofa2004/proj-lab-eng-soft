@@ -1,15 +1,24 @@
-from fastapi import APIRouter
-from sqlalchemy import select
+from fastapi import APIRouter, Response
+from sqlalchemy import func, select
 
 from app.api.platform import DB, Admin, require, save
 from app.models.asset_perfil import AssetPerfil
 from app.models.autor import Autor
 from app.models.genero import Genero
+from app.models.genero_canonico import GeneroCanonico
+from app.models.livro_genero_canonico import LivroGeneroCanonico
 from app.models.nivel import Nivel
 from app.models.plano import Plano
+from app.models.regra_genero_canonico import RegraGeneroCanonico
 from app.schemas.asset_perfil import AssetPerfilCreate, AssetPerfilPublic, AssetPerfilUpdate
 from app.schemas.autor import AutorCreate, AutorPublic, AutorUpdate
 from app.schemas.genero import GeneroCreate, GeneroPublic, GeneroUpdate
+from app.schemas.genero_canonico import (
+    GeneroCanonicoPublic,
+    RegraGeneroCanonicoCreate,
+    RegraGeneroCanonicoPublic,
+    RegraGeneroCanonicoUpdate,
+)
 from app.schemas.nivel import NivelCreate, NivelPublic, NivelUpdate
 from app.schemas.plano import PlanoCreate, PlanoPublic, PlanoUpdate
 
@@ -37,6 +46,58 @@ def edit_autor(item_id: int, data: AutorUpdate, db: DB, admin: Admin):
 @router.get("/genres", response_model=list[GeneroPublic])
 def list_genres(db: DB):
     return db.scalars(select(Genero).order_by(Genero.id_genero)).all()
+
+
+@router.get("/canonical-genres", response_model=list[GeneroCanonicoPublic])
+def list_canonical_genres(db: DB):
+    return db.scalars(
+        select(GeneroCanonico)
+        .where(GeneroCanonico.ativo.is_(True))
+        .order_by(GeneroCanonico.ordem_exibicao, GeneroCanonico.nome)
+    ).all()
+
+
+@router.get("/admin/canonical-genre-rules", response_model=list[RegraGeneroCanonicoPublic])
+def list_canonical_genre_rules(db: DB, admin: Admin):
+    return db.scalars(select(RegraGeneroCanonico).order_by(RegraGeneroCanonico.id_regra)).all()
+
+
+@router.post(
+    "/admin/canonical-genre-rules",
+    response_model=RegraGeneroCanonicoPublic,
+    status_code=201,
+)
+def create_canonical_genre_rule(data: RegraGeneroCanonicoCreate, db: DB, admin: Admin):
+    require(db.get(GeneroCanonico, data.id_genero_canonico))
+    return save(db, RegraGeneroCanonico(**data.model_dump()))
+
+
+@router.patch("/admin/canonical-genre-rules/{item_id}", response_model=RegraGeneroCanonicoPublic)
+def edit_canonical_genre_rule(item_id: int, data: RegraGeneroCanonicoUpdate, db: DB, admin: Admin):
+    row = require(db.get(RegraGeneroCanonico, item_id))
+    for key, value in data.model_dump(exclude_unset=True).items():
+        setattr(row, key, value)
+    return save(db, row)
+
+
+@router.delete("/admin/canonical-genre-rules/{item_id}", status_code=204)
+def delete_canonical_genre_rule(item_id: int, db: DB, admin: Admin):
+    row = require(db.get(RegraGeneroCanonico, item_id))
+    db.delete(row)
+    db.commit()
+    return Response(status_code=204)
+
+
+@router.post("/admin/canonical-genres/reprocess")
+def reprocess_canonical_genres(db: DB, admin: Admin):
+    from app.canonical_genres import reclassify_all_books
+
+    total, classified = reclassify_all_books(db)
+    db.commit()
+    unclassified = total - int(
+        db.scalar(select(func.count(func.distinct(LivroGeneroCanonico.id_livro)))) or 0
+    )
+    return {"total": total, "classified": classified, "unclassified": unclassified}
 
 
 @router.post("/admin/genres", response_model=GeneroPublic, status_code=201)

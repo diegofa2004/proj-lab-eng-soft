@@ -7,13 +7,13 @@ import {
   BOOK_SOURCE_OPTIONS,
   buildBookSearchHref,
   type BookSearchFilters,
-  type Genre,
+  type CanonicalGenre,
 } from "@/app/lib/books";
 import { card } from "@/app/lib/ui";
 
 type BookSearchFormProps = {
   filters: BookSearchFilters;
-  genres: Genre[];
+  genres: CanonicalGenre[];
   hasActiveFilters: boolean;
 };
 
@@ -27,7 +27,12 @@ export default function BookSearchForm({
   genres,
   hasActiveFilters,
 }: BookSearchFormProps) {
-  const genreIsListed = genres.some((genre) => genre.nome === filters.genre);
+  const genreIsListed = genres.some(
+    (genre) => genre.slug === filters.genre || genre.nome === filters.genre,
+  );
+  const selectedGenre = genres.find(
+    (genre) => genre.slug === filters.genre || genre.nome === filters.genre,
+  );
 
   const quickFilters = [
     {
@@ -132,13 +137,13 @@ export default function BookSearchForm({
             {genres.length > 0 ? (
               <select
                 className={fieldClassName}
-                defaultValue={filters.genre}
+                defaultValue={selectedGenre?.slug ?? filters.genre}
                 id="book-search-genre"
                 name="genre"
               >
                 <option value="">All genres</option>
                 {genres.map((genre) => (
-                  <option key={genre.id_genero} value={genre.nome}>
+                  <option key={genre.id_genero_canonico} value={genre.slug}>
                     {genre.nome}
                   </option>
                 ))}
