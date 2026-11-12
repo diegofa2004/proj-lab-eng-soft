@@ -110,15 +110,19 @@ export default function UserAvatarMenu({
           } ${style.shell}`}
         >
           {selectedRing ? (
-            <Image
-              alt=""
+            <span
               aria-hidden="true"
-              className="pointer-events-none absolute -inset-1.5 z-10 h-15 w-15 max-w-none"
-              height={60}
-              src={selectedRing.src}
-              unoptimized
-              width={60}
-            />
+              className="pointer-events-none absolute -inset-1 z-10 block h-14 w-14 overflow-hidden rounded-full"
+            >
+              <Image
+                alt=""
+                className="h-full w-full scale-[1.08]"
+                height={56}
+                src={selectedRing.src}
+                unoptimized
+                width={56}
+              />
+            </span>
           ) : null}
           <span className="grid h-full w-full place-items-center overflow-hidden rounded-full bg-[#F7F4EE] text-sm font-bold text-[#1E2E4F]">
             {avatarUrl ? (

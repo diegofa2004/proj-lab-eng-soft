@@ -265,15 +265,19 @@ export default function ProfileEditor({
                 sizeClassName="h-20 w-20 sm:h-24 sm:w-24 text-2xl sm:text-3xl"
               />
               {selectedRing ? (
-                <Image
-                  alt=""
+                <span
                   aria-hidden="true"
-                  className="pointer-events-none absolute -inset-2.5 z-10 h-[calc(100%+20px)] w-[calc(100%+20px)] max-w-none"
-                  height={116}
-                  src={selectedRing.src}
-                  unoptimized
-                  width={116}
-                />
+                  className="pointer-events-none absolute -inset-2 z-10 block h-[calc(100%+16px)] w-[calc(100%+16px)] overflow-hidden rounded-full"
+                >
+                  <Image
+                    alt=""
+                    className="h-full w-full scale-[1.08]"
+                    height={112}
+                    src={selectedRing.src}
+                    unoptimized
+                    width={112}
+                  />
+                </span>
               ) : null}
               {selectedIconAsset ? (
                 <div
