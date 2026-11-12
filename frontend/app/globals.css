@@ -25,7 +25,7 @@ body {
 .livrusp-page-shell {
   background-color: var(--livrusp-page-background);
   background-image:
-    linear-gradient(rgb(217 225 241 / 82%), rgb(217 225 241 / 82%)),
+    linear-gradient(rgb(217 225 241 / 52%), rgb(217 225 241 / 52%)),
     var(--livrusp-background-image);
   background-position: center;
   background-repeat: no-repeat;
