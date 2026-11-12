@@ -355,7 +355,7 @@ export default function ProfileEditor({
             </div>
             <div className={`px-3 py-3 ${cardInset}`}>
               <dt className="font-mono text-[10px] uppercase tracking-wider text-[#556B45]">
-                Positions
+                Pages
               </dt>
               <dd className="mt-1 font-serif text-2xl leading-none text-black">
                 {stats.pagesRead}

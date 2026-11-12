@@ -93,11 +93,11 @@ export default function UserAvatarMenu({
     <details className="group relative">
       <summary
         aria-controls={menuId}
-        className="flex cursor-pointer list-none items-center gap-2 rounded-full p-1 outline-none transition hover:bg-white/65 focus-visible:ring-2 focus-visible:ring-[#1E2E4F] focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden"
+        className="flex cursor-pointer list-none items-center gap-2.5 rounded-full p-1 outline-none transition hover:bg-white/65 focus-visible:ring-2 focus-visible:ring-[#1E2E4F] focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden"
       >
         <span
           aria-label={`Open ${username}'s menu`}
-          className={`relative grid h-11 w-11 place-items-center overflow-visible rounded-full p-0.5 shadow-sm ring-2 ring-offset-2 ring-offset-[#FBFAF7] ${style.shell} ${style.ring}`}
+          className={`relative grid h-12 w-12 place-items-center overflow-visible rounded-full p-0.5 shadow-sm ring-2 ring-offset-2 ring-offset-[#FBFAF7] ${style.shell} ${style.ring}`}
         >
           <span className="grid h-full w-full place-items-center overflow-hidden rounded-full bg-[#F7F4EE] text-sm font-bold text-[#1E2E4F]">
             {avatarUrl ? (
@@ -117,7 +117,7 @@ export default function UserAvatarMenu({
             </span>
           ) : null}
         </span>
-        <span className="hidden max-w-28 truncate text-sm font-semibold text-[#1E2E4F] lg:block">
+        <span className="hidden max-w-32 truncate text-sm font-semibold text-[#1E2E4F] sm:block">
           {username}
         </span>
       </summary>

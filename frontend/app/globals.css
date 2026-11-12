@@ -3,6 +3,8 @@
 :root {
   --background: #d9e1f1;
   --foreground: #171717;
+  --livrusp-page-background: #d9e1f1;
+  --livrusp-background-image: none;
 }
 
 @theme inline {
@@ -17,4 +19,32 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* A future user-selected background only needs to set --livrusp-background-image. */
+.livrusp-page-shell {
+  background-color: var(--livrusp-page-background);
+  background-image:
+    linear-gradient(rgb(217 225 241 / 82%), rgb(217 225 241 / 82%)),
+    var(--livrusp-background-image);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+/* Shared visual scale for the app's single-column content pages. */
+.app-page-proportions h1 {
+  font-size: clamp(2.5rem, 4vw, 3rem);
+  line-height: 0.98;
+}
+
+.app-page-proportions h2 {
+  font-size: clamp(2rem, 3vw, 2.125rem);
+  line-height: 1;
+}
+
+.app-page-proportions h3 {
+  font-size: clamp(1.25rem, 2vw, 1.375rem);
+  line-height: 1.15;
 }

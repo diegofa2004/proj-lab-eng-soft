@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func, select
+from sqlalchemy import Numeric, func, select
 from sqlalchemy.orm import Session
 
 from app.api.endpoints.account import purchase_plan
@@ -43,11 +43,25 @@ def dashboard(db: Session = Depends(get_db), user: User = Depends(get_current_us
         )
         or 0
     )
-    pages = (
+    standard_pages = (
         db.scalar(
-            select(func.coalesce(func.sum(ProgressoLeitura.paginas_distintas_lidas), 0)).where(
-                ProgressoLeitura.id_usuario == user.id
+            select(
+                func.coalesce(
+                    func.round(
+                        func.sum(
+                            func.least(
+                                ProgressoLeitura.paginas_distintas_lidas, Livro.total_paginas
+                            ).cast(Numeric)
+                            * Livro.paginas_padrao
+                            / Livro.total_paginas
+                        )
+                    ),
+                    0,
+                )
             )
+            .select_from(ProgressoLeitura)
+            .join(Livro, Livro.id_livro == ProgressoLeitura.id_livro)
+            .where(ProgressoLeitura.id_usuario == user.id, Livro.paginas_padrao.is_not(None))
         )
         or 0
     )
@@ -59,7 +73,11 @@ def dashboard(db: Session = Depends(get_db), user: User = Depends(get_current_us
         )
         or 0
     )
-    return {"books_read": completed, "pages_read": pages, "active_seconds": seconds}
+    return {
+        "books_read": completed,
+        "standard_pages_read": int(standard_pages),
+        "active_seconds": seconds,
+    }
 
 
 @router.get("/points")

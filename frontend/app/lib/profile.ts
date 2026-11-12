@@ -41,12 +41,12 @@ type LegacyPointsResponse = {
 
 type RawDashboardResponse = {
   livros_concluidos?: number;
-  paginas_lidas?: number;
+  paginas_padrao_lidas?: number;
   tempo_ativo_segundos?: number;
   generos_lidos?: number;
   autores_lidos?: number;
   books_read?: number;
-  pages_read?: number;
+  standard_pages_read?: number;
   active_seconds?: number;
 };
 
@@ -196,10 +196,10 @@ export async function getProfileDashboardStats(): Promise<ProfileDashboardStats>
                 ? data.books_read
                 : 0,
           pagesRead:
-            typeof data.paginas_lidas === "number"
-              ? data.paginas_lidas
-              : typeof data.pages_read === "number"
-                ? data.pages_read
+            typeof data.paginas_padrao_lidas === "number"
+              ? data.paginas_padrao_lidas
+              : typeof data.standard_pages_read === "number"
+                ? data.standard_pages_read
                 : 0,
           activeSeconds:
             typeof data.tempo_ativo_segundos === "number"

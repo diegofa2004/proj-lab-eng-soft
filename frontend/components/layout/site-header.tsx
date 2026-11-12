@@ -36,14 +36,14 @@ export default async function SiteHeader({
   const profileAssets = currentUser && assets.length === 0 ? await getProfileAssets() : assets;
 
   return (
-    <header className="flex flex-wrap items-center justify-between gap-4 py-6">
-      <Link aria-label="LivrUSP Home" className="inline-flex items-center" href="/">
+    <header className="grid min-h-20 grid-cols-[1fr_auto_1fr] items-center gap-x-4 gap-y-3 py-4 sm:gap-x-6">
+      <Link aria-label="LivrUSP Home" className="inline-flex justify-self-start" href="/">
         <LivruspHeaderLogo />
       </Link>
 
       <nav
         aria-label="Primary"
-        className="order-3 flex w-full flex-wrap items-center justify-center gap-4 rounded-full bg-[#E6EBF5]/90 px-5 py-3 text-xs font-semibold text-black shadow-xs backdrop-blur-xs sm:order-2 sm:w-auto sm:gap-7 sm:px-8 sm:text-sm"
+        className="col-span-3 row-start-2 flex flex-wrap items-center justify-center gap-4 rounded-full bg-[#E6EBF5]/90 px-5 py-3 text-sm font-semibold text-black shadow-xs backdrop-blur-xs lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:gap-7 lg:px-8"
       >
         {links.map((item) => (
           <Link
@@ -59,7 +59,7 @@ export default async function SiteHeader({
         ))}
       </nav>
 
-      <div className="order-2 flex items-center gap-2 sm:order-3 sm:gap-3">
+      <div className="col-start-3 row-start-1 flex justify-self-end gap-2 sm:gap-3">
         {currentUser ? (
           <>
             <UserAvatarMenu

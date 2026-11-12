@@ -1,7 +1,7 @@
 export const pageBody =
-  "min-h-screen bg-[#D9E1F1] font-sans text-black selection:bg-[#1E2E4F] selection:text-white";
+  "livrusp-page-shell app-page-proportions min-h-screen font-sans text-black selection:bg-[#1E2E4F] selection:text-white";
 
-export const pageContainer = "mx-auto max-w-[1280px] px-6 sm:px-10 lg:px-12";
+export const pageContainer = "mx-auto w-[min(85%,1200px)] max-sm:w-full max-sm:px-4";
 
 export const card =
   "rounded-[24px] border border-black/10 bg-[#E6EBF5]/90 shadow-xs backdrop-blur-xs";

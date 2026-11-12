@@ -150,7 +150,7 @@ export default function ForYouHomePage({
                     {featuredReading.book.titulo}
                   </h3>
                   <p className="mt-2 text-sm text-black/55">
-                    {featuredReading.pagesRead} of {featuredReading.book.total_paginas} reading positions
+                    {featuredReading.pagesRead} of {featuredReading.book.total_paginas} reading pages
                   </p>
                   <div className="mt-6 h-2 overflow-hidden rounded-full bg-black/10">
                     <div

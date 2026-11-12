@@ -290,7 +290,7 @@ export default function AdminBookMetadataEditor({
       parsedPages > MAX_BOOK_PAGES
     ) {
       setFormStatus("error");
-      setMessage(`Position count must be a whole number between 1 and ${MAX_BOOK_PAGES}.`);
+      setMessage(`Reading pages must be a whole number between 1 and ${MAX_BOOK_PAGES}.`);
       return;
     }
 
@@ -472,7 +472,7 @@ export default function AdminBookMetadataEditor({
             className={labelClassName}
             htmlFor={`book-pages-${savedBook.id_livro}`}
           >
-            Reading positions
+            Reading pages
           </label>
           <input
             className={fieldClassName}
@@ -827,7 +827,7 @@ export default function AdminBookMetadataEditor({
             #{savedBook.id_livro} ·{" "}
             {savedBook.origem === "usuario" ? "Community book" : "Catalog book"} ·{" "}
             {savedBook.status_bloqueado ? "Removed" : savedBook.status_publicacao} ·{" "}
-            {savedBook.total_paginas} reading positions ·{" "}
+            {savedBook.total_paginas} reading pages ·{" "}
             Published {normalizeDateInput(savedBook.data_publicacao)}
           </p>
 

@@ -25,6 +25,9 @@ class Livro(Base):
     __table_args__ = (
         CheckConstraint("btrim(titulo) <> ''", name="ck_livro_titulo"),
         CheckConstraint("total_paginas > 0", name="ck_livro_total_paginas"),
+        CheckConstraint(
+            "paginas_padrao IS NULL OR paginas_padrao > 0", name="ck_livro_paginas_padrao"
+        ),
         CheckConstraint("origem IN ('catalogo', 'usuario')", name="ck_livro_origem"),
         CheckConstraint(
             "status_publicacao IN ('rascunho', 'publicado', 'arquivado')",
@@ -43,6 +46,8 @@ class Livro(Base):
     gutenberg_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     data_publicacao: Mapped[date] = mapped_column(Date, nullable=False)
     arquivo_conteudo: Mapped[str] = mapped_column(Text, nullable=False)
+    # A stable, content-based estimate (300 words per page), unlike EPUB locations.
+    paginas_padrao: Mapped[int | None] = mapped_column(Integer, nullable=True)
     total_paginas: Mapped[int] = mapped_column(Integer, nullable=False)
     origem: Mapped[str] = mapped_column(String(10), nullable=False)
     status_publicacao: Mapped[str] = mapped_column(
