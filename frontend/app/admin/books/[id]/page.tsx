@@ -5,7 +5,7 @@ import {
   getAdminBookById,
   getAdminGenres,
 } from "@/app/lib/admin";
-import { PUBLICATION_STATUS_LABELS } from "@/app/lib/books";
+import { PUBLICATION_STATUS_LABELS } from "@/app/lib/book-presentation";
 import { card, secondaryCompact } from "@/app/lib/ui";
 import AdminActionButton from "@/components/admin/admin-action-button";
 import AdminBookMetadataEditor from "@/components/admin/admin-book-metadata-editor";

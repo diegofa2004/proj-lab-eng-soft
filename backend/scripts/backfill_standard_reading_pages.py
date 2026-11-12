@@ -18,7 +18,11 @@ def main() -> None:
     if args.limit is not None and args.limit <= 0:
         parser.error("limit must be positive")
 
-    statement = select(Livro.id_livro).where(Livro.paginas_padrao.is_(None)).order_by(Livro.id_livro)
+    statement = (
+        select(Livro.id_livro)
+        .where(Livro.paginas_padrao.is_(None))
+        .order_by(Livro.id_livro)
+    )
     if args.limit is not None:
         statement = statement.limit(args.limit)
     with SessionLocal() as db:

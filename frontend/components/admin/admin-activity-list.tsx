@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import type { AdminActionType, EnrichedAdminActivity } from "@/app/lib/admin";
-import { PUBLICATION_STATUS_LABELS } from "@/app/lib/books";
+import { PUBLICATION_STATUS_LABELS } from "@/app/lib/book-presentation";
 import { card, cardInset, secondaryCompact } from "@/app/lib/ui";
 
 type CategoryFilter = "all" | "users" | "books" | "reviews";

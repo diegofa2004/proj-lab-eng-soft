@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { type SyntheticEvent, useMemo, useState } from "react";
 
 import type { AdminBook } from "@/app/lib/admin";
+import { PUBLICATION_STATUS_LABELS } from "@/app/lib/book-presentation";
 import {
-  PUBLICATION_STATUS_LABELS,
   type Author,
   type Book,
   type Genre,
