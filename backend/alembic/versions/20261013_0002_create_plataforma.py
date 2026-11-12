@@ -10,6 +10,7 @@ Create Date: 2026-10-13 00:00:00
 from collections.abc import Sequence
 
 import sqlalchemy as sa
+from sqlalchemy import inspect
 
 from alembic import op
 
@@ -22,6 +23,13 @@ SCHEMA = "plataforma"
 
 
 def upgrade() -> None:
+    # The shared environment predates Alembic and already contains the complete
+    # platform baseline. In that case, preserve it and let the following
+    # revisions reconcile the incremental changes.  A brand-new database still
+    # executes the bootstrap below normally.
+    if inspect(op.get_bind()).has_schema(SCHEMA):
+        return
+
     op.execute(sa.schema.CreateSchema(SCHEMA))
     op.execute("""
 CREATE TABLE plataforma.nivel (
