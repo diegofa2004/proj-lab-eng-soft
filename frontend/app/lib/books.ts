@@ -1,6 +1,11 @@
 import { cache } from "react";
 import { cookies } from "next/headers";
 
+import {
+  getProfileAvatar,
+  resolveAssetImageUrl,
+  type ProfileAsset,
+} from "@/app/lib/profile-utils";
 import { accessTokenCookieName } from "@/app/lib/session";
 
 export type OrigemLivro = "catalogo" | "usuario";
@@ -636,6 +641,9 @@ export type PublicProfile = {
   biografia: string;
   id_avatar?: number | null;
   id_icone?: number | null;
+  profile_ring?: string | null;
+  profile_background?: string | null;
+  profile_avatar?: string | null;
   nivel?: string | null;
 };
 
@@ -643,6 +651,9 @@ export type SocialActivityItem = {
   id: string;
   userId: number;
   username: string;
+  avatarUrl?: string | null;
+  profileRing?: string | null;
+  level?: string | null;
   bookId: number;
   bookTitle: string;
   authorName: string | null;
@@ -717,26 +728,19 @@ async function resolveBooksByIds(
     .filter((book): book is BookSearchResult => Boolean(book));
 }
 
-async function fetchPublicProfileName(
-  userId: number,
-  currentUser: CurrentUser | null,
-): Promise<string> {
-  if (currentUser && currentUser.id === userId) {
-    return currentUser.username;
-  }
-
+async function fetchPublicProfile(userId: number): Promise<PublicProfile | null> {
   const backendUrl = getBackendUrl();
   const v2Profile = await fetchJsonOrNull<PublicProfile>(`${backendUrl}/v2/profiles/${userId}`);
   if (v2Profile.ok && v2Profile.data?.nome_perfil) {
-    return v2Profile.data.nome_perfil;
+    return v2Profile.data;
   }
 
   const rootProfile = await fetchJsonOrNull<PublicProfile>(`${backendUrl}/profiles/${userId}`);
   if (rootProfile.ok && rootProfile.data?.nome_perfil) {
-    return rootProfile.data.nome_perfil;
+    return rootProfile.data;
   }
 
-  return `user_${userId}`;
+  return null;
 }
 
 export async function getSignedHomeData(
@@ -757,6 +761,7 @@ export async function getSignedHomeData(
     v2MyBooksResponse,
     myReviewsResponse,
     recentReviewsResponse,
+    assetsResponse,
   ] = await Promise.all([
     fetchJsonOrNull<BookSearchResult[] | PaginatedBooksResponse>(`${backendUrl}/books`),
     authHeaders
@@ -777,7 +782,8 @@ export async function getSignedHomeData(
     authHeaders
       ? fetchJsonOrNull<Review[]>(`${backendUrl}/v2/me/reviews`, authHeaders)
       : Promise.resolve({ ok: false as const, status: 401 }),
-    fetchJsonOrNull<Review[]>(`${backendUrl}/v2/reviews/recent?limit=6`),
+    fetchJsonOrNull<Review[]>(`${backendUrl}/v2/reviews/recent?limit=24`),
+    fetchJsonOrNull<ProfileAsset[]>(`${backendUrl}/v2/assets`),
   ]);
 
   const bookMap = new Map<number, BookSearchResult>();
@@ -864,26 +870,40 @@ export async function getSignedHomeData(
   );
   const recentSocialReviews = toBookReviews(
     recentReviewsResponse.ok && Array.isArray(recentReviewsResponse.data)
-      ? recentReviewsResponse.data
+      ? recentReviewsResponse.data.filter(
+          (review) => !currentUser || review.id_usuario !== currentUser.id,
+        )
       : [],
-  );
+  ).slice(0, 6);
   const uniqueReviewerIds = Array.from(
     new Set(recentSocialReviews.map((entry) => entry.review.id_usuario)),
   );
-  const profileNamesEntries = await Promise.all(
-    uniqueReviewerIds.map(async (userId) => [
-      userId,
-      await fetchPublicProfileName(userId, currentUser),
-    ] as const),
+  const profileEntries = await Promise.all(
+    uniqueReviewerIds.map(async (userId) => [userId, await fetchPublicProfile(userId)] as const),
   );
-  const profileNameMap = new Map<number, string>(profileNamesEntries);
+  const profileMap = new Map<number, PublicProfile | null>(profileEntries);
+  const assetPathById = new Map<number, string>(
+    (assetsResponse.ok && Array.isArray(assetsResponse.data) ? assetsResponse.data : []).map(
+      (asset) => [asset.id_asset, asset.arquivo],
+    ),
+  );
 
   const socials: SocialActivityItem[] = recentSocialReviews.map(({ book, review }) => {
     const authorNames = (book.autores ?? []).map((author) => author.nome).filter(Boolean);
+    const profile = profileMap.get(review.id_usuario) ?? null;
+    const illustratedAvatar = getProfileAvatar(profile?.profile_avatar)?.src ?? null;
+    const assetPath =
+      profile?.id_avatar != null ? (assetPathById.get(profile.id_avatar) ?? null) : null;
+    const resolvedAssetUrl = assetPath ? resolveAssetImageUrl(assetPath) || null : null;
+    const avatarUrl = illustratedAvatar ?? resolvedAssetUrl;
+
     return {
       id: `${review.id_avaliacao}-${book.id_livro}`,
       userId: review.id_usuario,
-      username: profileNameMap.get(review.id_usuario) ?? `user_${review.id_usuario}`,
+      username: profile?.nome_perfil ?? `user_${review.id_usuario}`,
+      avatarUrl,
+      profileRing: profile?.profile_ring ?? null,
+      level: profile?.nivel ?? null,
       bookId: book.id_livro,
       bookTitle: book.titulo,
       authorName: authorNames.length > 0 ? authorNames.join(", ") : null,
