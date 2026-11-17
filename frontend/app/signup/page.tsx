@@ -11,6 +11,7 @@ type FormStatus = "idle" | "submitting" | "success" | "error";
 export default function SignupPage() {
   const [formStatus, setFormStatus] = useState<FormStatus>("idle");
   const [message, setMessage] = useState("");
+  const [requiresSignIn, setRequiresSignIn] = useState(false);
 
   async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -44,6 +45,7 @@ export default function SignupPage() {
 
     setFormStatus("submitting");
     setMessage("");
+    setRequiresSignIn(false);
     let accountCreated = false;
 
     try {
@@ -86,7 +88,8 @@ export default function SignupPage() {
     } catch {
       if (accountCreated) {
         setFormStatus("success");
-        setMessage("Account created. Welcome to livrUSP.");
+        setMessage("Account created. Please sign in to continue.");
+        setRequiresSignIn(true);
       } else {
         setFormStatus("error");
         setMessage("Unable to reach the authentication service. Please try again.");
@@ -108,6 +111,11 @@ export default function SignupPage() {
             <h2 className={styles.completionTitle} id="signup-heading">
               {message || "Account created. Welcome to livrUSP."}
             </h2>
+            {requiresSignIn ? (
+              <p className={styles.switchText}>
+                <Link className={styles.textLink} href="/login">Sign in</Link>
+              </p>
+            ) : null}
           </div>
         ) : (
           <>
