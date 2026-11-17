@@ -41,6 +41,9 @@ type SubscriptionCheckoutProps = {
   initialPlans: SubscriptionPlan[];
   initialSubscriptions: Subscription[];
   initialPayments: PaymentRecord[];
+  /** "plans" shows the plan cards; "form" shows the subscription form for the chosen plan. */
+  view?: "plans" | "form";
+  initialPlanId?: number | null;
 };
 
 type DisplayedReceipt = {
@@ -98,6 +101,8 @@ export default function SubscriptionCheckout({
   initialPlans,
   initialSubscriptions,
   initialPayments,
+  view = "plans",
+  initialPlanId = null,
 }: SubscriptionCheckoutProps) {
   const router = useRouter();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>(initialSubscriptions);
@@ -115,9 +120,14 @@ export default function SubscriptionCheckout({
     DEFAULT_FAMILY_AND_FRIENDS_PLAN;
 
   const initialActiveSubscription = getActiveSubscription(initialSubscriptions);
-  const initialDefaultPlanId =
-    initialActiveSubscription &&
-    availablePlans.some((plan) => plan.id_plano === initialActiveSubscription.id_plano)
+  const requestedPlan =
+    initialPlanId !== null
+      ? availablePlans.find((plan) => plan.id_plano === initialPlanId)
+      : undefined;
+  const initialDefaultPlanId = requestedPlan
+    ? requestedPlan.id_plano
+    : initialActiveSubscription &&
+        availablePlans.some((plan) => plan.id_plano === initialActiveSubscription.id_plano)
       ? initialActiveSubscription.id_plano
       : (availablePlans[0]?.id_plano ?? individualPlan.id_plano);
 
@@ -649,18 +659,18 @@ export default function SubscriptionCheckout({
         >
           <div className="border-b border-black/10 pb-5">
             <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#556B45]">
-              Subscription Checkout
+              {view === "form" ? "Subscribe now" : "Subscription Checkout"}
             </p>
             <h2
               className="mt-2 font-serif text-3xl font-normal tracking-tight text-black sm:text-4xl"
               id="subscription-checkout-heading"
             >
-              LivrUSP Premium plans
+              {view === "form" ? selectedPlan.nome : "LivrUSP Premium plans"}
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-black/65">
-              Select the Individual plan for one reader or the Family and Friends plan for up to 4
-              different people at a lower cost per person. Both plans include the exact same Premium
-              benefits.
+              {view === "form"
+                ? "Review your order and fill in the details below to activate your Premium subscription."
+                : "Select the Individual plan for one reader or the Family and Friends plan for up to 4 different people at a lower cost per person. Both plans include the exact same Premium benefits."}
             </p>
           </div>
 
@@ -696,6 +706,7 @@ export default function SubscriptionCheckout({
 
           <form className="mt-6 space-y-6" noValidate onSubmit={handleCheckout}>
             {/* Two-Plan Selector */}
+            {view === "plans" ? (
             <div>
               <span className="block font-mono text-[11px] font-semibold uppercase tracking-wider text-[#556B45]">
                 Choose Your Plan
@@ -789,10 +800,53 @@ export default function SubscriptionCheckout({
                   );
                 })}
               </div>
+
+              <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-black/10 pt-5">
+                <button
+                  className="rounded-full bg-[#1E2E4F] px-7 py-2.5 text-xs font-semibold text-white transition hover:bg-[#15223B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E2E4F] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
+                  disabled={isSwitchingPlan || cancellingId !== null}
+                  onClick={() =>
+                    router.push(`/subscription/checkout?plan=${selectedPlan.id_plano}`)
+                  }
+                  type="button"
+                >
+                  Subscribe now
+                </button>
+
+                <p
+                  aria-live="polite"
+                  className={`text-sm font-medium ${
+                    checkoutStatus === "error" ? "text-red-700" : "text-[#3A4B2E]"
+                  }`}
+                  role={checkoutStatus === "error" ? "alert" : "status"}
+                >
+                  {feedbackMessage}
+                </p>
+              </div>
+
+              {isSwitchingPlan && activeSubscription ? (
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/35 bg-amber-50 px-3.5 py-3 text-xs text-amber-950">
+                  <p className="leading-relaxed">
+                    Cancel your current active plan before switching to{" "}
+                    <strong>{selectedPlan.nome}</strong>.
+                  </p>
+                  <button
+                    className={dangerCompact}
+                    disabled={cancellingId !== null || isSubmitting}
+                    onClick={() => handleCancelSubscription(activeSubscription.id_assinatura)}
+                    type="button"
+                  >
+                    {cancellingId === activeSubscription.id_assinatura
+                      ? "Cancelling..."
+                      : "Cancel current plan"}
+                  </button>
+                </div>
+              ) : null}
             </div>
+            ) : null}
 
             {/* Family & Friends Holder (18+) & Group Members Setup */}
-            {isFamilyPlanSelected ? (
+            {view === "form" && isFamilyPlanSelected ? (
               <div className={`space-y-5 p-5 ${cardInset}`}>
                 <div className="border-b border-black/10 pb-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -927,10 +981,20 @@ export default function SubscriptionCheckout({
             ) : null}
 
             {/* Checkout Summary */}
+            {view === "form" ? (
+            <>
             <div className={`space-y-3 p-5 ${cardInset}`}>
-              <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[#556B45]">
-                Order Summary
-              </span>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[#556B45]">
+                  Order Summary
+                </span>
+                <Link
+                  className="text-xs font-semibold text-[#1E2E4F] transition hover:underline"
+                  href="/subscription"
+                >
+                  ← Change plan
+                </Link>
+              </div>
 
               <dl className="grid gap-3 text-sm sm:grid-cols-2">
                 <div>
@@ -1067,7 +1131,17 @@ export default function SubscriptionCheckout({
               >
                 {feedbackMessage}
               </p>
+              {checkoutStatus === "success" ? (
+                <Link
+                  className="text-xs font-semibold text-[#1E2E4F] transition hover:underline sm:text-sm"
+                  href="/subscription"
+                >
+                  View my membership →
+                </Link>
+              ) : null}
             </div>
+            </>
+            ) : null}
           </form>
 
           {/* Latest Payment Confirmation Receipt */}
@@ -1140,6 +1214,7 @@ export default function SubscriptionCheckout({
         </section>
 
         {/* Subscription & Payment History Card */}
+        {view === "plans" ? (
         <section
           aria-labelledby="subscription-history-heading"
           className={`${card} p-6 sm:p-8`}
@@ -1287,6 +1362,7 @@ export default function SubscriptionCheckout({
             </div>
           </div>
         </section>
+        ) : null}
       </div>
     </div>
   );
