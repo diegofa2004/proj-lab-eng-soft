@@ -58,6 +58,12 @@ export type AdminAccessBook = {
   acessos: number;
 };
 
+export type AdminAccessGenre = {
+  id_genero: number;
+  nome: string;
+  acessos: number;
+};
+
 export type AdminAccessReport = {
   users: {
     total_usuarios: number;
@@ -65,6 +71,7 @@ export type AdminAccessReport = {
     usuarios_bloqueados: number;
   };
   books: AdminAccessBook[];
+  genres: AdminAccessGenre[];
 };
 
 export type AdminActionType =
