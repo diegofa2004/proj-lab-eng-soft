@@ -17,6 +17,7 @@ from app.db.base import (
     AtividadeAdmin,
     Autor,
     CapaLivro,
+    Capitulo,
     Genero,
     GeneroCanonico,
     Livro,
@@ -32,6 +33,7 @@ from app.schemas.common import BookTitle, PositiveId
 from app.schemas.genero import GeneroPublic
 from app.schemas.genero_canonico import GeneroCanonicoPublic
 from app.schemas.livro import LivroPublic, StatusPublicacao
+from app.services.epub import ChapterSource, GeneratedEpub, generate_epub
 
 router = APIRouter(tags=["Catalog"])
 CONTENT = Path("content")
@@ -103,6 +105,38 @@ def require_publication_ready(row, _total_pages: int) -> int:
     if total_positions is None:
         raise HTTPException(409, "Upload an EPUB3 file before publishing")
     return total_positions
+
+
+def book_chapter_sources(db, book_id: int) -> list[ChapterSource]:
+    rows = db.scalars(
+        select(Capitulo)
+        .where(Capitulo.id_livro == book_id)
+        .order_by(Capitulo.ordem, Capitulo.id_capitulo)
+    ).all()
+    return [
+        ChapterSource(
+            id=row.id_capitulo,
+            ordem=row.ordem,
+            titulo=row.titulo,
+            conteudo=row.conteudo,
+        )
+        for row in rows
+    ]
+
+
+def generate_book_epub(db, row, chapters: list[ChapterSource]) -> GeneratedEpub:
+    authors = ", ".join(
+        author.nome for author in links(db, row.id_livro, Autor, LivroAutor, "id_autor")
+    )
+    CONTENT.mkdir(exist_ok=True)
+    tmp = CONTENT / uuid4().hex
+    try:
+        result = generate_epub(tmp, row.id_livro, row.titulo, chapters, authors)
+        validate_epub(tmp)
+        tmp.replace(CONTENT / f"{row.id_livro}.epub")
+        return result
+    finally:
+        tmp.unlink(missing_ok=True)
 
 
 class BookInput(BaseModel):
@@ -203,14 +237,26 @@ def owned_book(db, user, book_id):
 
 
 def metadata(db, row, data):
-    total_positions = stored_epub_positions(row) or data.total_paginas
+    chapters = book_chapter_sources(db, row.id_livro)
+    generated = None
+    if data.status_publicacao == "publicado" and chapters:
+        generated = generate_book_epub(db, row, chapters)
+        total_positions = generated.total_paginas
+    else:
+        total_positions = stored_epub_positions(row) or data.total_paginas
     validate_page_count(db, row, total_positions)
-    if data.status_publicacao == "publicado":
+    if data.status_publicacao == "publicado" and not chapters:
         total_positions = require_publication_ready(row, total_positions)
     for key, value in data.model_dump(exclude={"autores", "generos"}).items():
         if key == "total_paginas":
             value = total_positions
         setattr(row, key, value)
+    if generated is not None:
+        row.paginas_padrao = generated.total_paginas
+    if not data.autores:
+        data.autores = [
+            author.id_autor for author in links(db, row.id_livro, Autor, LivroAutor, "id_autor")
+        ]
     for model, through, key, ids in [
         (Autor, LivroAutor, "id_autor", data.autores),
         (Genero, LivroGenero, "id_genero", data.generos),
@@ -226,6 +272,13 @@ def metadata(db, row, data):
 @router.post("/books", response_model=LivroPublic, status_code=201)
 def create(data: BookInput, db: DB, user: Reader):
     grant_publish(db, user)
+    if not data.autores:
+        author = db.scalar(select(Autor).where(Autor.nome == user.username))
+        if author is None:
+            author = Autor(nome=user.username)
+            db.add(author)
+            db.flush()
+        data.autores.append(author.id_autor)
     row = Livro(
         **data.model_dump(exclude={"autores", "generos", "status_publicacao"}),
         origem="catalogo" if user.is_admin else "usuario",
@@ -260,6 +313,8 @@ def replace(book_id: int, data: BookInput, db: DB, user: Reader):
 def upload(book_id: int, db: DB, user: Reader, file: UploadFile = File()):
     row = owned_book(db, user, book_id)
     grant_publish(db, user)
+    if book_chapter_sources(db, book_id):
+        raise HTTPException(409, "Books with chapters cannot use EPUB upload")
     CONTENT.mkdir(exist_ok=True)
     tmp = CONTENT / uuid4().hex
     try:
