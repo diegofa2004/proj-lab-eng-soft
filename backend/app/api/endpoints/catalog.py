@@ -188,13 +188,6 @@ def detail(book_id: int, db: DB):
     )
 
 
-@router.get("/me/books", response_model=list[LivroPublic])
-def my_books(db: DB, user: Reader):
-    return db.scalars(
-        select(Livro).filter_by(id_publicador=user.id).order_by(Livro.id_livro.desc())
-    ).all()
-
-
 def grant_publish(db, user):
     if not user.is_admin and not profile_stats(db, user)["pode_publicar"]:
         raise HTTPException(403, "Publishing requires premium or a qualifying level")
