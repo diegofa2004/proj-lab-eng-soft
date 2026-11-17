@@ -121,9 +121,13 @@ export function isFamilyAndFriendsPlan(plan: SubscriptionPlan): boolean {
   return plan.tier === "family_and_friends";
 }
 
-/** Returns only plans actually configured by the backend, in checkout display order. */
+/**
+ * Returns the Premium plans in checkout display order (Individual first).
+ * Both tiers are always offered: when the backend does not return one of them,
+ * the matching default plan is used so its card is still shown.
+ */
 export function resolvePremiumPlans(plans: SubscriptionPlan[]): SubscriptionPlan[] {
-  return plans
+  const configured = plans
     .filter(
       (plan) =>
         plan.ativo !== false && (plan.tier === "individual" || plan.tier === "family_and_friends"),
@@ -132,6 +136,15 @@ export function resolvePremiumPlans(plans: SubscriptionPlan[]): SubscriptionPlan
       if (left.tier === right.tier) return left.id_plano - right.id_plano;
       return left.tier === "individual" ? -1 : 1;
     });
+
+  const result = [...configured];
+  if (!result.some((plan) => plan.tier === "individual")) {
+    result.unshift(DEFAULT_INDIVIDUAL_PLAN);
+  }
+  if (!result.some((plan) => plan.tier === "family_and_friends")) {
+    result.push(DEFAULT_FAMILY_AND_FRIENDS_PLAN);
+  }
+  return result;
 }
 
 /** Resolves the default Individual LivrUSP Premium plan shown in checkout. */
