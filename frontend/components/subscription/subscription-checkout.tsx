@@ -6,28 +6,30 @@ import { type SyntheticEvent, useMemo, useState } from "react";
 
 import { formatProfileLevel, type UserProfile } from "@/app/lib/profile-utils";
 import {
+  FAMILY_AND_FRIENDS_MAX_MEMBERS,
+  FAMILY_AND_FRIENDS_MIN_HOLDER_AGE,
   PREMIUM_BENEFITS,
+  calculateAgeFromBirthDate,
   formatCycleDuration,
   formatPaymentStatus,
+  formatPerPersonPrice,
   formatPeriodicity,
   formatPeriodicityInterval,
   formatPlanPrice,
   formatSubscriptionDate,
   formatSubscriptionStatus,
   getActiveSubscription,
-  resolvePremiumPlan,
+  isFamilyAndFriendsPlan,
+  resolvePremiumPlans,
+  validateFamilyAndFriendsCheckout,
   type BillingConfig,
   type CheckoutResponse,
+  type FamilyPlanHolderDetails,
   type PaymentRecord,
   type Subscription,
   type SubscriptionPlan,
 } from "@/app/lib/subscription-utils";
-import {
-  card,
-  cardInset,
-  cardInsetMuted,
-  dangerCompact,
-} from "@/app/lib/ui";
+import { card, cardInset, cardInsetMuted, dangerCompact } from "@/app/lib/ui";
 
 type RequestStatus = "idle" | "submitting" | "success" | "error";
 
@@ -43,6 +45,11 @@ type DisplayedReceipt = {
   subscription: Subscription;
   payment: PaymentRecord | null;
 };
+
+const labelClassName =
+  "block font-mono text-[11px] font-semibold uppercase tracking-wider text-[#556B45]";
+const fieldClassName =
+  "mt-1.5 block w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-sm text-black shadow-2xs outline-none transition placeholder:text-black/40 hover:border-[#1E2E4F]/50 focus:border-[#1E2E4F] focus:ring-2 focus:ring-[#82A7D5]/50";
 
 function mergeSubscription(list: Subscription[], item: Subscription): Subscription[] {
   const withoutCurrent = list.filter(
@@ -98,6 +105,27 @@ export default function SubscriptionCheckout({
   );
   const [cancelledInSession, setCancelledInSession] = useState<boolean>(false);
 
+  const availablePlans = useMemo(() => resolvePremiumPlans(initialPlans), [initialPlans]);
+  const [individualPlan, familyPlan] = availablePlans;
+
+  const initialActiveSubscription = getActiveSubscription(initialSubscriptions);
+  const initialDefaultPlanId =
+    initialActiveSubscription &&
+    availablePlans.some((plan) => plan.id_plano === initialActiveSubscription.id_plano)
+      ? initialActiveSubscription.id_plano
+      : individualPlan.id_plano;
+
+  const [selectedPlanId, setSelectedPlanId] = useState<number>(initialDefaultPlanId);
+  const [subscribedPlanOverride, setSubscribedPlanOverride] =
+    useState<SubscriptionPlan | null>(null);
+  const [savedFamilyDetails, setSavedFamilyDetails] =
+    useState<FamilyPlanHolderDetails | null>(null);
+
+  const [holderName, setHolderName] = useState<string>(initialProfile.nome_perfil);
+  const [holderBirthDate, setHolderBirthDate] = useState<string>("");
+  const [holderAgeConfirmed, setHolderAgeConfirmed] = useState<boolean>(false);
+  const [familyMembers, setFamilyMembers] = useState<[string, string, string]>(["", "", ""]);
+
   const [checkoutStatus, setCheckoutStatus] = useState<RequestStatus>("idle");
   const [feedbackMessage, setFeedbackMessage] = useState<string>("");
   const [cancellingId, setCancellingId] = useState<number | null>(null);
@@ -105,16 +133,20 @@ export default function SubscriptionCheckout({
     null,
   );
 
-  const hasServerPlan = initialPlans.length > 0;
-  const premiumPlan = useMemo(() => resolvePremiumPlan(initialPlans), [initialPlans]);
-
   const plansById = useMemo(() => {
     const map = new Map<number, SubscriptionPlan>();
     for (const plan of initialPlans) {
       map.set(plan.id_plano, plan);
     }
+    for (const plan of availablePlans) {
+      map.set(plan.id_plano, plan);
+    }
     return map;
-  }, [initialPlans]);
+  }, [availablePlans, initialPlans]);
+
+  const selectedPlan =
+    availablePlans.find((plan) => plan.id_plano === selectedPlanId) ?? individualPlan;
+  const isFamilyPlanSelected = isFamilyAndFriendsPlan(selectedPlan);
 
   const activeSubscription = useMemo(
     () => getActiveSubscription(subscriptions),
@@ -122,14 +154,39 @@ export default function SubscriptionCheckout({
   );
 
   const activePlan = activeSubscription
-    ? (plansById.get(activeSubscription.id_plano) ?? premiumPlan)
+    ? (subscribedPlanOverride ??
+      plansById.get(activeSubscription.id_plano) ??
+      individualPlan)
     : null;
 
+  const effectiveActivePlanId =
+    subscribedPlanOverride?.id_plano ?? activeSubscription?.id_plano ?? null;
+
   const isSameActivePlan = Boolean(
-    activeSubscription && (!hasServerPlan || activeSubscription.id_plano === premiumPlan.id_plano),
+    activeSubscription && effectiveActivePlanId === selectedPlan.id_plano,
   );
   const isSwitchingPlan = Boolean(
-    activeSubscription && hasServerPlan && activeSubscription.id_plano !== premiumPlan.id_plano,
+    activeSubscription && effectiveActivePlanId !== selectedPlan.id_plano,
+  );
+
+  const holderAge = useMemo(
+    () => (holderBirthDate ? calculateAgeFromBirthDate(holderBirthDate) : null),
+    [holderBirthDate],
+  );
+  const isHolderAdult = holderAge !== null && holderAge >= FAMILY_AND_FRIENDS_MIN_HOLDER_AGE && holderAge <= 120;
+  const isHolderUnderage = holderAge !== null && holderAge < FAMILY_AND_FRIENDS_MIN_HOLDER_AGE;
+
+  const filledExtraMembers = useMemo(
+    () => familyMembers.map((member) => member.trim()).filter(Boolean),
+    [familyMembers],
+  );
+  const totalPlannedPeople = 1 + filledExtraMembers.length;
+
+  const perPersonIndividualLabel = formatPlanPrice(individualPlan.preco, individualPlan.moeda);
+  const perPersonFamilyWithFourLabel = formatPerPersonPrice(
+    familyPlan.preco,
+    familyPlan.moeda,
+    FAMILY_AND_FRIENDS_MAX_MEMBERS,
   );
 
   const displayedReceipt = useMemo<DisplayedReceipt | null>(() => {
@@ -159,6 +216,22 @@ export default function SubscriptionCheckout({
   const isSubmitting = checkoutStatus === "submitting";
   const canPublish = isPremium || (!cancelledInSession && initialProfile.pode_publicar);
 
+  function handleSelectPlan(plan: SubscriptionPlan) {
+    setSelectedPlanId(plan.id_plano);
+    if (checkoutStatus === "error" || checkoutStatus === "success") {
+      setCheckoutStatus("idle");
+      setFeedbackMessage("");
+    }
+  }
+
+  function handleMemberChange(index: 0 | 1 | 2, value: string) {
+    setFamilyMembers((prev) => {
+      const next: [string, string, string] = [prev[0], prev[1], prev[2]];
+      next[index] = value;
+      return next;
+    });
+  }
+
   async function refreshSubscriptionState() {
     const response = await fetch("/api/subscription", { cache: "no-store" }).catch(() => null);
     if (!response || !response.ok) {
@@ -186,14 +259,48 @@ export default function SubscriptionCheckout({
       return;
     }
 
+    let cleanedMembers: string[] = [];
+    if (isFamilyPlanSelected) {
+      const validation = validateFamilyAndFriendsCheckout({
+        holderName,
+        holderEmail: initialProfile.email,
+        holderBirthDate,
+        holderAgeConfirmed,
+        members: familyMembers,
+      });
+
+      if (!validation.valid) {
+        setCheckoutStatus("error");
+        setFeedbackMessage(validation.error);
+        return;
+      }
+
+      cleanedMembers = validation.cleanedMembers;
+    }
+
     setCheckoutStatus("submitting");
     setFeedbackMessage("");
+
+    const payload = isFamilyPlanSelected
+      ? {
+          id_plano: selectedPlan.id_plano,
+          plan_tier: "family_and_friends",
+          holder_name: holderName.trim(),
+          holder_email: initialProfile.email,
+          holder_birth_date: holderBirthDate.trim(),
+          holder_age_confirmed: holderAgeConfirmed,
+          members: cleanedMembers,
+        }
+      : {
+          id_plano: selectedPlan.id_plano,
+          plan_tier: "individual",
+        };
 
     try {
       const response = await fetch("/api/subscription", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(hasServerPlan ? { id_plano: premiumPlan.id_plano } : {}),
+        body: JSON.stringify(payload),
       });
 
       const data = (await response.json().catch(() => null)) as
@@ -209,6 +316,19 @@ export default function SubscriptionCheckout({
           ),
         );
         return;
+      }
+
+      setSubscribedPlanOverride(selectedPlan);
+      if (isFamilyPlanSelected) {
+        setSavedFamilyDetails({
+          holderName: holderName.trim(),
+          holderEmail: initialProfile.email,
+          holderBirthDate: holderBirthDate.trim(),
+          holderAgeConfirmed,
+          members: cleanedMembers,
+        });
+      } else {
+        setSavedFamilyDetails(null);
       }
 
       if (data && data.subscription) {
@@ -229,7 +349,7 @@ export default function SubscriptionCheckout({
         setFeedbackMessage(
           isSameActivePlan
             ? "Your active Premium subscription and payment confirmation are up to date."
-            : `${premiumPlan.nome} is now active! You can publish books immediately.`,
+            : `${selectedPlan.nome} is now active! You can publish books immediately.`,
         );
       } else {
         setIsPremium(true);
@@ -237,7 +357,7 @@ export default function SubscriptionCheckout({
         await refreshSubscriptionState();
         setCheckoutStatus("success");
         setFeedbackMessage(
-          `${premiumPlan.nome} is now active! You can publish books immediately.`,
+          `${selectedPlan.nome} is now active! You can publish books immediately.`,
         );
       }
 
@@ -292,6 +412,8 @@ export default function SubscriptionCheckout({
       setSubscriptions(updatedSubscriptions);
       setIsPremium(Boolean(getActiveSubscription(updatedSubscriptions)));
       setCancelledInSession(true);
+      setSubscribedPlanOverride(null);
+      setSavedFamilyDetails(null);
       setLatestCheckoutReceipt(null);
       setCheckoutStatus("success");
       setFeedbackMessage(
@@ -406,6 +528,27 @@ export default function SubscriptionCheckout({
                       {formatSubscriptionDate(activeSubscription.fim)}
                     </dd>
                   </div>
+                  {savedFamilyDetails && activePlan && isFamilyAndFriendsPlan(activePlan) ? (
+                    <>
+                      <div>
+                        <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
+                          Primary Holder (18+)
+                        </dt>
+                        <dd className="mt-0.5 font-medium text-black">
+                          {savedFamilyDetails.holderName}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
+                          Covered People
+                        </dt>
+                        <dd className="mt-0.5 font-medium text-black">
+                          {1 + savedFamilyDetails.members.length} of{" "}
+                          {FAMILY_AND_FRIENDS_MAX_MEMBERS} slots
+                        </dd>
+                      </div>
+                    </>
+                  ) : null}
                   {activeSubscription.referencia_provedor ? (
                     <div className="col-span-2">
                       <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
@@ -440,8 +583,9 @@ export default function SubscriptionCheckout({
               </p>
             ) : (
               <p className="mt-2 text-sm leading-relaxed text-black/65">
-                You are currently on the free Standard Plan. Subscribe to LivrUSP Premium to
-                immediately unlock book publishing rights and exclusive profile cosmetics.
+                You are currently on the free Standard Plan. Subscribe to LivrUSP Premium
+                (Individual or Family and Friends) to immediately unlock book publishing rights and
+                exclusive profile cosmetics.
               </p>
             )}
           </div>
@@ -451,6 +595,10 @@ export default function SubscriptionCheckout({
             <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[#556B45]">
               Included with Premium
             </span>
+            <p className="mt-1.5 text-xs leading-relaxed text-black/60">
+              Both the Individual and Family and Friends plans provide the exact same Premium
+              benefits for every member.
+            </p>
             <ul className="mt-3 space-y-3">
               {PREMIUM_BENEFITS.map((benefit) => (
                 <li className="flex items-start gap-2.5 text-sm" key={benefit.title}>
@@ -503,12 +651,12 @@ export default function SubscriptionCheckout({
               className="mt-2 font-serif text-3xl font-normal tracking-tight text-black sm:text-4xl"
               id="subscription-checkout-heading"
             >
-              LivrUSP Premium
+              LivrUSP Premium plans
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-black/65">
-              Subscribe to the single Premium membership plan to immediately gain the right to
-              publish books and unlock exclusive profile cosmetics. Price, currency, and billing
-              period are verified by the backend.
+              Select the Individual plan for one reader or the Family and Friends plan for up to 4
+              different people at a lower cost per person. Both plans include the exact same Premium
+              benefits.
             </p>
           </div>
 
@@ -543,50 +691,239 @@ export default function SubscriptionCheckout({
           </div>
 
           <form className="mt-6 space-y-6" noValidate onSubmit={handleCheckout}>
-            {/* Single Premium Plan Card */}
+            {/* Two-Plan Selector */}
             <div>
               <span className="block font-mono text-[11px] font-semibold uppercase tracking-wider text-[#556B45]">
-                Premium Plan
+                Choose Your Plan
               </span>
 
-              <div className="mt-3 rounded-2xl border border-[#1E2E4F] bg-white p-5 ring-2 ring-[#1E2E4F]/15 shadow-xs sm:p-6">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full border border-[#1E2E4F]/20 bg-[#D9E1F1] px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[#1E2E4F]">
-                        {formatPeriodicity(premiumPlan.periodicidade)}
-                      </span>
-                      {isSameActivePlan ? (
-                        <span className="rounded-full border border-[#556B45]/30 bg-[#556B45]/15 px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[#3A4B2E]">
-                          Active plan
-                        </span>
-                      ) : (
-                        <span className="rounded-full border border-amber-500/30 bg-amber-100/90 px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-amber-900">
-                          Immediate Publishing Access
-                        </span>
-                      )}
-                    </div>
+              <div
+                aria-label="Choose a Premium plan"
+                className="mt-3 grid gap-4 sm:grid-cols-2"
+                role="radiogroup"
+              >
+                {availablePlans.map((plan) => {
+                  const isFamily = isFamilyAndFriendsPlan(plan);
+                  const isSelected = selectedPlan.id_plano === plan.id_plano;
+                  const isCurrentActive = Boolean(
+                    activeSubscription && effectiveActivePlanId === plan.id_plano,
+                  );
 
-                    <h3 className="mt-3 font-serif text-3xl font-normal text-black">
-                      {premiumPlan.nome}
-                    </h3>
-                    <p className="mt-2 max-w-lg text-xs leading-relaxed text-black/65 sm:text-sm">
-                      Subscribing immediately grants you the right to publish original books on
-                      LivrUSP, along with exclusive Premium avatars and icons.
-                    </p>
+                  return (
+                    <button
+                      aria-checked={isSelected}
+                      className={`flex flex-col justify-between rounded-2xl border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E2E4F] ${
+                        isSelected
+                          ? "border-[#1E2E4F] bg-white ring-2 ring-[#1E2E4F]/15 shadow-xs"
+                          : "border-black/15 bg-white/75 hover:border-[#1E2E4F]/45 hover:bg-white"
+                      }`}
+                      key={plan.id_plano}
+                      onClick={() => handleSelectPlan(plan)}
+                      role="radio"
+                      type="button"
+                    >
+                      <div>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="rounded-full border border-[#1E2E4F]/20 bg-[#D9E1F1] px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[#1E2E4F]">
+                            {formatPeriodicity(plan.periodicidade)}
+                          </span>
+                          <span className="rounded-full border border-black/10 bg-black/5 px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-black/75">
+                            {isFamily ? `Up to ${FAMILY_AND_FRIENDS_MAX_MEMBERS} people` : "1 person"}
+                          </span>
+                          {isCurrentActive ? (
+                            <span className="rounded-full border border-[#556B45]/30 bg-[#556B45]/15 px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[#3A4B2E]">
+                              Active
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <h3 className="mt-3 font-serif text-2xl leading-snug font-normal text-black">
+                          {plan.nome}
+                        </h3>
+
+                        <div className="mt-3 flex items-baseline gap-1.5">
+                          <span className="font-serif text-3xl leading-none tracking-tight text-black">
+                            {formatPlanPrice(plan.preco, plan.moeda)}
+                          </span>
+                          <span className="font-mono text-[11px] text-[#556B45]">
+                            {formatPeriodicityInterval(plan.periodicidade)}
+                          </span>
+                        </div>
+
+                        {isFamily ? (
+                          <p className="mt-2.5 rounded-xl border border-[#556B45]/25 bg-[#556B45]/10 px-3 py-2 text-xs leading-relaxed text-[#3A4B2E]">
+                            <strong>{perPersonFamilyWithFourLabel} / person</strong> with 4 people
+                            (cheaper than {perPersonIndividualLabel} on Individual)
+                          </p>
+                        ) : (
+                          <p className="mt-2.5 rounded-xl border border-[#1E2E4F]/15 bg-[#D9E1F1]/55 px-3 py-2 text-xs leading-relaxed text-[#1E2E4F]">
+                            <strong>{perPersonIndividualLabel} / person</strong> · Single reader
+                            account
+                          </p>
+                        )}
+
+                        <p className="mt-3 text-xs leading-relaxed text-black/65">
+                          {plan.description}
+                        </p>
+                      </div>
+
+                      <div className="mt-4 border-t border-black/10 pt-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                          <span className="font-mono uppercase tracking-wider text-black/60">
+                            {isFamily ? "Adult titular (18+) required" : "No group setup needed"}
+                          </span>
+                          <span
+                            className={`font-semibold ${
+                              isSelected ? "text-[#1E2E4F]" : "text-black/50"
+                            }`}
+                          >
+                            {isSelected ? "Selected ✓" : "Select plan"}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Family & Friends Holder (18+) & Group Members Setup */}
+            {isFamilyPlanSelected ? (
+              <div className={`space-y-5 p-5 ${cardInset}`}>
+                <div className="border-b border-black/10 pb-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[#556B45]">
+                      Family and Friends · Holder &amp; Members
+                    </span>
+                    <span className="rounded-full border border-amber-500/30 bg-amber-100/90 px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-amber-900">
+                      Titular 18+ Mandatory
+                    </span>
+                  </div>
+                  <p className="mt-1.5 text-xs leading-relaxed text-black/65">
+                    The Family and Friends plan requires a primary account holder (titular) who is
+                    at least <strong>{FAMILY_AND_FRIENDS_MIN_HOLDER_AGE} years old</strong> and
+                    covers up to <strong>{FAMILY_AND_FRIENDS_MAX_MEMBERS} different people</strong>{" "}
+                    with the exact same Premium benefits.
+                  </p>
+                </div>
+
+                {/* Primary Holder (Titular) */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className={labelClassName} htmlFor="family-holder-name">
+                      Primary Holder Name (Titular)
+                    </label>
+                    <input
+                      className={fieldClassName}
+                      id="family-holder-name"
+                      onChange={(event) => setHolderName(event.target.value)}
+                      placeholder="Full name of primary holder"
+                      required
+                      type="text"
+                      value={holderName}
+                    />
                   </div>
 
-                  <div className="text-left sm:text-right">
-                    <p className="font-serif text-4xl leading-none tracking-tight text-black">
-                      {formatPlanPrice(premiumPlan.preco, premiumPlan.moeda)}
-                    </p>
-                    <p className="mt-1.5 font-mono text-[11px] text-[#556B45]">
-                      {formatPeriodicityInterval(premiumPlan.periodicidade)} · {premiumPlan.moeda}
-                    </p>
+                  <div>
+                    <label className={labelClassName} htmlFor="family-holder-birthdate">
+                      Titular Date of Birth (18+ Required)
+                    </label>
+                    <input
+                      className={fieldClassName}
+                      id="family-holder-birthdate"
+                      onChange={(event) => setHolderBirthDate(event.target.value)}
+                      required
+                      type="date"
+                      value={holderBirthDate}
+                    />
+                    {isHolderAdult ? (
+                      <p className="mt-1.5 inline-flex items-center rounded-full border border-[#556B45]/30 bg-[#556B45]/15 px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[#3A4B2E]">
+                        Age {holderAge} · Adult titular verified (18+)
+                      </p>
+                    ) : isHolderUnderage ? (
+                      <p className="mt-1.5 text-xs font-medium text-red-700" role="alert">
+                        Holder is {holderAge} years old. Must be at least 18 years old (maior de
+                        idade).
+                      </p>
+                    ) : (
+                      <p className="mt-1.5 text-[11px] text-black/55">
+                        Primary holder must be at least {FAMILY_AND_FRIENDS_MIN_HOLDER_AGE} years
+                        old.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-black/10 bg-white/80 p-3.5 text-xs leading-relaxed text-black/80">
+                  <input
+                    checked={holderAgeConfirmed}
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-black/25 text-[#1E2E4F] focus:ring-[#1E2E4F]"
+                    id="family-holder-age-confirmed"
+                    onChange={(event) => setHolderAgeConfirmed(event.target.checked)}
+                    type="checkbox"
+                  />
+                  <span>
+                    I confirm that the primary account holder (titular) is{" "}
+                    <strong>at least 18 years old</strong> (maior de idade) and responsible for
+                    managing the up to 4 different people included in this Family and Friends plan.
+                  </span>
+                </label>
+
+                {/* Up to 4 Different People */}
+                <div className="border-t border-black/10 pt-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className={labelClassName}>
+                      Plan Members ({totalPlannedPeople} / {FAMILY_AND_FRIENDS_MAX_MEMBERS}{" "}
+                      different people)
+                    </span>
+                    <span className="font-mono text-[11px] text-[#556B45]">
+                      {perPersonFamilyWithFourLabel} / person with 4 members
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-black/60">
+                    The titular counts as person #1. Optionally list up to 3 additional distinct
+                    people (username or email). You can include fewer than 4 now, or fill all 4
+                    slots.
+                  </p>
+
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-xl border border-[#1E2E4F]/20 bg-[#D9E1F1]/45 px-3.5 py-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[#1E2E4F]">
+                          Person 1 · Titular (18+)
+                        </span>
+                        <span className="font-mono text-[10px] text-[#556B45]">Included</span>
+                      </div>
+                      <p className="mt-1 truncate text-sm font-medium text-black">
+                        {holderName.trim() || initialProfile.nome_perfil}
+                      </p>
+                      <p className="truncate font-mono text-[11px] text-black/55">
+                        {initialProfile.email}
+                      </p>
+                    </div>
+
+                    {([0, 1, 2] as const).map((slotIndex) => (
+                      <div key={slotIndex}>
+                        <label
+                          className="block font-mono text-[10px] font-semibold uppercase tracking-wider text-black/60"
+                          htmlFor={`family-member-${slotIndex + 2}`}
+                        >
+                          Person {slotIndex + 2} (Optional)
+                        </label>
+                        <input
+                          className={fieldClassName}
+                          id={`family-member-${slotIndex + 2}`}
+                          onChange={(event) => handleMemberChange(slotIndex, event.target.value)}
+                          placeholder="Distinct name or email"
+                          type="text"
+                          value={familyMembers[slotIndex]}
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
-            </div>
+            ) : null}
 
             {/* Checkout Summary */}
             <div className={`space-y-3 p-5 ${cardInset}`}>
@@ -597,39 +934,74 @@ export default function SubscriptionCheckout({
               <dl className="grid gap-3 text-sm sm:grid-cols-2">
                 <div>
                   <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
-                    Plan
+                    Selected Plan
                   </dt>
-                  <dd className="mt-0.5 font-semibold text-black">{premiumPlan.nome}</dd>
+                  <dd className="mt-0.5 font-semibold text-black">{selectedPlan.nome}</dd>
                 </div>
                 <div>
                   <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
                     Billing Cycle
                   </dt>
                   <dd className="mt-0.5 font-medium text-black">
-                    {formatPeriodicity(premiumPlan.periodicidade)} (
-                    {formatCycleDuration(premiumPlan.periodicidade)})
+                    {formatPeriodicity(selectedPlan.periodicidade)} (
+                    {formatCycleDuration(selectedPlan.periodicidade)})
                   </dd>
                 </div>
                 <div>
                   <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
-                    Server-Verified Total
+                    People Covered
+                  </dt>
+                  <dd className="mt-0.5 text-xs font-medium text-black/80">
+                    {isFamilyPlanSelected
+                      ? `Up to ${FAMILY_AND_FRIENDS_MAX_MEMBERS} different people (${totalPlannedPeople} set now)`
+                      : "1 reader (Individual account)"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
+                    Price per Person
+                  </dt>
+                  <dd className="mt-0.5 text-xs font-medium text-black/80">
+                    {isFamilyPlanSelected
+                      ? `${perPersonFamilyWithFourLabel} / person with 4 people (vs. ${perPersonIndividualLabel} Individual)`
+                      : `${perPersonIndividualLabel} / person`}
+                  </dd>
+                </div>
+                {isFamilyPlanSelected ? (
+                  <div>
+                    <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
+                      Primary Holder (Titular 18+)
+                    </dt>
+                    <dd className="mt-0.5 text-xs font-medium text-black/80">
+                      {holderName.trim() || "Name required"} ·{" "}
+                      {isHolderAdult
+                        ? `${holderAge} yrs (18+ verified)`
+                        : isHolderUnderage
+                          ? `${holderAge} yrs (Must be 18+)`
+                          : "Birth date required"}
+                    </dd>
+                  </div>
+                ) : null}
+                <div>
+                  <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
+                    Total Due
                   </dt>
                   <dd className="mt-0.5 font-semibold text-black">
-                    {formatPlanPrice(premiumPlan.preco, premiumPlan.moeda)}{" "}
+                    {formatPlanPrice(selectedPlan.preco, selectedPlan.moeda)}{" "}
                     <span className="font-mono text-xs font-normal text-black/55">
-                      ({premiumPlan.moeda})
+                      ({selectedPlan.moeda} {formatPeriodicityInterval(selectedPlan.periodicidade)})
                     </span>
                   </dd>
                 </div>
                 <div>
                   <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
-                    Instant Benefit
+                    Included Benefits
                   </dt>
                   <dd className="mt-0.5 text-xs font-medium text-black/75">
-                    Immediate book publishing permission &amp; Premium cosmetics
+                    Identical across both plans: instant book publishing &amp; Premium cosmetics
                   </dd>
                 </div>
-                <div className="sm:col-span-2">
+                <div>
                   <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
                     Payment Method
                   </dt>
@@ -643,7 +1015,7 @@ export default function SubscriptionCheckout({
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/35 bg-amber-50 px-3.5 py-3 text-xs text-amber-950">
                   <p className="leading-relaxed">
                     Cancel your current active plan before switching to{" "}
-                    <strong>{premiumPlan.nome}</strong>.
+                    <strong>{selectedPlan.nome}</strong>.
                   </p>
                   <button
                     className={dangerCompact}
@@ -660,9 +1032,9 @@ export default function SubscriptionCheckout({
 
               {isSameActivePlan ? (
                 <p className="rounded-xl border border-[#556B45]/25 bg-[#556B45]/10 px-3.5 py-2.5 text-xs leading-relaxed text-[#3A4B2E]">
-                  Your Premium plan is already active on this account, including book publishing
-                  permissions. Reconfirming checkout returns your existing payment confirmation
-                  without double-charging.
+                  Your <strong>{selectedPlan.nome}</strong> is already active on this account,
+                  including book publishing permissions. Reconfirming checkout returns your existing
+                  payment confirmation without double-charging.
                 </p>
               ) : null}
             </div>
@@ -678,7 +1050,9 @@ export default function SubscriptionCheckout({
                   ? "Processing checkout..."
                   : isSameActivePlan
                     ? "Reconfirm active plan"
-                    : "Subscribe to Premium"}
+                    : isFamilyPlanSelected
+                      ? "Subscribe to Family & Friends"
+                      : "Subscribe to Individual"}
               </button>
 
               <p
@@ -725,12 +1099,17 @@ export default function SubscriptionCheckout({
                     Amount
                   </dt>
                   <dd className="mt-0.5 font-semibold text-black">
-                    {displayedReceipt.payment
+                    {subscribedPlanOverride && isFamilyAndFriendsPlan(subscribedPlanOverride)
                       ? formatPlanPrice(
-                          displayedReceipt.payment.valor,
-                          displayedReceipt.payment.moeda,
+                          subscribedPlanOverride.preco,
+                          subscribedPlanOverride.moeda,
                         )
-                      : "Confirmed"}
+                      : displayedReceipt.payment
+                        ? formatPlanPrice(
+                            displayedReceipt.payment.valor,
+                            displayedReceipt.payment.moeda,
+                          )
+                        : "Confirmed"}
                   </dd>
                 </div>
                 <div>
@@ -784,7 +1163,12 @@ export default function SubscriptionCheckout({
               {subscriptions.length > 0 ? (
                 <ul className="mt-3 space-y-3">
                   {subscriptions.map((subscription) => {
-                    const plan = plansById.get(subscription.id_plano);
+                    const isLatestActiveOverride =
+                      activeSubscription?.id_assinatura === subscription.id_assinatura &&
+                      subscribedPlanOverride;
+                    const plan = isLatestActiveOverride
+                      ? subscribedPlanOverride
+                      : plansById.get(subscription.id_plano);
                     const statusBadge = formatSubscriptionStatus(subscription.status);
                     const canCancel =
                       subscription.status === "ativa" || subscription.status === "pendente";
@@ -851,9 +1235,15 @@ export default function SubscriptionCheckout({
                     const linkedSubscription = subscriptions.find(
                       (sub) => sub.id_assinatura === payment.id_assinatura,
                     );
-                    const linkedPlan = linkedSubscription
-                      ? plansById.get(linkedSubscription.id_plano)
-                      : null;
+                    const isLatestOverride =
+                      linkedSubscription &&
+                      activeSubscription?.id_assinatura === linkedSubscription.id_assinatura &&
+                      subscribedPlanOverride;
+                    const linkedPlan = isLatestOverride
+                      ? subscribedPlanOverride
+                      : linkedSubscription
+                        ? plansById.get(linkedSubscription.id_plano)
+                        : null;
 
                     return (
                       <li
