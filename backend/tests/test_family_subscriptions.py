@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime
+from datetime import date
 
 import pytest
 from fastapi import HTTPException
@@ -37,8 +37,13 @@ def family_db(tmp_path):
         session.close()
 
 
-def create_reader(db, username: str, email: str) -> User:
-    reader = User(username=username, email=email, password_hash="not-a-real-password-hash")
+def create_reader(db, username: str, email: str, birth_date: date = date(1990, 1, 1)) -> User:
+    reader = User(
+        username=username,
+        email=email,
+        password_hash="not-a-real-password-hash",
+        birth_date=birth_date,
+    )
     db.add(reader)
     db.commit()
     return reader
@@ -68,8 +73,6 @@ def test_family_checkout_grants_premium_to_registered_members(family_db):
             family_db,
             owner,
             plan.id_plano,
-            holder_birth_date=date(1990, 1, 1),
-            holder_age_confirmed=True,
             member_emails=[member.email],
         )
     finally:
@@ -86,7 +89,7 @@ def test_family_checkout_grants_premium_to_registered_members(family_db):
 
 
 def test_family_checkout_rejects_underage_holder(family_db):
-    owner = create_reader(family_db, "owner", "owner@example.com")
+    owner = create_reader(family_db, "owner", "owner@example.com", date(2010, 1, 1))
     family_db.add(
         Plano(
             nome="Family",
@@ -109,8 +112,6 @@ def test_family_checkout_rejects_underage_holder(family_db):
                 family_db,
                 owner,
                 plan.id_plano,
-                holder_birth_date=date(datetime.now(UTC).year - 17, 1, 1),
-                holder_age_confirmed=True,
             )
     finally:
         settings.DEMO_BILLING = original_demo_billing
@@ -140,8 +141,6 @@ def test_family_checkout_requires_an_additional_registered_reader(family_db):
                 family_db,
                 owner,
                 plan.id_plano,
-                holder_birth_date=date(1990, 1, 1),
-                holder_age_confirmed=True,
             )
     finally:
         settings.DEMO_BILLING = original_demo_billing

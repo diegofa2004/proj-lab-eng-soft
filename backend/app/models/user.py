@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import (
     BigInteger,
@@ -46,6 +46,7 @@ class User(Base):
     username: Mapped[str] = mapped_column("nome_perfil", String(100), nullable=False)
     email: Mapped[str] = mapped_column(String(254), nullable=False)
     password_hash: Mapped[str] = mapped_column("senha_hash", Text, nullable=False)
+    birth_date: Mapped[date] = mapped_column("data_nascimento", nullable=False)
     biography: Mapped[str] = mapped_column(
         "biografia", Text, nullable=False, server_default=text("''")
     )

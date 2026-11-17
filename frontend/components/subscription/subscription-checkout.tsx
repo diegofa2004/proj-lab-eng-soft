@@ -9,9 +9,7 @@ import {
   DEFAULT_FAMILY_AND_FRIENDS_PLAN,
   DEFAULT_INDIVIDUAL_PLAN,
   FAMILY_AND_FRIENDS_MAX_MEMBERS,
-  FAMILY_AND_FRIENDS_MIN_HOLDER_AGE,
   PREMIUM_BENEFITS,
-  calculateAgeFromBirthDate,
   formatCycleDuration,
   formatPaymentStatus,
   formatPerPersonPrice,
@@ -26,7 +24,6 @@ import {
   validateFamilyAndFriendsCheckout,
   type BillingConfig,
   type CheckoutResponse,
-  type FamilyPlanHolderDetails,
   type PaymentRecord,
   type Subscription,
   type SubscriptionPlan,
@@ -134,12 +131,6 @@ export default function SubscriptionCheckout({
   const [selectedPlanId, setSelectedPlanId] = useState<number>(initialDefaultPlanId);
   const [subscribedPlanOverride, setSubscribedPlanOverride] =
     useState<SubscriptionPlan | null>(null);
-  const [savedFamilyDetails, setSavedFamilyDetails] =
-    useState<FamilyPlanHolderDetails | null>(null);
-
-  const [holderName, setHolderName] = useState<string>(initialProfile.nome_perfil);
-  const [holderBirthDate, setHolderBirthDate] = useState<string>("");
-  const [holderAgeConfirmed, setHolderAgeConfirmed] = useState<boolean>(false);
   const [familyMembers, setFamilyMembers] = useState<[string, string, string]>(["", "", ""]);
 
   const [checkoutStatus, setCheckoutStatus] = useState<RequestStatus>("idle");
@@ -186,13 +177,6 @@ export default function SubscriptionCheckout({
   const isSwitchingPlan = Boolean(
     activeSubscription && effectiveActivePlanId !== selectedPlan.id_plano,
   );
-
-  const holderAge = useMemo(
-    () => (holderBirthDate ? calculateAgeFromBirthDate(holderBirthDate) : null),
-    [holderBirthDate],
-  );
-  const isHolderAdult = holderAge !== null && holderAge >= FAMILY_AND_FRIENDS_MIN_HOLDER_AGE && holderAge <= 120;
-  const isHolderUnderage = holderAge !== null && holderAge < FAMILY_AND_FRIENDS_MIN_HOLDER_AGE;
 
   const filledExtraMembers = useMemo(
     () => familyMembers.map((member) => member.trim()).filter(Boolean),
@@ -280,10 +264,7 @@ export default function SubscriptionCheckout({
     let cleanedMembers: string[] = [];
     if (isFamilyPlanSelected) {
       const validation = validateFamilyAndFriendsCheckout({
-        holderName,
         holderEmail: initialProfile.email,
-        holderBirthDate,
-        holderAgeConfirmed,
         members: familyMembers,
       });
 
@@ -302,8 +283,6 @@ export default function SubscriptionCheckout({
     const payload = isFamilyPlanSelected
       ? {
           id_plano: selectedPlan.id_plano,
-          holder_birth_date: holderBirthDate.trim(),
-          holder_age_confirmed: holderAgeConfirmed,
           member_emails: cleanedMembers,
         }
       : {
@@ -333,18 +312,6 @@ export default function SubscriptionCheckout({
       }
 
       setSubscribedPlanOverride(selectedPlan);
-      if (isFamilyPlanSelected) {
-        setSavedFamilyDetails({
-          holderName: holderName.trim(),
-          holderEmail: initialProfile.email,
-          holderBirthDate: holderBirthDate.trim(),
-          holderAgeConfirmed,
-          members: cleanedMembers,
-        });
-      } else {
-        setSavedFamilyDetails(null);
-      }
-
       if (data && data.subscription) {
         const nextSubscriptions = mergeSubscription(subscriptions, data.subscription);
         setSubscriptions(nextSubscriptions);
@@ -542,27 +509,6 @@ export default function SubscriptionCheckout({
                       {formatSubscriptionDate(activeSubscription.fim)}
                     </dd>
                   </div>
-                  {savedFamilyDetails && activePlan && isFamilyAndFriendsPlan(activePlan) ? (
-                    <>
-                      <div>
-                        <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
-                          Primary Holder (18+)
-                        </dt>
-                        <dd className="mt-0.5 font-medium text-black">
-                          {savedFamilyDetails.holderName}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
-                          Covered People
-                        </dt>
-                        <dd className="mt-0.5 font-medium text-black">
-                          {1 + savedFamilyDetails.members.length} of{" "}
-                          {FAMILY_AND_FRIENDS_MAX_MEMBERS} slots
-                        </dd>
-                      </div>
-                    </>
-                  ) : null}
                   {activeSubscription.referencia_provedor ? (
                     <div className="col-span-2">
                       <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
@@ -858,72 +804,12 @@ export default function SubscriptionCheckout({
                     </span>
                   </div>
                   <p className="mt-1.5 text-xs leading-relaxed text-black/65">
-                    The Family and Friends plan requires a primary account holder who is
-                    at least <strong>{FAMILY_AND_FRIENDS_MIN_HOLDER_AGE} years old</strong> and
-                    covers up to <strong>{FAMILY_AND_FRIENDS_MAX_MEMBERS} different people</strong>{" "}
-                    with the exact same Premium benefits.
+                    The primary account holder must be 18 or older, based on the date of birth
+                    saved on the account. This plan covers up to{" "}
+                    <strong>{FAMILY_AND_FRIENDS_MAX_MEMBERS} different people</strong> with the
+                    exact same Premium benefits.
                   </p>
                 </div>
-
-                {/* Primary Holder */}
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className={labelClassName} htmlFor="family-holder-name">
-                      Primary Holder Name
-                    </label>
-                    <input
-                      className={fieldClassName}
-                      id="family-holder-name"
-                      onChange={(event) => setHolderName(event.target.value)}
-                      placeholder="Full name of primary holder"
-                      required
-                      type="text"
-                      value={holderName}
-                    />
-                  </div>
-
-                  <div>
-                    <label className={labelClassName} htmlFor="family-holder-birthdate">
-                      Primary Holder Date of Birth (18+ Required)
-                    </label>
-                    <input
-                      className={fieldClassName}
-                      id="family-holder-birthdate"
-                      onChange={(event) => setHolderBirthDate(event.target.value)}
-                      required
-                      type="date"
-                      value={holderBirthDate}
-                    />
-                    {isHolderAdult ? (
-                      <p className="mt-1.5 inline-flex items-center rounded-full border border-[#556B45]/30 bg-[#556B45]/15 px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[#3A4B2E]">
-                        Age {holderAge} · Adult holder verified (18+)
-                      </p>
-                    ) : isHolderUnderage ? (
-                      <p className="mt-1.5 text-xs font-medium text-red-700" role="alert">
-                        Holder is {holderAge} years old. Must be at least 18 years old.
-                      </p>
-                    ) : (
-                      <p className="mt-1.5 text-[11px] text-black/55">
-                        Primary holder must be at least {FAMILY_AND_FRIENDS_MIN_HOLDER_AGE} years
-                        old.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-black/10 bg-white/80 p-3.5 text-xs leading-relaxed text-black/80">
-                  <input
-                    checked={holderAgeConfirmed}
-                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-black/25 text-[#1E2E4F] focus:ring-[#1E2E4F]"
-                    id="family-holder-age-confirmed"
-                    onChange={(event) => setHolderAgeConfirmed(event.target.checked)}
-                    type="checkbox"
-                  />
-                  <span>
-                    I confirm that the primary account holder is <strong>at least 18 years old</strong> and responsible for
-                    managing the up to 4 different people included in this Family and Friends plan.
-                  </span>
-                </label>
 
                 {/* Up to 4 Different People */}
                 <div className="border-t border-black/10 pt-4">
@@ -945,12 +831,12 @@ export default function SubscriptionCheckout({
                     <div className="rounded-xl border border-[#1E2E4F]/20 bg-[#D9E1F1]/45 px-3.5 py-2.5">
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[#1E2E4F]">
-                          Person 1 · Primary Holder (18+)
+                          Person 1 · Primary Holder
                         </span>
                         <span className="font-mono text-[10px] text-[#556B45]">Included</span>
                       </div>
                       <p className="mt-1 truncate text-sm font-medium text-black">
-                        {holderName.trim() || initialProfile.nome_perfil}
+                        {initialProfile.nome_perfil}
                       </p>
                       <p className="truncate font-mono text-[11px] text-black/55">
                         {initialProfile.email}
@@ -1032,21 +918,6 @@ export default function SubscriptionCheckout({
                       : `${perPersonIndividualLabel} / person`}
                   </dd>
                 </div>
-                {isFamilyPlanSelected ? (
-                  <div>
-                    <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
-                      Primary Holder (18+)
-                    </dt>
-                    <dd className="mt-0.5 text-xs font-medium text-black/80">
-                      {holderName.trim() || "Name required"} ·{" "}
-                      {isHolderAdult
-                        ? `${holderAge} yrs (18+ verified)`
-                        : isHolderUnderage
-                          ? `${holderAge} yrs (Must be 18+)`
-                          : "Birth date required"}
-                    </dd>
-                  </div>
-                ) : null}
                 <div>
                   <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
                     Total Due

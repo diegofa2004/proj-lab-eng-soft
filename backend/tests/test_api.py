@@ -1,7 +1,18 @@
-def register(client, username="reader", email="reader@example.com", password="password123"):
+def register(
+    client,
+    username="reader",
+    email="reader@example.com",
+    password="password123",
+    birth_date="2000-01-01",
+):
     return client.post(
         "/register",
-        json={"username": username, "email": email, "password": password},
+        json={
+            "username": username,
+            "email": email,
+            "password": password,
+            "birth_date": birth_date,
+        },
     )
 
 
@@ -80,6 +91,12 @@ def test_login_rejects_invalid_credentials(client):
 
 def test_register_rejects_invalid_data(client):
     response = register(client, username="ab", email="not-an-email", password="short")
+
+    assert response.status_code == 422
+
+
+def test_register_rejects_a_future_birth_date(client):
+    response = register(client, birth_date="2999-01-01")
 
     assert response.status_code == 422
 

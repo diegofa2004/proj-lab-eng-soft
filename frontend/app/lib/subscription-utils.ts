@@ -23,14 +23,6 @@ export type SubscriptionPlan = {
   description?: string;
 };
 
-export type FamilyPlanHolderDetails = {
-  holderName: string;
-  holderEmail: string;
-  holderBirthDate: string;
-  holderAgeConfirmed: boolean;
-  members: string[];
-};
-
 export type Subscription = {
   id_assinatura: number;
   id_usuario: number;
@@ -328,45 +320,9 @@ export function getActiveSubscription(subscriptions: Subscription[]): Subscripti
   );
 }
 
-/** Calculates completed years of age from a YYYY-MM-DD birth date string, or null if invalid. */
-export function calculateAgeFromBirthDate(
-  birthDate: string,
-  referenceDate = new Date(),
-): number | null {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(birthDate.trim());
-  if (!match) {
-    return null;
-  }
-
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-
-  const parsed = new Date(Date.UTC(year, month - 1, day));
-  if (
-    parsed.getUTCFullYear() !== year ||
-    parsed.getUTCMonth() !== month - 1 ||
-    parsed.getUTCDate() !== day
-  ) {
-    return null;
-  }
-
-  const refYear = referenceDate.getFullYear();
-  const refMonth = referenceDate.getMonth() + 1;
-  const refDay = referenceDate.getDate();
-
-  let age = refYear - year;
-  if (refMonth < month || (refMonth === month && refDay < day)) {
-    age -= 1;
-  }
-
-  return age >= 0 ? age : null;
-}
-
 export type FamilyCheckoutValidationResult =
   | {
       valid: true;
-      holderAge: number;
       cleanedMembers: string[];
     }
   | {
@@ -374,53 +330,12 @@ export type FamilyCheckoutValidationResult =
       error: string;
     };
 
-/** Validates primary adult holder (titular 18+) and distinct member requirements for Family and Friends. */
+/** Validates distinct registered members for a Family and Friends checkout. */
 export function validateFamilyAndFriendsCheckout(input: {
-  holderName?: unknown;
   holderEmail?: unknown;
-  holderBirthDate?: unknown;
-  holderAgeConfirmed?: unknown;
   members?: unknown;
-  optional?: boolean;
 }): FamilyCheckoutValidationResult {
-  if (input.optional && input.holderBirthDate === undefined && input.members === undefined) {
-    return { valid: true, holderAge: 0, cleanedMembers: [] };
-  }
-  const holderName = typeof input.holderName === "string" ? input.holderName.trim() : "";
-  if (holderName.length < 2) {
-    return {
-      valid: false,
-      error: "Please enter the full name of the primary account holder.",
-    };
-  }
-
   const holderEmail = typeof input.holderEmail === "string" ? input.holderEmail.trim() : "";
-  const holderBirthDate =
-    typeof input.holderBirthDate === "string" ? input.holderBirthDate.trim() : "";
-  const holderAge = holderBirthDate ? calculateAgeFromBirthDate(holderBirthDate) : null;
-
-  if (holderAge === null || holderAge > 120) {
-    return {
-      valid: false,
-      error: "Please enter a valid birth date for the primary account holder.",
-    };
-  }
-
-  if (holderAge < FAMILY_AND_FRIENDS_MIN_HOLDER_AGE) {
-    return {
-      valid: false,
-      error:
-        "The primary account holder for the Family and Friends plan must be at least 18 years old.",
-    };
-  }
-
-  if (input.holderAgeConfirmed !== true) {
-    return {
-      valid: false,
-      error: "Please confirm that the primary account holder is at least 18 years old.",
-    };
-  }
-
   const rawMembers = Array.isArray(input.members) ? input.members : [];
   const cleanedMembers = rawMembers
     .map((entry) => (typeof entry === "string" ? entry.trim() : ""))
@@ -441,7 +356,7 @@ export function validateFamilyAndFriendsCheckout(input: {
     };
   }
 
-  const seenIdentifiers = new Set<string>([holderName.toLowerCase()]);
+  const seenIdentifiers = new Set<string>();
   if (holderEmail) {
     seenIdentifiers.add(holderEmail.toLowerCase());
   }
@@ -463,7 +378,6 @@ export function validateFamilyAndFriendsCheckout(input: {
 
   return {
     valid: true,
-    holderAge,
     cleanedMembers,
   };
 }
