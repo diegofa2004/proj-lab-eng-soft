@@ -7,6 +7,19 @@
 name: proj-lab-eng-soft
 
 services:
+  recommender-model:
+    build:
+      context: ../backend
+      target: development
+    command: ["python", "-m", "scripts.download_recommender_model"]
+    environment:
+      HF_HOME: /models/.huggingface
+      RECOMMENDER_MODEL_PATH: /models/all-MiniLM-L6-v2
+      RECOMMENDER_MODEL_ID: sentence-transformers/all-MiniLM-L6-v2
+    volumes:
+      - recommender-models:/models
+    restart: "no"
+
   backend:
     build:
       context: ../backend
@@ -17,6 +30,8 @@ services:
       DATABASE_URL: ${DATABASE_URL:?configure DATABASE_URL in infra/.env.dev}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-}
       JWT_SECRET_KEY_FILE: /run/livrusp-dev/jwt-secret
+      RECOMMENDER_MODEL_PATH: /models/all-MiniLM-L6-v2
+      RECOMMENDER_MODEL_ID: sentence-transformers/all-MiniLM-L6-v2
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
@@ -26,6 +41,10 @@ services:
       - ../backend/alembic.ini:/app/alembic.ini
       - books-dev:/app/content
       - jwt-secret-dev:/run/livrusp-dev
+      - recommender-models:/models:ro
+    depends_on:
+      recommender-model:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
       interval: 5s
@@ -55,3 +74,4 @@ services:
 volumes:
   books-dev:
   jwt-secret-dev:
+  recommender-models:
