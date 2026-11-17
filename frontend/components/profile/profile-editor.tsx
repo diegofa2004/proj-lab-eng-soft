@@ -364,6 +364,15 @@ export default function ProfileEditor({
                   </span>
                 ) : null}
               </div>
+
+              <div className="mt-2.5">
+                <Link
+                  className="inline-flex items-center font-mono text-[11px] font-semibold text-[#1E2E4F] transition hover:underline"
+                  href="/subscription"
+                >
+                  {savedProfile.is_premium ? "Manage subscription →" : "Upgrade to Premium →"}
+                </Link>
+              </div>
             </div>
           </div>
 
