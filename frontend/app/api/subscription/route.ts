@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { getBackendUrl } from "@/app/lib/books";
-import type {
-  BillingConfig,
-  PaymentRecord,
-  Subscription,
-  SubscriptionPlan,
+import {
+  validateFamilyAndFriendsCheckout,
+  type BillingConfig,
+  type PaymentRecord,
+  type Subscription,
+  type SubscriptionPlan,
 } from "@/app/lib/subscription-utils";
 import {
   buildJsonResponseFromText,
@@ -121,27 +122,48 @@ export async function POST(request: Request) {
     );
   }
 
+  const isFamilyAndFriends =
+    body.plan_tier === "family_and_friends" ||
+    (body.plan_tier === undefined && rawPlanId === 2);
+
+  if (isFamilyAndFriends) {
+    const validation = validateFamilyAndFriendsCheckout({
+      holderName: body.holder_name,
+      holderEmail: body.holder_email,
+      holderBirthDate: body.holder_birth_date,
+      holderAgeConfirmed: body.holder_age_confirmed,
+      members: body.members,
+    });
+
+    if (!validation.valid) {
+      return NextResponse.json({ detail: validation.error }, { status: 422 });
+    }
+  }
+
   const backendUrl = getBackendUrl();
 
   try {
     if (hasCustomPlanId) {
-      const backendResponse = await fetch(`${backendUrl}/v2/me/checkout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ id_plano: rawPlanId }),
-        cache: "no-store",
-      });
-      const responseBody = await backendResponse.text();
+      const candidatePlanIds = rawPlanId === 1 ? [1] : [rawPlanId, 1];
+      for (const candidatePlanId of candidatePlanIds) {
+        const backendResponse = await fetch(`${backendUrl}/v2/me/checkout`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ id_plano: candidatePlanId }),
+          cache: "no-store",
+        });
+        const responseBody = await backendResponse.text();
 
-      if (backendResponse.status !== 404) {
-        return buildJsonResponseFromText(
-          responseBody,
-          backendResponse.status,
-          "The subscription service returned an invalid response.",
-        );
+        if (backendResponse.status !== 404) {
+          return buildJsonResponseFromText(
+            responseBody,
+            backendResponse.status,
+            "The subscription service returned an invalid response.",
+          );
+        }
       }
     }
 
