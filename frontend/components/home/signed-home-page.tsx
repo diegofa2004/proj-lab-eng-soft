@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import type { BookSearchResult, SignedHomeData } from "@/app/lib/books";
+import type { BookSearchResult, Review, SignedHomeData } from "@/app/lib/books";
 import { SIGNED_NAV_LINKS } from "@/app/lib/navigation";
 import { card, cardInteractive, pageBody, pageContainer } from "@/app/lib/ui";
 import BookCoverCard from "@/components/books/book-cover-card";
@@ -74,12 +74,14 @@ function BookShelfSection({
   books,
   emptyLabel,
   badgesByBookId,
+  reviewsByBookId,
 }: {
   id: string;
   title: string;
   books: BookSearchResult[];
   emptyLabel: string;
   badgesByBookId?: Map<number, string>;
+  reviewsByBookId?: Map<number, Review>;
 }) {
   return (
     <section className="py-10 sm:py-14" id={id}>
@@ -89,13 +91,20 @@ function BookShelfSection({
 
       {books.length > 0 ? (
         <div className="mt-8 flex flex-wrap gap-6 sm:mt-10 sm:gap-8">
-          {books.map((book) => (
-            <BookCoverCard
-              badgeText={badgesByBookId?.get(book.id_livro)}
-              book={book}
-              key={book.id_livro}
-            />
-          ))}
+          {books.map((book) => {
+            const review = reviewsByBookId?.get(book.id_livro);
+
+            return (
+              <BookCoverCard
+                badgeText={badgesByBookId?.get(book.id_livro)}
+                book={book}
+                key={book.id_livro}
+                review={
+                  review ? { rating: review.nota, text: review.texto_revisao } : undefined
+                }
+              />
+            );
+          })}
         </div>
       ) : (
         <div className="mt-8 sm:mt-10">
@@ -131,6 +140,7 @@ export default function SignedHomePage({
   activeHref?: string;
 }) {
   const reviewBadges = new Map<number, string>();
+  const reviewsByBookId = new Map<number, Review>();
   const reviewedBooks: BookSearchResult[] = [];
   const seenReviewBookIds = new Set<number>();
 
@@ -139,6 +149,7 @@ export default function SignedHomePage({
       seenReviewBookIds.add(book.id_livro);
       reviewedBooks.push(book);
       reviewBadges.set(book.id_livro, `${review.nota}/5`);
+      reviewsByBookId.set(book.id_livro, review);
     }
   }
 
@@ -198,6 +209,7 @@ export default function SignedHomePage({
             books={reviewedBooks}
             emptyLabel="You haven’t reviewed any books yet."
             id="my-reviews"
+            reviewsByBookId={reviewsByBookId}
             title="My Reviews"
           />
 
