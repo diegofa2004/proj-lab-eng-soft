@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 
 import { getBackendUrl } from "@/app/lib/books";
 import {
-  validateFamilyAndFriendsCheckout,
   type BillingConfig,
   type PaymentRecord,
   type Subscription,
@@ -122,60 +121,43 @@ export async function POST(request: Request) {
     );
   }
 
-  const isFamilyAndFriends =
-    body.plan_tier === "family_and_friends" ||
-    (body.plan_tier === undefined && rawPlanId === 2);
-
-  if (isFamilyAndFriends) {
-    const validation = validateFamilyAndFriendsCheckout({
-      holderName: body.holder_name,
-      holderEmail: body.holder_email,
-      holderBirthDate: body.holder_birth_date,
-      holderAgeConfirmed: body.holder_age_confirmed,
-      members: body.members,
-    });
-
-    if (!validation.valid) {
-      return NextResponse.json({ detail: validation.error }, { status: 422 });
-    }
+  if (body.member_emails !== undefined && !Array.isArray(body.member_emails)) {
+    return NextResponse.json({ detail: "Family member emails must be a list." }, { status: 422 });
+  }
+  const memberEmails = Array.isArray(body.member_emails)
+    ? body.member_emails.map((entry) => (typeof entry === "string" ? entry.trim() : ""))
+    : [];
+  if (memberEmails.some((email) => !email)) {
+    return NextResponse.json(
+      { detail: "Family member emails must be valid text values." },
+      { status: 422 },
+    );
   }
 
   const backendUrl = getBackendUrl();
 
   try {
-    if (hasCustomPlanId) {
-      const candidatePlanIds = rawPlanId === 1 ? [1] : [rawPlanId, 1];
-      for (const candidatePlanId of candidatePlanIds) {
-        const backendResponse = await fetch(`${backendUrl}/v2/me/checkout`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ id_plano: candidatePlanId }),
-          cache: "no-store",
-        });
-        const responseBody = await backendResponse.text();
-
-        if (backendResponse.status !== 404) {
-          return buildJsonResponseFromText(
-            responseBody,
-            backendResponse.status,
-            "The subscription service returned an invalid response.",
-          );
-        }
-      }
+    if (!hasCustomPlanId) {
+      return NextResponse.json({ detail: "Please select a subscription plan." }, { status: 422 });
     }
-
-    const fallbackResponse = await fetch(`${backendUrl}/users/me/subscription`, {
+    const backendResponse = await fetch(`${backendUrl}/v2/me/checkout`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        id_plano: rawPlanId,
+        holder_birth_date: body.holder_birth_date,
+        holder_age_confirmed: body.holder_age_confirmed === true,
+        member_emails: memberEmails,
+      }),
       cache: "no-store",
     });
-    const fallbackBody = await fallbackResponse.text();
+    const responseBody = await backendResponse.text();
     return buildJsonResponseFromText(
-      fallbackBody,
-      fallbackResponse.status,
+      responseBody,
+      backendResponse.status,
       "The subscription service returned an invalid response.",
     );
   } catch {

@@ -51,3 +51,28 @@ class Assinatura(Base):
     )
     fim: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     referencia_provedor: Mapped[str | None] = mapped_column(Text)
+    titular_adulto_confirmado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class AssinaturaMembro(Base):
+    """A registered reader covered by a Family and Friends subscription."""
+
+    __tablename__ = "assinatura_membro"
+    __table_args__ = (
+        Index("assinatura_membro_usuario", "id_usuario"),
+        {"schema": SCHEMA},
+    )
+
+    id_assinatura: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey(f"{SCHEMA}.assinatura.id_assinatura", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    id_usuario: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey(f"{SCHEMA}.usuario.id_usuario", ondelete="RESTRICT"),
+        primary_key=True,
+    )
+    criado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.current_timestamp()
+    )

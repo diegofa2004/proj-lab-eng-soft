@@ -195,7 +195,28 @@ def seed():
             return row
 
         get_or_create(
-            Plano, dict(preco=9.90, moeda="BRL", periodicidade="mensal"), nome="Premium demo"
+            Plano,
+            dict(
+                preco=9.90,
+                moeda="BRL",
+                periodicidade="mensal",
+                tier="individual",
+                max_members=1,
+                requires_adult_holder=False,
+            ),
+            nome="Premium demo",
+        )
+        get_or_create(
+            Plano,
+            dict(
+                preco=29.90,
+                moeda="BRL",
+                periodicidade="mensal",
+                tier="family_and_friends",
+                max_members=4,
+                requires_adult_holder=True,
+            ),
+            nome="LivrUSP Premium Family and Friends",
         )
         get_or_create(Nivel, dict(permite_publicar=True, nome="Autor"), pontos_minimos=5)
         get_or_create(

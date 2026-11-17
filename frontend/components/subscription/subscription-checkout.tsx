@@ -6,6 +6,8 @@ import { type SyntheticEvent, useMemo, useState } from "react";
 
 import { formatProfileLevel, type UserProfile } from "@/app/lib/profile-utils";
 import {
+  DEFAULT_FAMILY_AND_FRIENDS_PLAN,
+  DEFAULT_INDIVIDUAL_PLAN,
   FAMILY_AND_FRIENDS_MAX_MEMBERS,
   FAMILY_AND_FRIENDS_MIN_HOLDER_AGE,
   PREMIUM_BENEFITS,
@@ -106,14 +108,18 @@ export default function SubscriptionCheckout({
   const [cancelledInSession, setCancelledInSession] = useState<boolean>(false);
 
   const availablePlans = useMemo(() => resolvePremiumPlans(initialPlans), [initialPlans]);
-  const [individualPlan, familyPlan] = availablePlans;
+  const individualPlan =
+    availablePlans.find((plan) => plan.tier === "individual") ?? DEFAULT_INDIVIDUAL_PLAN;
+  const familyPlan =
+    availablePlans.find((plan) => plan.tier === "family_and_friends") ??
+    DEFAULT_FAMILY_AND_FRIENDS_PLAN;
 
   const initialActiveSubscription = getActiveSubscription(initialSubscriptions);
   const initialDefaultPlanId =
     initialActiveSubscription &&
     availablePlans.some((plan) => plan.id_plano === initialActiveSubscription.id_plano)
       ? initialActiveSubscription.id_plano
-      : individualPlan.id_plano;
+      : (availablePlans[0]?.id_plano ?? individualPlan.id_plano);
 
   const [selectedPlanId, setSelectedPlanId] = useState<number>(initialDefaultPlanId);
   const [subscribedPlanOverride, setSubscribedPlanOverride] =
@@ -145,7 +151,9 @@ export default function SubscriptionCheckout({
   }, [availablePlans, initialPlans]);
 
   const selectedPlan =
-    availablePlans.find((plan) => plan.id_plano === selectedPlanId) ?? individualPlan;
+    availablePlans.find((plan) => plan.id_plano === selectedPlanId) ??
+    availablePlans[0] ??
+    individualPlan;
   const isFamilyPlanSelected = isFamilyAndFriendsPlan(selectedPlan);
 
   const activeSubscription = useMemo(
@@ -255,7 +263,7 @@ export default function SubscriptionCheckout({
   async function handleCheckout(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (isSwitchingPlan || isSubmitting || cancellingId !== null) {
+    if (availablePlans.length === 0 || isSwitchingPlan || isSubmitting || cancellingId !== null) {
       return;
     }
 
@@ -284,16 +292,12 @@ export default function SubscriptionCheckout({
     const payload = isFamilyPlanSelected
       ? {
           id_plano: selectedPlan.id_plano,
-          plan_tier: "family_and_friends",
-          holder_name: holderName.trim(),
-          holder_email: initialProfile.email,
           holder_birth_date: holderBirthDate.trim(),
           holder_age_confirmed: holderAgeConfirmed,
-          members: cleanedMembers,
+          member_emails: cleanedMembers,
         }
       : {
           id_plano: selectedPlan.id_plano,
-          plan_tier: "individual",
         };
 
     try {
@@ -770,7 +774,7 @@ export default function SubscriptionCheckout({
                       <div className="mt-4 border-t border-black/10 pt-3">
                         <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
                           <span className="font-mono uppercase tracking-wider text-black/60">
-                            {isFamily ? "Adult titular (18+) required" : "No group setup needed"}
+                            {isFamily ? "Adult holder (18+) required" : "No group setup needed"}
                           </span>
                           <span
                             className={`font-semibold ${
@@ -796,22 +800,22 @@ export default function SubscriptionCheckout({
                       Family and Friends · Holder &amp; Members
                     </span>
                     <span className="rounded-full border border-amber-500/30 bg-amber-100/90 px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-amber-900">
-                      Titular 18+ Mandatory
+                      Adult holder required
                     </span>
                   </div>
                   <p className="mt-1.5 text-xs leading-relaxed text-black/65">
-                    The Family and Friends plan requires a primary account holder (titular) who is
+                    The Family and Friends plan requires a primary account holder who is
                     at least <strong>{FAMILY_AND_FRIENDS_MIN_HOLDER_AGE} years old</strong> and
                     covers up to <strong>{FAMILY_AND_FRIENDS_MAX_MEMBERS} different people</strong>{" "}
                     with the exact same Premium benefits.
                   </p>
                 </div>
 
-                {/* Primary Holder (Titular) */}
+                {/* Primary Holder */}
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className={labelClassName} htmlFor="family-holder-name">
-                      Primary Holder Name (Titular)
+                      Primary Holder Name
                     </label>
                     <input
                       className={fieldClassName}
@@ -826,7 +830,7 @@ export default function SubscriptionCheckout({
 
                   <div>
                     <label className={labelClassName} htmlFor="family-holder-birthdate">
-                      Titular Date of Birth (18+ Required)
+                      Primary Holder Date of Birth (18+ Required)
                     </label>
                     <input
                       className={fieldClassName}
@@ -838,12 +842,11 @@ export default function SubscriptionCheckout({
                     />
                     {isHolderAdult ? (
                       <p className="mt-1.5 inline-flex items-center rounded-full border border-[#556B45]/30 bg-[#556B45]/15 px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[#3A4B2E]">
-                        Age {holderAge} · Adult titular verified (18+)
+                        Age {holderAge} · Adult holder verified (18+)
                       </p>
                     ) : isHolderUnderage ? (
                       <p className="mt-1.5 text-xs font-medium text-red-700" role="alert">
-                        Holder is {holderAge} years old. Must be at least 18 years old (maior de
-                        idade).
+                        Holder is {holderAge} years old. Must be at least 18 years old.
                       </p>
                     ) : (
                       <p className="mt-1.5 text-[11px] text-black/55">
@@ -863,8 +866,7 @@ export default function SubscriptionCheckout({
                     type="checkbox"
                   />
                   <span>
-                    I confirm that the primary account holder (titular) is{" "}
-                    <strong>at least 18 years old</strong> (maior de idade) and responsible for
+                    I confirm that the primary account holder is <strong>at least 18 years old</strong> and responsible for
                     managing the up to 4 different people included in this Family and Friends plan.
                   </span>
                 </label>
@@ -881,8 +883,8 @@ export default function SubscriptionCheckout({
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-black/60">
-                    The titular counts as person #1. Optionally list up to 3 additional distinct
-                    people (username or email). You can include fewer than 4 now, or fill all 4
+                    The primary holder counts as person #1. Optionally list up to 3 additional registered
+                    reader email addresses. You can include fewer than 4 now, or fill all 4
                     slots.
                   </p>
 
@@ -890,7 +892,7 @@ export default function SubscriptionCheckout({
                     <div className="rounded-xl border border-[#1E2E4F]/20 bg-[#D9E1F1]/45 px-3.5 py-2.5">
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[#1E2E4F]">
-                          Person 1 · Titular (18+)
+                          Person 1 · Primary Holder (18+)
                         </span>
                         <span className="font-mono text-[10px] text-[#556B45]">Included</span>
                       </div>
@@ -914,8 +916,8 @@ export default function SubscriptionCheckout({
                           className={fieldClassName}
                           id={`family-member-${slotIndex + 2}`}
                           onChange={(event) => handleMemberChange(slotIndex, event.target.value)}
-                          placeholder="Distinct name or email"
-                          type="text"
+                          placeholder="Registered reader email"
+                          type="email"
                           value={familyMembers[slotIndex]}
                         />
                       </div>
@@ -970,7 +972,7 @@ export default function SubscriptionCheckout({
                 {isFamilyPlanSelected ? (
                   <div>
                     <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
-                      Primary Holder (Titular 18+)
+                      Primary Holder (18+)
                     </dt>
                     <dd className="mt-0.5 text-xs font-medium text-black/80">
                       {holderName.trim() || "Name required"} ·{" "}
@@ -1043,7 +1045,9 @@ export default function SubscriptionCheckout({
             <div className="flex flex-wrap items-center justify-between gap-4 border-t border-black/10 pt-5">
               <button
                 className="rounded-full bg-[#1E2E4F] px-7 py-2.5 text-xs font-semibold text-white transition hover:bg-[#15223B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E2E4F] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
-                disabled={isSubmitting || isSwitchingPlan || cancellingId !== null}
+                disabled={
+                  availablePlans.length === 0 || isSubmitting || isSwitchingPlan || cancellingId !== null
+                }
                 type="submit"
               >
                 {isSubmitting

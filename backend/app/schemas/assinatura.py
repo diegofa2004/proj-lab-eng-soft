@@ -35,3 +35,4 @@ class AssinaturaPublic(PublicSchema):
     inicio: datetime
     fim: datetime | None
     referencia_provedor: str | None
+    titular_adulto_confirmado_em: datetime | None
