@@ -178,6 +178,9 @@ export default function UserAvatarMenu({
           <Link className="block rounded-xl px-3 py-2 text-sm text-black/75 hover:bg-[#E6EBF5]" href="/dashboard">
             Dashboard
           </Link>
+          <Link className="block rounded-xl px-3 py-2 text-sm text-black/75 hover:bg-[#E6EBF5]" href="/subscription">
+            Subscription
+          </Link>
           {isAdmin ? (
             <Link className="block rounded-xl px-3 py-2 text-sm font-semibold text-[#1E2E4F] hover:bg-[#E6EBF5]" href="/admin">
               Administration
