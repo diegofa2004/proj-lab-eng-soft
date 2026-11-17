@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { getBackendUrl } from "@/app/lib/books";
 import {
+  type PointMovement,
   type ProfileAsset,
   type ProfileDashboardStats,
   type ProfileLevel,
@@ -24,6 +25,7 @@ export type {
   ProfileAsset,
   ProfileAssetType,
   ProfileDashboardStats,
+  PointMovement,
   ProfileEditPayload,
   ProfileLevel,
   UserProfile,
@@ -223,4 +225,28 @@ export async function getProfileDashboardStats(): Promise<ProfileDashboardStats>
   }
 
   return defaultStats;
+}
+
+/** Fetches the reader's point movements, newest first. */
+export async function getProfilePointMovements(): Promise<PointMovement[]> {
+  const token = (await cookies()).get(accessTokenCookieName)?.value;
+  if (!token) {
+    return [];
+  }
+
+  try {
+    const response = await fetch(`${getBackendUrl()}/v2/me/points`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const movements = (await response.json()) as PointMovement[];
+    return Array.isArray(movements) ? movements : [];
+  } catch {
+    return [];
+  }
 }
