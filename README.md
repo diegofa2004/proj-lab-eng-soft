@@ -24,7 +24,9 @@ The root file includes `infra/docker-compose.dev.yml`. On first startup, the
 backend generates a private JWT key in the `jwt-secret-dev` Docker volume.
 The first startup also downloads the local MiniLM recommendation model into a
 Docker volume. Later starts reuse the downloaded files. The model is used for
-semantic book discovery; it does not require local training.
+semantic book discovery; it does not require local training. Its download runs
+in a lightweight separate container, so PyTorch is not installed in the API
+image just to fetch model files.
 
 The key survives container restarts and `docker compose down`; no local env
 file or manual setup is needed. To override it, set `JWT_SECRET_KEY` in your

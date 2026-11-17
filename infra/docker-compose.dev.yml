@@ -10,8 +10,7 @@ services:
   recommender-model:
     build:
       context: ../backend
-      target: development
-    command: ["python", "-m", "scripts.download_recommender_model"]
+      target: model-downloader
     environment:
       HF_HOME: /models/.huggingface
       RECOMMENDER_MODEL_PATH: /models/all-MiniLM-L6-v2
