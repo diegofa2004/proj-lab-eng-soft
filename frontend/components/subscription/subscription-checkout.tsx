@@ -810,7 +810,7 @@ export default function SubscriptionCheckout({
                   }
                   type="button"
                 >
-                  Subscribe now
+                  Continue to details
                 </button>
 
                 <p
