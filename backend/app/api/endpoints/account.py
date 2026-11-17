@@ -1,22 +1,24 @@
 from calendar import monthrange
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
-from sqlalchemy import delete, select
+from pydantic import BaseModel, EmailStr, Field
+from sqlalchemy import delete, func, select
 
 from app.api.platform import DB, Reader, lock_reader, profile_stats, require, save
 from app.core.config import settings
 from app.db.base import (
     AssetPerfil,
     Assinatura,
+    AssinaturaMembro,
     GeneroCanonico,
     Nivel,
     Pagamento,
     Plano,
     PreferenciaGeneroUsuario,
 )
+from app.models.user import User
 from app.schemas.assinatura import AssinaturaPublic
 from app.schemas.common import PositiveId
 from app.schemas.pagamento import PagamentoPublic
@@ -192,6 +194,9 @@ def update_profile(data: ProfileEdit, db: DB, user: Reader):
 
 class Checkout(BaseModel):
     id_plano: PositiveId
+    holder_birth_date: date | None = None
+    holder_age_confirmed: bool = False
+    member_emails: list[EmailStr] = Field(default_factory=list, max_length=3)
 
 
 class CheckoutResult(BaseModel):
@@ -230,10 +235,76 @@ def cycle_end(now, plan):
 
 @router.post("/me/checkout", response_model=CheckoutResult)
 def checkout(data: Checkout, db: DB, user: Reader):
-    return purchase_plan(db, user, data.id_plano)
+    return purchase_plan(
+        db,
+        user,
+        data.id_plano,
+        holder_birth_date=data.holder_birth_date,
+        holder_age_confirmed=data.holder_age_confirmed,
+        member_emails=data.member_emails,
+    )
 
 
-def purchase_plan(db, user, plan_id):
+def _is_adult(birth_date: date, today: date) -> bool:
+    birthday_not_reached = (today.month, today.day) < (birth_date.month, birth_date.day)
+    return today.year - birth_date.year - birthday_not_reached >= 18
+
+
+def _has_active_premium(db, user_id: int, now: datetime) -> bool:
+    owned = db.scalar(
+        select(Assinatura.id_assinatura).where(
+            Assinatura.id_usuario == user_id,
+            Assinatura.status == "ativa",
+            Assinatura.inicio <= now,
+            Assinatura.fim > now,
+        )
+    )
+    if owned is not None:
+        return True
+    return db.scalar(
+        select(AssinaturaMembro.id_assinatura)
+        .join(Assinatura, Assinatura.id_assinatura == AssinaturaMembro.id_assinatura)
+        .where(
+            AssinaturaMembro.id_usuario == user_id,
+            Assinatura.status == "ativa",
+            Assinatura.inicio <= now,
+            Assinatura.fim > now,
+        )
+    ) is not None
+
+
+def _family_members_for_checkout(db, user, member_emails: list[EmailStr], now: datetime):
+    emails = [str(email).strip().lower() for email in member_emails]
+    if len(set(emails)) != len(emails):
+        raise HTTPException(422, "Each family member email must be unique")
+    if user.email.lower() in emails:
+        raise HTTPException(422, "The primary account holder cannot be added as a family member")
+    if not emails:
+        return []
+    members = db.scalars(
+        select(User).where(func.lower(User.email).in_(emails), User.is_blocked.is_(False))
+    ).all()
+    found_emails = {member.email.lower() for member in members}
+    missing = set(emails) - found_emails
+    if missing:
+        raise HTTPException(422, "Every family member must be an active registered reader")
+    for member in members:
+        if _has_active_premium(db, member.id, now):
+            raise HTTPException(
+                409, "A selected family member already has an active Premium membership"
+            )
+    return members
+
+
+def purchase_plan(
+    db,
+    user,
+    plan_id,
+    *,
+    holder_birth_date: date | None = None,
+    holder_age_confirmed: bool = False,
+    member_emails: list[EmailStr] | None = None,
+):
     """Demo checkout shared by the legacy and v2 routes; legacy selects a default plan."""
     if not settings.DEMO_BILLING:
         raise HTTPException(503, "Payment provider not configured")
@@ -257,15 +328,37 @@ def purchase_plan(db, user, plan_id):
             raise HTTPException(503, "No active subscription plan is configured")
     else:
         plan = require(db.scalar(plans.filter_by(id_plano=plan_id)))
+    members = []
+    adult_confirmed_at = None
+    if plan.tier == "family_and_friends":
+        if not plan.requires_adult_holder:
+            raise HTTPException(409, "Family plans must require an adult primary account holder")
+        if (
+            holder_birth_date is None
+            or not holder_age_confirmed
+            or not _is_adult(holder_birth_date, now.date())
+        ):
+            raise HTTPException(422, "The primary account holder must be at least 18 years old")
+        members = _family_members_for_checkout(db, user, member_emails or [], now)
+        if len(members) + 1 > plan.max_members:
+            raise HTTPException(422, f"This plan covers at most {plan.max_members} people")
+        adult_confirmed_at = now
+    elif member_emails or holder_birth_date is not None or holder_age_confirmed:
+        raise HTTPException(422, "Family details can only be used with a Family and Friends plan")
     sub = Assinatura(
         id_usuario=user.id,
         id_plano=plan.id_plano,
         inicio=now,
         fim=cycle_end(now, plan),
         status="ativa",
+        titular_adulto_confirmado_em=adult_confirmed_at,
     )
     db.add(sub)
     db.flush()
+    db.add_all(
+        AssinaturaMembro(id_assinatura=sub.id_assinatura, id_usuario=member.id)
+        for member in members
+    )
     payment = Pagamento(
         id_assinatura=sub.id_assinatura,
         valor=plan.preco,

@@ -118,77 +118,25 @@ export function getPlanPerPersonPrice(preco: string | number, peopleCount = 1): 
 
 /** Determines whether a plan represents the Family and Friends tier. */
 export function isFamilyAndFriendsPlan(plan: SubscriptionPlan): boolean {
-  if (plan.tier === "family_and_friends") {
-    return true;
-  }
-  if ((plan.max_members ?? 1) > 1) {
-    return true;
-  }
-  const normalized = plan.nome.toLowerCase();
-  return normalized.includes("family") || normalized.includes("familia");
+  return plan.tier === "family_and_friends";
 }
 
-/** Resolves the Individual and Family and Friends Premium plans, ensuring both are present and priced accurately. */
-export function resolvePremiumPlans(
-  plans: SubscriptionPlan[],
-): [SubscriptionPlan, SubscriptionPlan] {
-  const serverIndividual = plans.find((plan) => !isFamilyAndFriendsPlan(plan));
-  const individualName = serverIndividual
-    ? serverIndividual.nome.toLowerCase().includes("individual")
-      ? serverIndividual.nome
-      : serverIndividual.nome.trim().toLowerCase() === "livrusp premium"
-        ? "LivrUSP Premium Individual"
-        : `${serverIndividual.nome} (Individual)`
-    : DEFAULT_INDIVIDUAL_PLAN.nome;
-
-  const individualPlan: SubscriptionPlan = serverIndividual
-    ? {
-        ...DEFAULT_INDIVIDUAL_PLAN,
-        ...serverIndividual,
-        nome: individualName,
-        tier: "individual",
-        max_members: 1,
-        requires_adult_holder: false,
-      }
-    : DEFAULT_INDIVIDUAL_PLAN;
-
-  const serverFamily = plans.find((plan) => isFamilyAndFriendsPlan(plan));
-  const individualNumeric = Number(individualPlan.preco);
-  const fallbackFamilyPrice = computeFamilyPlanPrice(individualPlan.preco);
-
-  let familyPrice: string | number = fallbackFamilyPrice;
-  if (serverFamily) {
-    const serverFamilyNumeric = Number(serverFamily.preco);
-    const isCheaperPerPersonForFour =
-      Number.isFinite(serverFamilyNumeric) &&
-      Number.isFinite(individualNumeric) &&
-      serverFamilyNumeric / FAMILY_AND_FRIENDS_MAX_MEMBERS < individualNumeric;
-    familyPrice = isCheaperPerPersonForFour ? serverFamily.preco : fallbackFamilyPrice;
-  }
-
-  const familyPlan: SubscriptionPlan = serverFamily
-    ? {
-        ...DEFAULT_FAMILY_AND_FRIENDS_PLAN,
-        ...serverFamily,
-        preco: familyPrice,
-        tier: "family_and_friends",
-        max_members: serverFamily.max_members ?? FAMILY_AND_FRIENDS_MAX_MEMBERS,
-        requires_adult_holder: true,
-      }
-    : {
-        ...DEFAULT_FAMILY_AND_FRIENDS_PLAN,
-        id_plano: individualPlan.id_plano === 2 ? 3 : 2,
-        preco: familyPrice,
-        moeda: individualPlan.moeda,
-        periodicidade: individualPlan.periodicidade,
-      };
-
-  return [individualPlan, familyPlan];
+/** Returns only plans actually configured by the backend, in checkout display order. */
+export function resolvePremiumPlans(plans: SubscriptionPlan[]): SubscriptionPlan[] {
+  return plans
+    .filter(
+      (plan) =>
+        plan.ativo !== false && (plan.tier === "individual" || plan.tier === "family_and_friends"),
+    )
+    .sort((left, right) => {
+      if (left.tier === right.tier) return left.id_plano - right.id_plano;
+      return left.tier === "individual" ? -1 : 1;
+    });
 }
 
 /** Resolves the default Individual LivrUSP Premium plan shown in checkout. */
 export function resolvePremiumPlan(plans: SubscriptionPlan[]): SubscriptionPlan {
-  return resolvePremiumPlans(plans)[0];
+  return resolvePremiumPlans(plans).find((plan) => plan.tier === "individual") ?? DEFAULT_INDIVIDUAL_PLAN;
 }
 
 export const PREMIUM_BENEFITS: readonly PremiumBenefit[] = [
@@ -433,12 +381,16 @@ export function validateFamilyAndFriendsCheckout(input: {
   holderBirthDate?: unknown;
   holderAgeConfirmed?: unknown;
   members?: unknown;
+  optional?: boolean;
 }): FamilyCheckoutValidationResult {
+  if (input.optional && input.holderBirthDate === undefined && input.members === undefined) {
+    return { valid: true, holderAge: 0, cleanedMembers: [] };
+  }
   const holderName = typeof input.holderName === "string" ? input.holderName.trim() : "";
   if (holderName.length < 2) {
     return {
       valid: false,
-      error: "Please enter the full name of the primary account holder (titular).",
+      error: "Please enter the full name of the primary account holder.",
     };
   }
 
@@ -450,7 +402,7 @@ export function validateFamilyAndFriendsCheckout(input: {
   if (holderAge === null || holderAge > 120) {
     return {
       valid: false,
-      error: "Please enter a valid birth date for the primary account holder (titular).",
+      error: "Please enter a valid birth date for the primary account holder.",
     };
   }
 
@@ -458,14 +410,14 @@ export function validateFamilyAndFriendsCheckout(input: {
     return {
       valid: false,
       error:
-        "The primary account holder (titular) for the Family and Friends plan must be at least 18 years old.",
+        "The primary account holder for the Family and Friends plan must be at least 18 years old.",
     };
   }
 
   if (input.holderAgeConfirmed !== true) {
     return {
       valid: false,
-      error: "Please confirm that the primary account holder (titular) is at least 18 years old.",
+      error: "Please confirm that the primary account holder is at least 18 years old.",
     };
   }
 
@@ -497,6 +449,9 @@ export function validateFamilyAndFriendsCheckout(input: {
       };
     }
     seenIdentifiers.add(normalized);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(member)) {
+      return { valid: false, error: "Family members must be registered reader email addresses." };
+    }
   }
 
   return {
