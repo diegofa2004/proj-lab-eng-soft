@@ -114,3 +114,65 @@ def test_family_checkout_rejects_underage_holder(family_db):
             )
     finally:
         settings.DEMO_BILLING = original_demo_billing
+
+
+def test_family_checkout_requires_an_additional_registered_reader(family_db):
+    owner = create_reader(family_db, "owner", "owner@example.com")
+    family_db.add(
+        Plano(
+            nome="Family",
+            preco=29.90,
+            moeda="BRL",
+            periodicidade="mensal",
+            tier="family_and_friends",
+            max_members=4,
+            requires_adult_holder=True,
+        )
+    )
+    family_db.commit()
+    plan = family_db.scalar(select(Plano))
+
+    original_demo_billing = settings.DEMO_BILLING
+    settings.DEMO_BILLING = True
+    try:
+        with pytest.raises(HTTPException, match="at least one additional reader"):
+            purchase_plan(
+                family_db,
+                owner,
+                plan.id_plano,
+                holder_birth_date=date(1990, 1, 1),
+                holder_age_confirmed=True,
+            )
+    finally:
+        settings.DEMO_BILLING = original_demo_billing
+
+
+def test_individual_checkout_rejects_family_member_details(family_db):
+    owner = create_reader(family_db, "owner", "owner@example.com")
+    member = create_reader(family_db, "member", "member@example.com")
+    family_db.add(
+        Plano(
+            nome="Individual",
+            preco=9.90,
+            moeda="BRL",
+            periodicidade="mensal",
+            tier="individual",
+            max_members=1,
+            requires_adult_holder=False,
+        )
+    )
+    family_db.commit()
+    plan = family_db.scalar(select(Plano))
+
+    original_demo_billing = settings.DEMO_BILLING
+    settings.DEMO_BILLING = True
+    try:
+        with pytest.raises(HTTPException, match="Family details can only"):
+            purchase_plan(
+                family_db,
+                owner,
+                plan.id_plano,
+                member_emails=[member.email],
+            )
+    finally:
+        settings.DEMO_BILLING = original_demo_billing

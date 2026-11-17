@@ -883,9 +883,8 @@ export default function SubscriptionCheckout({
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-black/60">
-                    The primary holder counts as person #1. Optionally list up to 3 additional registered
-                    reader email addresses. You can include fewer than 4 now, or fill all 4
-                    slots.
+                    The primary holder counts as person #1. Add at least 1 and up to 3 additional
+                    registered reader email addresses, for up to 4 people in total.
                   </p>
 
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -910,7 +909,7 @@ export default function SubscriptionCheckout({
                           className="block font-mono text-[10px] font-semibold uppercase tracking-wider text-black/60"
                           htmlFor={`family-member-${slotIndex + 2}`}
                         >
-                          Person {slotIndex + 2} (Optional)
+                          Person {slotIndex + 2}{slotIndex === 0 ? " (Required)" : " (Optional)"}
                         </label>
                         <input
                           className={fieldClassName}

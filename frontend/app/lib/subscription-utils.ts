@@ -426,6 +426,13 @@ export function validateFamilyAndFriendsCheckout(input: {
     .map((entry) => (typeof entry === "string" ? entry.trim() : ""))
     .filter((entry) => entry.length > 0);
 
+  if (cleanedMembers.length === 0) {
+    return {
+      valid: false,
+      error: "Add at least one registered reader to the Family and Friends plan.",
+    };
+  }
+
   if (cleanedMembers.length > FAMILY_AND_FRIENDS_MAX_MEMBERS - 1) {
     return {
       valid: false,

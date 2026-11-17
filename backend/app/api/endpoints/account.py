@@ -340,6 +340,10 @@ def purchase_plan(
         ):
             raise HTTPException(422, "The primary account holder must be at least 18 years old")
         members = _family_members_for_checkout(db, user, member_emails or [], now)
+        if not members:
+            raise HTTPException(
+                422, "A Family and Friends plan must include at least one additional reader"
+            )
         if len(members) + 1 > plan.max_members:
             raise HTTPException(422, f"This plan covers at most {plan.max_members} people")
         adult_confirmed_at = now
