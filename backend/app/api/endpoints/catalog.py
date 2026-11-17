@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Annotated
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import delete, func, select, text
@@ -325,8 +325,15 @@ def cover(book_id: int, db: DB):
     book = require(db.get(Livro, book_id))
     if book.status_bloqueado or book.status_publicacao != "publicado":
         raise HTTPException(404, "Not found")
-    if db.get(CapaLivro, book_id) is None:
+    cover_image = db.get(CapaLivro, book_id)
+    if cover_image is None:
         raise HTTPException(404, "Cover not available")
+    if cover_image.imagem is not None:
+        return Response(
+            content=cover_image.imagem,
+            media_type=cover_image.tipo_mime,
+            headers={"Cache-Control": "public, max-age=604800, immutable"},
+        )
     path = CONTENT / "covers" / f"{book_id}.jpg"
     if not path.is_file():
         raise HTTPException(404, "Cover not available")

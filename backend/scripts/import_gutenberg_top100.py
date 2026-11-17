@@ -162,9 +162,8 @@ def download_cover(url: str, user_agent: str) -> Path:
 
 
 def save_cover(book_id: int, temporary_cover: Path, source_url: str) -> None:
-    target = CONTENT / "covers" / f"{book_id}.jpg"
     try:
-        temporary_cover.replace(target)
+        image = temporary_cover.read_bytes()
         with SessionLocal.begin() as db:
             db.merge(
                 CapaLivro(
@@ -172,12 +171,13 @@ def save_cover(book_id: int, temporary_cover: Path, source_url: str) -> None:
                     arquivo=f"/v2/books/{book_id}/cover",
                     tipo_mime="image/jpeg",
                     fonte_url=source_url,
+                    imagem=image,
                 )
             )
     except Exception:
-        target.unlink(missing_ok=True)
-        temporary_cover.unlink(missing_ok=True)
         raise
+    finally:
+        temporary_cover.unlink(missing_ok=True)
 
 
 def main() -> None:
