@@ -45,7 +45,7 @@ export default function LoginPage() {
       }
 
       setFormStatus("success");
-      setMessage(`Signed in as ${data.username}.`);
+      setMessage("Welcome! Signing in...");
       window.location.replace("/home");
     } catch {
       setFormStatus("error");
@@ -54,63 +54,77 @@ export default function LoginPage() {
   }
 
   const isSubmitting = formStatus === "submitting";
+  const isComplete = formStatus === "success";
 
   return (
     <AuthShell mode="login">
-      <section className={styles.formPanel} aria-labelledby="login-heading">
-        <p className={styles.formEyebrow}>YOUR ACCOUNT / 01</p>
-        <h2 className={styles.formTitle} id="login-heading">Sign in</h2>
-        <p className={styles.formDescription}>Your next read is waiting for you.</p>
-
-        <form className={styles.form} noValidate onSubmit={handleSubmit}>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="username">Username</label>
-            <input
-              autoComplete="username"
-              className={styles.input}
-              id="username"
-              maxLength={100}
-              minLength={1}
-              name="username"
-              placeholder="Your username"
-              required
-              type="text"
-            />
+      <section
+        className={`${styles.formPanel} ${isComplete ? styles.formPanelComplete : ""}`}
+        aria-labelledby="login-heading"
+      >
+        {isComplete ? (
+          <div aria-live="polite" className={styles.completionState} role="status">
+            <h2 className={styles.completionTitle} id="login-heading">
+              {message || "Welcome! Signing in..."}
+            </h2>
           </div>
+        ) : (
+          <>
+            <p className={styles.formEyebrow}>YOUR ACCOUNT / 01</p>
+            <h2 className={styles.formTitle} id="login-heading">Sign in</h2>
+            <p className={styles.formDescription}>Your next read is waiting for you.</p>
 
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="password">Password</label>
-            <input
-              autoComplete="current-password"
-              className={styles.input}
-              id="password"
-              maxLength={72}
-              minLength={1}
-              name="password"
-              placeholder="Enter your password"
-              required
-              type="password"
-            />
-          </div>
+            <form className={styles.form} noValidate onSubmit={handleSubmit}>
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="username">Username</label>
+                <input
+                  autoComplete="username"
+                  className={styles.input}
+                  id="username"
+                  maxLength={100}
+                  minLength={1}
+                  name="username"
+                  placeholder="Your username"
+                  required
+                  type="text"
+                />
+              </div>
 
-          <button className={styles.submitButton} disabled={isSubmitting} type="submit">
-            {isSubmitting ? "Signing in..." : "Sign in"}
-            {!isSubmitting && <span aria-hidden="true">↗</span>}
-          </button>
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="password">Password</label>
+                <input
+                  autoComplete="current-password"
+                  className={styles.input}
+                  id="password"
+                  maxLength={72}
+                  minLength={1}
+                  name="password"
+                  placeholder="Enter your password"
+                  required
+                  type="password"
+                />
+              </div>
 
-          <p
-            aria-live="polite"
-            className={`${styles.formMessage} ${formStatus === "error" ? styles.error : styles.success}`}
-            role={formStatus === "error" ? "alert" : "status"}
-          >
-            {message}
-          </p>
-        </form>
+              <button className={styles.submitButton} disabled={isSubmitting} type="submit">
+                {isSubmitting ? "Signing in..." : "Sign in"}
+                {!isSubmitting && <span aria-hidden="true">↗</span>}
+              </button>
 
-        <p className={styles.switchText}>
-          New to livrUSP?{" "}
-          <Link className={styles.textLink} href="/signup">Create an account</Link>
-        </p>
+              <p
+                aria-live="polite"
+                className={`${styles.formMessage} ${styles.error}`}
+                role="alert"
+              >
+                {message}
+              </p>
+            </form>
+
+            <p className={styles.switchText}>
+              New to livrUSP?{" "}
+              <Link className={styles.textLink} href="/signup">Create an account</Link>
+            </p>
+          </>
+        )}
       </section>
     </AuthShell>
   );

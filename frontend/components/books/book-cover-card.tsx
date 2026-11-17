@@ -3,17 +3,29 @@ import Link from "next/link";
 
 import type { BookSearchResult } from "@/app/lib/books";
 import { card, cardInteractive } from "@/app/lib/ui";
+import { StarRatingDisplay } from "@/components/books/star-rating";
 
 export default function BookCoverCard({
   book,
   badgeText,
   reason,
+  review,
 }: {
   book: BookSearchResult;
   badgeText?: string;
   reason?: string;
+  review?: {
+    rating: number;
+    text?: string | null;
+  };
 }) {
   const authorNames = (book.autores ?? []).map((author) => author.nome).filter(Boolean);
+  const effectiveBadgeText = badgeText ?? (review ? `${review.rating}/5` : undefined);
+  const trimmedReviewText = review?.text?.trim() ?? "";
+  const reviewPreview =
+    trimmedReviewText.length > 100
+      ? `${trimmedReviewText.slice(0, 100).trimEnd()}...`
+      : trimmedReviewText;
 
   return (
     <Link
@@ -31,9 +43,9 @@ export default function BookCoverCard({
               src={`/api/books/${book.id_livro}/cover`}
               unoptimized
             />
-            {badgeText ? (
-              <span className="relative z-10 self-end rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold text-slate-900">
-                {badgeText}
+            {effectiveBadgeText ? (
+              <span className="relative z-10 self-end rounded-full border border-black/10 bg-[#1E2E4F]/95 px-3 py-1 font-mono text-xs font-bold text-[#FBE251] shadow-sm sm:text-sm">
+                {effectiveBadgeText}
               </span>
             ) : null}
           </>
@@ -47,9 +59,9 @@ export default function BookCoverCard({
               <span className="line-clamp-2 font-mono text-[9px] uppercase tracking-[0.14em] opacity-75">
                 {authorNames.length > 0 ? authorNames.join(", ") : "LivrUSP"}
               </span>
-              {badgeText ? (
-                <span className="shrink-0 font-mono text-[10px] font-bold text-[#FBE251]">
-                  {badgeText}
+              {effectiveBadgeText ? (
+                <span className="shrink-0 rounded-full bg-[#FBE251] px-2.5 py-0.5 font-mono text-xs font-bold text-[#1E2E4F] shadow-xs sm:text-sm">
+                  {effectiveBadgeText}
                 </span>
               ) : null}
             </div>
@@ -77,6 +89,21 @@ export default function BookCoverCard({
           <p className="mt-2 line-clamp-2 text-[11px] font-medium leading-snug text-[#556B45]">
             {reason}
           </p>
+        ) : null}
+        {review ? (
+          <div className="mt-3 border-t border-black/10 pt-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <StarRatingDisplay rating={review.rating} size="md" />
+              <span className="font-serif text-lg leading-none font-bold text-[#1E2E4F]">
+                {review.rating}/5
+              </span>
+            </div>
+            {reviewPreview ? (
+              <p className="mt-2 break-words text-xs leading-relaxed text-black/70">
+                {reviewPreview}
+              </p>
+            ) : null}
+          </div>
         ) : null}
       </div>
     </Link>

@@ -1,10 +1,17 @@
+import Image from "next/image";
 import Link from "next/link";
-import type { ReactNode } from "react";
 
-import type { BookSearchResult, SignedHomeData } from "@/app/lib/books";
+import type {
+  BookSearchResult,
+  Review,
+  SignedHomeData,
+  SocialActivityItem,
+} from "@/app/lib/books";
 import { SIGNED_NAV_LINKS } from "@/app/lib/navigation";
+import { getProfileRing } from "@/app/lib/profile-utils";
 import { card, cardInteractive, pageBody, pageContainer } from "@/app/lib/ui";
 import BookCoverCard from "@/components/books/book-cover-card";
+import { StarRatingDisplay } from "@/components/books/star-rating";
 import SiteFooter from "@/components/layout/site-footer";
 import SiteHeader from "@/components/layout/site-header";
 
@@ -17,56 +24,55 @@ const SHELF_LINKS = [
   { label: "Socials", href: "#socials" },
 ] as const;
 
-const SOCIAL_ICONS: ReactNode[] = [
-  // Chain link icon
-  <svg
-    aria-hidden="true"
-    className="h-5 w-5 text-black"
-    fill="none"
-    key="link"
-    stroke="currentColor"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    strokeWidth="1.8"
-    viewBox="0 0 24 24"
-  >
-    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-  </svg>,
-  // Globe icon
-  <svg
-    aria-hidden="true"
-    className="h-5 w-5 text-black"
-    fill="none"
-    key="globe"
-    stroke="currentColor"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    strokeWidth="1.8"
-    viewBox="0 0 24 24"
-  >
-    <circle cx="12" cy="12" r="10" />
-    <path d="M2 12h20" />
-    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-  </svg>,
-  // Users icon
-  <svg
-    aria-hidden="true"
-    className="h-5 w-5 text-black"
-    fill="none"
-    key="users"
-    stroke="currentColor"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    strokeWidth="1.8"
-    viewBox="0 0 24 24"
-  >
-    <circle cx="9" cy="7" r="4" />
-    <path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
-    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    <path d="M21 21v-2a4 4 0 0 0-3-3.85" />
-  </svg>,
-];
+function getInitials(username: string): string {
+  const words = username.trim().split(/[\s._-]+/).filter(Boolean);
+  if (words.length > 1) {
+    return `${words[0][0]}${words.at(-1)?.[0] ?? ""}`.toLocaleUpperCase();
+  }
+  return (words[0]?.slice(0, 2) ?? "U").toLocaleUpperCase();
+}
+
+function ReviewerAvatar({ item }: { item: SocialActivityItem }) {
+  const selectedRing = getProfileRing(item.profileRing);
+
+  return (
+    <span
+      className={`relative grid h-12 w-12 shrink-0 place-items-center overflow-visible rounded-full bg-gradient-to-br from-[#D9E1F1] via-[#BECBE3] to-[#8EA5CB] p-0.5 shadow-sm ${
+        selectedRing ? "" : "ring-2 ring-[#1E2E4F]/60 ring-offset-2 ring-offset-[#E6EBF5]"
+      }`}
+    >
+      {selectedRing ? (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -inset-1 z-10 block h-14 w-14 overflow-hidden rounded-full"
+        >
+          <Image
+            alt=""
+            className="h-full w-full scale-[1.08]"
+            height={56}
+            src={selectedRing.src}
+            unoptimized
+            width={56}
+          />
+        </span>
+      ) : null}
+      <span className="grid h-full w-full place-items-center overflow-hidden rounded-full bg-[#F7F4EE] text-xs font-bold text-[#1E2E4F]">
+        {item.avatarUrl ? (
+          <Image
+            alt={`${item.username}'s avatar`}
+            className="h-full w-full object-cover"
+            height={48}
+            src={item.avatarUrl}
+            unoptimized
+            width={48}
+          />
+        ) : (
+          <span aria-hidden="true">{getInitials(item.username)}</span>
+        )}
+      </span>
+    </span>
+  );
+}
 
 function BookShelfSection({
   id,
@@ -74,12 +80,14 @@ function BookShelfSection({
   books,
   emptyLabel,
   badgesByBookId,
+  reviewsByBookId,
 }: {
   id: string;
   title: string;
   books: BookSearchResult[];
   emptyLabel: string;
   badgesByBookId?: Map<number, string>;
+  reviewsByBookId?: Map<number, Review>;
 }) {
   return (
     <section className="py-10 sm:py-14" id={id}>
@@ -89,13 +97,20 @@ function BookShelfSection({
 
       {books.length > 0 ? (
         <div className="mt-8 flex flex-wrap gap-6 sm:mt-10 sm:gap-8">
-          {books.map((book) => (
-            <BookCoverCard
-              badgeText={badgesByBookId?.get(book.id_livro)}
-              book={book}
-              key={book.id_livro}
-            />
-          ))}
+          {books.map((book) => {
+            const review = reviewsByBookId?.get(book.id_livro);
+
+            return (
+              <BookCoverCard
+                badgeText={badgesByBookId?.get(book.id_livro)}
+                book={book}
+                key={book.id_livro}
+                review={
+                  review ? { rating: review.nota, text: review.texto_revisao } : undefined
+                }
+              />
+            );
+          })}
         </div>
       ) : (
         <div className="mt-8 sm:mt-10">
@@ -126,11 +141,12 @@ export default function SignedHomePage({
   data,
   activeHref = "/library",
 }: {
-  currentUser: { username: string; is_admin: boolean };
+  currentUser: { id?: number; username: string; is_admin: boolean };
   data: SignedHomeData;
   activeHref?: string;
 }) {
   const reviewBadges = new Map<number, string>();
+  const reviewsByBookId = new Map<number, Review>();
   const reviewedBooks: BookSearchResult[] = [];
   const seenReviewBookIds = new Set<number>();
 
@@ -139,8 +155,15 @@ export default function SignedHomePage({
       seenReviewBookIds.add(book.id_livro);
       reviewedBooks.push(book);
       reviewBadges.set(book.id_livro, `${review.nota}/5`);
+      reviewsByBookId.set(book.id_livro, review);
     }
   }
+
+  const friendSocials = data.socials.filter(
+    (item) =>
+      (currentUser.id === undefined || item.userId !== currentUser.id) &&
+      item.username !== currentUser.username,
+  );
 
   return (
     <div className={pageBody}>
@@ -198,6 +221,7 @@ export default function SignedHomePage({
             books={reviewedBooks}
             emptyLabel="You haven’t reviewed any books yet."
             id="my-reviews"
+            reviewsByBookId={reviewsByBookId}
             title="My Reviews"
           />
 
@@ -207,38 +231,45 @@ export default function SignedHomePage({
               Socials
             </h2>
 
-            {data.socials.length > 0 ? (
-              <div className="mt-12 grid grid-cols-1 gap-10 sm:mt-16 sm:grid-cols-3 sm:gap-8">
-                {data.socials.map((item, index) => (
-                  <div className="flex flex-col" key={item.id}>
-                    <div className="mb-5">
-                      {SOCIAL_ICONS[index % SOCIAL_ICONS.length]}
+            {friendSocials.length > 0 ? (
+              <div className="mt-8 grid grid-cols-1 gap-6 sm:mt-10 sm:grid-cols-2 lg:grid-cols-3">
+                {friendSocials.map((item) => (
+                  <article
+                    className={`flex flex-col ${card} ${cardInteractive} p-6`}
+                    key={item.id}
+                  >
+                    <div className="mb-4">
+                      <ReviewerAvatar item={item} />
                     </div>
                     <h3 className="font-serif text-lg font-normal text-black sm:text-xl">
                       {item.username}
                     </h3>
-                    <div className="mt-3 space-y-0.5 text-xs leading-relaxed text-black/55 sm:text-sm">
+                    <div className="mt-3 space-y-2 text-xs leading-relaxed text-black/65 sm:text-sm">
                       <p>
                         <Link
-                          className="transition hover:text-black hover:underline"
+                          className="font-semibold text-[#1E2E4F] transition hover:text-black hover:underline"
                           href={`/books/${item.bookId}`}
                         >
                           {item.bookTitle}
                           {item.authorName ? ` - ${item.authorName}` : ""}
                         </Link>
                       </p>
-                      <p>{item.rating}/5</p>
+                      <div className="flex items-center gap-2">
+                        <StarRatingDisplay rating={item.rating} size="sm" />
+                        <span className="font-serif text-base leading-none font-bold text-[#1E2E4F]">
+                          {item.rating}/5
+                        </span>
+                      </div>
                       {item.reviewText ? (
-                        <p className="line-clamp-3">{item.reviewText}</p>
+                        <p className="line-clamp-3 text-black/70">{item.reviewText}</p>
                       ) : null}
                     </div>
-                  </div>
+                  </article>
                 ))}
               </div>
             ) : (
-              <div className="mt-12 grid grid-cols-1 gap-10 sm:mt-16 sm:grid-cols-3 sm:gap-8">
-                <div className="flex flex-col">
-                  <div className="mb-5">{SOCIAL_ICONS[0]}</div>
+              <div className="mt-8 grid grid-cols-1 gap-6 sm:mt-10 sm:grid-cols-3 sm:gap-8">
+                <div className={`flex flex-col ${card} p-6`}>
                   <h3 className="font-serif text-lg font-normal text-black sm:text-xl">
                     No recent activity
                   </h3>
