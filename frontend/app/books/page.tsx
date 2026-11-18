@@ -76,7 +76,7 @@ export default async function BooksPage({ searchParams }: BooksPageProps) {
           />
 
           <Suspense fallback={<BookResultsSkeleton />} key={JSON.stringify(filters)}>
-            <BookResults filters={filters} />
+            <BookResults filters={filters} signedIn={Boolean(currentUser)} />
           </Suspense>
         </main>
 

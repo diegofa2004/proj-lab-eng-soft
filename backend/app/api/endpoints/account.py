@@ -194,8 +194,6 @@ def update_profile(data: ProfileEdit, db: DB, user: Reader):
 
 class Checkout(BaseModel):
     id_plano: PositiveId
-    holder_birth_date: date | None = None
-    holder_age_confirmed: bool = False
     member_emails: list[EmailStr] = Field(default_factory=list, max_length=3)
 
 
@@ -239,8 +237,6 @@ def checkout(data: Checkout, db: DB, user: Reader):
         db,
         user,
         data.id_plano,
-        holder_birth_date=data.holder_birth_date,
-        holder_age_confirmed=data.holder_age_confirmed,
         member_emails=data.member_emails,
     )
 
@@ -301,8 +297,6 @@ def purchase_plan(
     user,
     plan_id,
     *,
-    holder_birth_date: date | None = None,
-    holder_age_confirmed: bool = False,
     member_emails: list[EmailStr] | None = None,
 ):
     """Demo checkout shared by the legacy and v2 routes; legacy selects a default plan."""
@@ -333,17 +327,17 @@ def purchase_plan(
     if plan.tier == "family_and_friends":
         if not plan.requires_adult_holder:
             raise HTTPException(409, "Family plans must require an adult primary account holder")
-        if (
-            holder_birth_date is None
-            or not holder_age_confirmed
-            or not _is_adult(holder_birth_date, now.date())
-        ):
+        if not _is_adult(user.birth_date, now.date()):
             raise HTTPException(422, "The primary account holder must be at least 18 years old")
         members = _family_members_for_checkout(db, user, member_emails or [], now)
+        if not members:
+            raise HTTPException(
+                422, "A Family and Friends plan must include at least one additional reader"
+            )
         if len(members) + 1 > plan.max_members:
             raise HTTPException(422, f"This plan covers at most {plan.max_members} people")
         adult_confirmed_at = now
-    elif member_emails or holder_birth_date is not None or holder_age_confirmed:
+    elif member_emails:
         raise HTTPException(422, "Family details can only be used with a Family and Friends plan")
     sub = Assinatura(
         id_usuario=user.id,

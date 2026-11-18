@@ -4,6 +4,7 @@ import {
   getProfileAssets,
   getProfileDashboardStats,
   getProfileLevels,
+  getProfilePointMovements,
   requireUserProfile,
 } from "@/app/lib/profile";
 import { SIGNED_NAV_LINKS } from "@/app/lib/navigation";
@@ -17,11 +18,12 @@ export const metadata: Metadata = {
 };
 
 export default async function ProfilePage() {
-  const [profile, assets, levels, stats] = await Promise.all([
+  const [profile, assets, levels, stats, pointMovements] = await Promise.all([
     requireUserProfile(),
     getProfileAssets(),
     getProfileLevels(),
     getProfileDashboardStats(),
+    getProfilePointMovements(),
   ]);
 
   return (
@@ -58,6 +60,12 @@ export default async function ProfilePage() {
             assets={assets}
             initialProfile={profile}
             levels={levels}
+            pointMovements={
+              pointMovements.status === "ok" ? pointMovements.movements : []
+            }
+            pointMovementsError={
+              pointMovements.status === "unavailable" ? pointMovements.detail : null
+            }
             stats={stats}
           />
         </main>

@@ -41,8 +41,8 @@ export default async function SubscriptionPage() {
               Subscription checkout.
             </h1>
             <p className="mt-4 max-w-xl text-sm leading-relaxed text-black/60 sm:text-base">
-              Choose a LivrUSP Premium plan, complete simulated server checkout, and manage your
-              active membership and payment history.
+              Choose a LivrUSP Premium plan, then continue to subscribe. You can also manage your
+              active membership and payment history here.
             </p>
           </div>
 
@@ -52,6 +52,7 @@ export default async function SubscriptionPage() {
             initialPlans={plans}
             initialProfile={profile}
             initialSubscriptions={subscriptions}
+            view="plans"
           />
         </main>
 

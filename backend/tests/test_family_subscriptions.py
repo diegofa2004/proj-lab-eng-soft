@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime
+from datetime import date
 
 import pytest
 from fastapi import HTTPException
@@ -37,8 +37,13 @@ def family_db(tmp_path):
         session.close()
 
 
-def create_reader(db, username: str, email: str) -> User:
-    reader = User(username=username, email=email, password_hash="not-a-real-password-hash")
+def create_reader(db, username: str, email: str, birth_date: date = date(1990, 1, 1)) -> User:
+    reader = User(
+        username=username,
+        email=email,
+        password_hash="not-a-real-password-hash",
+        birth_date=birth_date,
+    )
     db.add(reader)
     db.commit()
     return reader
@@ -68,8 +73,6 @@ def test_family_checkout_grants_premium_to_registered_members(family_db):
             family_db,
             owner,
             plan.id_plano,
-            holder_birth_date=date(1990, 1, 1),
-            holder_age_confirmed=True,
             member_emails=[member.email],
         )
     finally:
@@ -86,7 +89,7 @@ def test_family_checkout_grants_premium_to_registered_members(family_db):
 
 
 def test_family_checkout_rejects_underage_holder(family_db):
-    owner = create_reader(family_db, "owner", "owner@example.com")
+    owner = create_reader(family_db, "owner", "owner@example.com", date(2010, 1, 1))
     family_db.add(
         Plano(
             nome="Family",
@@ -109,8 +112,66 @@ def test_family_checkout_rejects_underage_holder(family_db):
                 family_db,
                 owner,
                 plan.id_plano,
-                holder_birth_date=date(datetime.now(UTC).year - 17, 1, 1),
-                holder_age_confirmed=True,
+            )
+    finally:
+        settings.DEMO_BILLING = original_demo_billing
+
+
+def test_family_checkout_requires_an_additional_registered_reader(family_db):
+    owner = create_reader(family_db, "owner", "owner@example.com")
+    family_db.add(
+        Plano(
+            nome="Family",
+            preco=29.90,
+            moeda="BRL",
+            periodicidade="mensal",
+            tier="family_and_friends",
+            max_members=4,
+            requires_adult_holder=True,
+        )
+    )
+    family_db.commit()
+    plan = family_db.scalar(select(Plano))
+
+    original_demo_billing = settings.DEMO_BILLING
+    settings.DEMO_BILLING = True
+    try:
+        with pytest.raises(HTTPException, match="at least one additional reader"):
+            purchase_plan(
+                family_db,
+                owner,
+                plan.id_plano,
+            )
+    finally:
+        settings.DEMO_BILLING = original_demo_billing
+
+
+def test_individual_checkout_rejects_family_member_details(family_db):
+    owner = create_reader(family_db, "owner", "owner@example.com")
+    member = create_reader(family_db, "member", "member@example.com")
+    family_db.add(
+        Plano(
+            nome="Individual",
+            preco=9.90,
+            moeda="BRL",
+            periodicidade="mensal",
+            tier="individual",
+            max_members=1,
+            requires_adult_holder=False,
+        )
+    )
+    family_db.commit()
+    plan = family_db.scalar(select(Plano))
+
+    original_demo_billing = settings.DEMO_BILLING
+    settings.DEMO_BILLING = True
+    try:
+        with pytest.raises(HTTPException, match="Family details can only"):
+            purchase_plan(
+                family_db,
+                owner,
+                plan.id_plano,
+                member_emails=[member.email],
             )
     finally:
         settings.DEMO_BILLING = original_demo_billing
