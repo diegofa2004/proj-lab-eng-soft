@@ -45,7 +45,9 @@ def upgrade() -> None:
         sa.CheckConstraint("ordem > 0", name="ck_capitulo_ordem"),
         sa.CheckConstraint("length(trim(titulo)) > 0", name="ck_capitulo_titulo"),
         sa.CheckConstraint("versao > 0", name="ck_capitulo_versao"),
-        sa.CheckConstraint("octet_length(conteudo) <= 1048576", name="ck_capitulo_conteudo_tamanho"),
+        sa.CheckConstraint(
+            "octet_length(conteudo) <= 1048576", name="ck_capitulo_conteudo_tamanho"
+        ),
         sa.ForeignKeyConstraint(
             ["id_livro"], ["plataforma.livro.id_livro"], ondelete="CASCADE"
         ),
