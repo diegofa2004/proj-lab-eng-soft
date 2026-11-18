@@ -69,5 +69,5 @@ HTTP-only cookie defined in `app/lib/session.ts`.
 - The feature has models, schemas, routes, migrations, and tests where needed.
 - The migration was reviewed and is included in the pull request.
 - No secret, personal `.env`, hash, or password is in the code.
-- Interface text is in English.
+- Interface text and comments are written in English.
 - Ruff, pytest, lint, and TypeScript pass.

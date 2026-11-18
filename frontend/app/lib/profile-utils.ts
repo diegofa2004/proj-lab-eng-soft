@@ -115,6 +115,19 @@ export type ProfileEditPayload = {
   profile_avatar?: ProfileAvatarId | null;
 };
 
+export type PointMovementReason = "leitura" | "inatividade" | "ajuste";
+
+export type PointMovement = {
+  id_movimento: number;
+  id_usuario: number;
+  id_livro: number | null;
+  quantidade: number;
+  motivo: PointMovementReason;
+  data_hora: string;
+  data_referencia: string | null;
+  chave_evento: string;
+};
+
 export type ProfileDashboardStats = {
   booksCompleted: number;
   pagesRead: number;
