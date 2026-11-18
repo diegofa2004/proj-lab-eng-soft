@@ -17,7 +17,7 @@ export default async function FavoritesPage() {
   const currentUser = await getOptionalCurrentUser();
   if (!currentUser) redirect("/login");
 
-  const books = await getFavoriteBooks();
+  const result = await getFavoriteBooks();
   const navLinks = currentUser ? SIGNED_NAV_LINKS : GUEST_NAV_LINKS;
 
   return (
@@ -38,7 +38,14 @@ export default async function FavoritesPage() {
             </p>
           </div>
 
-          {books.length > 0 ? (
+          {result.status === "unavailable" ? (
+            <section className={`${card} p-8`} role="alert">
+              <h2 className="font-serif text-3xl font-normal tracking-tight text-black">
+                Favorites could not load
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-black/65">{result.detail}</p>
+            </section>
+          ) : result.books.length > 0 ? (
             <section aria-labelledby="favorites-heading" className="space-y-6">
               <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-black/10 pb-4">
                 <h2
@@ -48,12 +55,12 @@ export default async function FavoritesPage() {
                   Saved books
                 </h2>
                 <p aria-live="polite" className="font-mono text-xs text-[#556B45]">
-                  {books.length} {books.length === 1 ? "favorite" : "favorites"}
+                  {result.books.length} {result.books.length === 1 ? "favorite" : "favorites"}
                 </p>
               </div>
 
               <ul className="grid gap-5 sm:grid-cols-2">
-                {books.map((book) => (
+                {result.books.map((book) => (
                   <BookResultCard
                     book={book}
                     isFavorite

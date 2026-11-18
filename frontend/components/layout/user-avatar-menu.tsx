@@ -178,6 +178,12 @@ export default function UserAvatarMenu({
           <Link className="block rounded-xl px-3 py-2 text-sm text-black/75 hover:bg-[#E6EBF5]" href="/favorites">
             Favorites
           </Link>
+          <Link className="block rounded-xl px-3 py-2 text-sm text-black/75 hover:bg-[#E6EBF5]" href="/publish">
+            Publish
+          </Link>
+          <Link className="block rounded-xl px-3 py-2 text-sm text-black/75 hover:bg-[#E6EBF5]" href="/write">
+            Write
+          </Link>
           <Link className="block rounded-xl px-3 py-2 text-sm text-black/75 hover:bg-[#E6EBF5]" href="/dashboard">
             Dashboard
           </Link>

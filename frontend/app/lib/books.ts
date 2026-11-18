@@ -284,11 +284,15 @@ export async function getUserFavoriteBookIds(): Promise<Set<number>> {
   }
 }
 
-export async function getFavoriteBooks(): Promise<BookSearchResult[]> {
+export type FavoriteBooksResult =
+  | { status: "ok"; books: BookSearchResult[] }
+  | { status: "unavailable"; detail: string };
+
+export async function getFavoriteBooks(): Promise<FavoriteBooksResult> {
   const token = (await cookies()).get(accessTokenCookieName)?.value;
 
   if (!token) {
-    return [];
+    return { status: "unavailable", detail: "Sign in to view your favorites." };
   }
 
   try {
@@ -300,7 +304,10 @@ export async function getFavoriteBooks(): Promise<BookSearchResult[]> {
     ]);
 
     if (!listResponse.ok) {
-      return [];
+      return {
+        status: "unavailable",
+        detail: "We could not load your favorites. Please try again.",
+      };
     }
 
     const items = (await listResponse.json()) as ListItem[];
@@ -320,9 +327,12 @@ export async function getFavoriteBooks(): Promise<BookSearchResult[]> {
       }
     }
 
-    return await resolveBooksByIds(favoriteIds, bookMap);
+    return { status: "ok", books: await resolveBooksByIds(favoriteIds, bookMap) };
   } catch {
-    return [];
+    return {
+      status: "unavailable",
+      detail: "The favorites service is unavailable. Please try again.",
+    };
   }
 }
 

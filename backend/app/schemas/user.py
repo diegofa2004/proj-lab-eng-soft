@@ -1,3 +1,5 @@
+from datetime import date
+
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 
@@ -14,6 +16,7 @@ class UserCreate(PasswordInput):
     username: str = Field(min_length=3, max_length=100)
     email: EmailStr = Field(max_length=254)
     password: str = Field(min_length=8, max_length=72)
+    birth_date: date
 
     @field_validator("username", mode="before")
     @classmethod
@@ -24,6 +27,16 @@ class UserCreate(PasswordInput):
     @classmethod
     def normalize_email(cls, value: EmailStr) -> str:
         return str(value).strip().lower()
+
+    @field_validator("birth_date")
+    @classmethod
+    def validate_birth_date(cls, value: date) -> date:
+        today = date.today()
+        if value > today:
+            raise ValueError("Birth date cannot be in the future")
+        if value.year < today.year - 120:
+            raise ValueError("Please enter a valid birth date")
+        return value
 
 
 class UserLogin(PasswordInput):
