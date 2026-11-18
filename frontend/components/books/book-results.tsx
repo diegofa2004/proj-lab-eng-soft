@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import {
   buildBookSearchHref,
+  getUserFavoriteBookIds,
   hasActiveBookFilters,
   searchBooks,
   type BookSearchFilters,
@@ -11,6 +12,7 @@ import BookResultCard from "@/components/books/book-result-card";
 
 type BookResultsProps = {
   filters: BookSearchFilters;
+  signedIn?: boolean;
 };
 
 function ResultsMessage({
@@ -53,8 +55,11 @@ function describeFilters(filters: BookSearchFilters): string {
   return parts.join(", ");
 }
 
-export default async function BookResults({ filters }: BookResultsProps) {
-  const result = await searchBooks(filters);
+export default async function BookResults({ filters, signedIn = false }: BookResultsProps) {
+  const [result, favoriteIds] = await Promise.all([
+    searchBooks(filters),
+    signedIn ? getUserFavoriteBookIds() : Promise.resolve(new Set<number>()),
+  ]);
   const isFiltered = hasActiveBookFilters(filters);
 
   if (result.status === "unavailable") {
@@ -115,7 +120,12 @@ export default async function BookResults({ filters }: BookResultsProps) {
 
       <ul className="grid gap-5 sm:grid-cols-2">
         {books.map((book) => (
-          <BookResultCard book={book} key={book.id_livro} />
+          <BookResultCard
+            book={book}
+            isFavorite={favoriteIds.has(book.id_livro)}
+            key={book.id_livro}
+            showFavoriteButton={signedIn}
+          />
         ))}
       </ul>
 

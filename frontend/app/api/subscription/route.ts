@@ -148,8 +148,6 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         id_plano: rawPlanId,
-        holder_birth_date: body.holder_birth_date,
-        holder_age_confirmed: body.holder_age_confirmed === true,
         member_emails: memberEmails,
       }),
       cache: "no-store",

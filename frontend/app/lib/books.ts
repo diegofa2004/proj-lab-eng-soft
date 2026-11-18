@@ -254,6 +254,88 @@ export async function getBookReviews(bookId: number): Promise<Review[]> {
   }
 }
 
+export async function getUserFavoriteBookIds(): Promise<Set<number>> {
+  const token = (await cookies()).get(accessTokenCookieName)?.value;
+
+  if (!token) {
+    return new Set();
+  }
+
+  try {
+    const response = await fetch(`${getBackendUrl()}/v2/me/lists?tipo=favorito`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return new Set();
+    }
+
+    const items = (await response.json()) as ListItem[];
+    return new Set(
+      Array.isArray(items)
+        ? items
+            .map((item) => item.id_livro)
+            .filter((id) => Number.isInteger(id) && id > 0)
+        : [],
+    );
+  } catch {
+    return new Set();
+  }
+}
+
+export type FavoriteBooksResult =
+  | { status: "ok"; books: BookSearchResult[] }
+  | { status: "unavailable"; detail: string };
+
+export async function getFavoriteBooks(): Promise<FavoriteBooksResult> {
+  const token = (await cookies()).get(accessTokenCookieName)?.value;
+
+  if (!token) {
+    return { status: "unavailable", detail: "Sign in to view your favorites." };
+  }
+
+  try {
+    const backendUrl = getBackendUrl();
+    const headers = { Authorization: `Bearer ${token}` };
+    const [listResponse, catalogResponse] = await Promise.all([
+      fetch(`${backendUrl}/v2/me/lists?tipo=favorito`, { headers, cache: "no-store" }),
+      fetch(`${backendUrl}/books`, { cache: "no-store" }),
+    ]);
+
+    if (!listResponse.ok) {
+      return {
+        status: "unavailable",
+        detail: "We could not load your favorites. Please try again.",
+      };
+    }
+
+    const items = (await listResponse.json()) as ListItem[];
+    const favoriteIds = Array.isArray(items)
+      ? items
+          .map((item) => item.id_livro)
+          .filter((id) => Number.isInteger(id) && id > 0)
+      : [];
+
+    const bookMap = new Map<number, BookSearchResult>();
+    const catalog = catalogResponse.ok
+      ? ((await catalogResponse.json()) as BookSearchResult[] | PaginatedBooksResponse)
+      : [];
+    for (const book of extractBookList(catalog)) {
+      if (book && typeof book.id_livro === "number") {
+        bookMap.set(book.id_livro, book);
+      }
+    }
+
+    return { status: "ok", books: await resolveBooksByIds(favoriteIds, bookMap) };
+  } catch {
+    return {
+      status: "unavailable",
+      detail: "The favorites service is unavailable. Please try again.",
+    };
+  }
+}
+
 export async function getUserBookListsStatus(bookId: number): Promise<{
   isFavorite: boolean;
   isToRead: boolean;
