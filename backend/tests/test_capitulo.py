@@ -1,5 +1,5 @@
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -12,6 +12,13 @@ def make_session(tmp_path):
     engine = create_engine(
         f"sqlite:///{tmp_path}/chapters.db",
         execution_options={"schema_translate_map": {"plataforma": None}},
+    )
+    event.listen(
+        engine,
+        "connect",
+        lambda connection, _: connection.create_function(
+            "octet_length", 1, lambda value: len(value.encode("utf-8")) if value else 0
+        ),
     )
     Base.metadata.create_all(bind=engine, tables=[Capitulo.__table__])
     return Session(engine)
@@ -65,4 +72,16 @@ def test_chapter_contracts_validate_title_and_content_size():
     with pytest.raises(ValueError):
         CapituloCreate(titulo="Long", conteudo="x" * (1024 * 1024 + 1))
     with pytest.raises(ValueError):
+        CapituloCreate(titulo="Unicode", conteudo="é" * (1024 * 1024 // 2 + 1))
+    with pytest.raises(ValueError):
+        CapituloUpdate(titulo="Unicode", conteudo="é" * (1024 * 1024 // 2 + 1), versao=1)
+    with pytest.raises(ValueError):
         CapituloUpdate(titulo="Missing version")  # type: ignore[call-arg]
+
+
+def test_reorder_contract_caps_chapters_per_book():
+    from app.schemas.capitulo import CapituloReorder
+
+    assert len(CapituloReorder(capitulos=list(range(1, 201))).capitulos) == 200
+    with pytest.raises(ValueError):
+        CapituloReorder(capitulos=list(range(1, 202)))

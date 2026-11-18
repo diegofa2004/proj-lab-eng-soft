@@ -124,19 +124,18 @@ def book_chapter_sources(db, book_id: int) -> list[ChapterSource]:
     ]
 
 
-def generate_book_epub(db, row, chapters: list[ChapterSource]) -> GeneratedEpub:
-    authors = ", ".join(
-        author.nome for author in links(db, row.id_livro, Autor, LivroAutor, "id_autor")
-    )
+def generate_book_epub(
+    book_id: int, title: str, chapters: list[ChapterSource], authors: str
+) -> tuple[GeneratedEpub, Path]:
     CONTENT.mkdir(exist_ok=True)
     tmp = CONTENT / uuid4().hex
     try:
-        result = generate_epub(tmp, row.id_livro, row.titulo, chapters, authors)
+        result = generate_epub(tmp, book_id, title, chapters, authors)
         validate_epub(tmp)
-        tmp.replace(CONTENT / f"{row.id_livro}.epub")
-        return result
-    finally:
+        return result, tmp
+    except Exception:
         tmp.unlink(missing_ok=True)
+        raise
 
 
 class BookInput(BaseModel):
@@ -239,34 +238,47 @@ def owned_book(db, user, book_id):
 def metadata(db, row, data):
     chapters = book_chapter_sources(db, row.id_livro)
     generated = None
+    generated_path = None
+    author_ids = data.autores or [
+        author.id_autor for author in links(db, row.id_livro, Autor, LivroAutor, "id_autor")
+    ]
+    for model, ids in ((Autor, author_ids), (Genero, data.generos)):
+        if any(db.get(model, item_id) is None for item_id in set(ids)):
+            raise HTTPException(422, "Unknown author or genre")
     if data.status_publicacao == "publicado" and chapters:
-        generated = generate_book_epub(db, row, chapters)
+        authors = ", ".join(
+            author.nome
+            for author in db.scalars(select(Autor).where(Autor.id_autor.in_(set(author_ids))))
+        )
+        generated, generated_path = generate_book_epub(
+            row.id_livro, data.titulo, chapters, authors
+        )
         total_positions = generated.total_paginas
     else:
         total_positions = stored_epub_positions(row) or data.total_paginas
-    validate_page_count(db, row, total_positions)
-    if data.status_publicacao == "publicado" and not chapters:
-        total_positions = require_publication_ready(row, total_positions)
-    for key, value in data.model_dump(exclude={"autores", "generos"}).items():
-        if key == "total_paginas":
-            value = total_positions
-        setattr(row, key, value)
-    if generated is not None:
-        row.paginas_padrao = generated.total_paginas
-    if not data.autores:
-        data.autores = [
-            author.id_autor for author in links(db, row.id_livro, Autor, LivroAutor, "id_autor")
-        ]
-    for model, through, key, ids in [
-        (Autor, LivroAutor, "id_autor", data.autores),
-        (Genero, LivroGenero, "id_genero", data.generos),
-    ]:
-        if any(db.get(model, i) is None for i in set(ids)):
-            raise HTTPException(422, "Unknown author or genre")
-        db.execute(delete(through).where(through.id_livro == row.id_livro))
-        db.add_all(through(id_livro=row.id_livro, **{key: i}) for i in set(ids))
-    db.flush()
-    classify_book(db, row.id_livro)
+    try:
+        validate_page_count(db, row, total_positions)
+        if data.status_publicacao == "publicado" and not chapters:
+            total_positions = require_publication_ready(row, total_positions)
+        for key, value in data.model_dump(exclude={"autores", "generos"}).items():
+            if key == "total_paginas":
+                value = total_positions
+            setattr(row, key, value)
+        if generated is not None:
+            row.paginas_padrao = generated.total_paginas
+        for model, through, key, ids in [
+            (Autor, LivroAutor, "id_autor", author_ids),
+            (Genero, LivroGenero, "id_genero", data.generos),
+        ]:
+            db.execute(delete(through).where(through.id_livro == row.id_livro))
+            db.add_all(through(id_livro=row.id_livro, **{key: i}) for i in set(ids))
+        db.flush()
+        classify_book(db, row.id_livro)
+    except Exception:
+        if generated_path is not None:
+            generated_path.unlink(missing_ok=True)
+        raise
+    return generated, generated_path
 
 
 @router.post("/books", response_model=LivroPublic, status_code=201)
@@ -296,7 +308,14 @@ def create(data: BookInput, db: DB, user: Reader):
 def replace(book_id: int, data: BookInput, db: DB, user: Reader):
     row = owned_book(db, user, book_id)
     grant_publish(db, user)
-    metadata(db, row, data)
+    generated_path = None
+    try:
+        _, generated_path = metadata(db, row, data)
+    except Exception:
+        db.rollback()
+        if generated_path is not None:
+            generated_path.unlink(missing_ok=True)
+        raise
     if user.is_admin:
         db.add(
             AtividadeAdmin(
@@ -306,7 +325,16 @@ def replace(book_id: int, data: BookInput, db: DB, user: Reader):
                 descricao="Book metadata updated",
             )
         )
-    return save(db, row)
+    try:
+        result = save(db, row)
+        if generated_path is not None:
+            generated_path.replace(CONTENT / f"{book_id}.epub")
+        return result
+    except Exception:
+        db.rollback()
+        if generated_path is not None:
+            generated_path.unlink(missing_ok=True)
+        raise
 
 
 @router.put("/books/{book_id}/content", status_code=204)

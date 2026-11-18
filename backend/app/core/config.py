@@ -15,7 +15,9 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("DATABASE_URL", "SQLALCHEMY_DATABASE_URI")
     )
     JWT_SECRET_KEY: str
-    DEMO_BILLING: bool = False
+    # Until a real provider is integrated, subscriptions are an immediate
+    # server-side mock checkout and never collect card data.
+    DEMO_BILLING: bool = True
 
     @field_validator("JWT_SECRET_KEY", mode="before")
     @classmethod

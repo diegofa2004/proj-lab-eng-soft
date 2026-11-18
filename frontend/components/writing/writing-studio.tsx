@@ -59,8 +59,10 @@ export default function WritingStudio({ book }: { book: OwnedBookDetail }) {
 
   const active = chapters.find((chapter) => chapter.id_capitulo === activeId) ?? null;
   const activeRef = useRef<Chapter | null>(active);
-  const lastSaved = useRef<string>(
-    initialChapter ? chapterSignature(initialChapter) : "",
+  const chaptersRef = useRef(chapters);
+  const savingChapters = useRef(new Set<number>());
+  const lastSaved = useRef(
+    new Map(book.capitulos.map((chapter) => [chapter.id_capitulo, chapterSignature(chapter)])),
   );
 
   const editable =
@@ -72,6 +74,9 @@ export default function WritingStudio({ book }: { book: OwnedBookDetail }) {
   useEffect(() => {
     activeRef.current = active;
   }, [active]);
+  useEffect(() => {
+    chaptersRef.current = chapters;
+  }, [chapters]);
 
   const refreshBook = useCallback(
     async (preferredId?: number | null, warning = "") => {
@@ -90,13 +95,15 @@ export default function WritingStudio({ book }: { book: OwnedBookDetail }) {
       const detail = (await response.json()) as OwnedBookDetail;
       const nextChapters = sortChapters(detail.capitulos);
       setChapters(nextChapters);
+      chaptersRef.current = nextChapters;
+      lastSaved.current = new Map(
+        nextChapters.map((chapter) => [chapter.id_capitulo, chapterSignature(chapter)]),
+      );
       const nextId =
         preferredId && nextChapters.some((chapter) => chapter.id_capitulo === preferredId)
           ? preferredId
           : nextChapters[0]?.id_capitulo ?? null;
       setActiveId(nextId);
-      const nextChapter = nextChapters.find((chapter) => chapter.id_capitulo === nextId) ?? null;
-      lastSaved.current = nextChapter ? chapterSignature(nextChapter) : "";
       setSaveState(warning ? "conflict" : "idle");
       setFeedback(warning ? { tone: "warning", text: warning } : null);
       return detail;
@@ -111,6 +118,8 @@ export default function WritingStudio({ book }: { book: OwnedBookDetail }) {
         setFeedback({ tone: "error", text: "Chapter title cannot be empty." });
         return false;
       }
+      if (savingChapters.current.has(chapter.id_capitulo)) return false;
+      savingChapters.current.add(chapter.id_capitulo);
 
       const sentSignature = chapterSignature(chapter);
       setSaveState("saving");
@@ -131,10 +140,11 @@ export default function WritingStudio({ book }: { book: OwnedBookDetail }) {
         );
 
         if (response.status === 409) {
-          await refreshBook(
-            activeRef.current?.id_capitulo ?? chapter.id_capitulo,
-            "This chapter changed in another session. We reloaded the latest version.",
-          );
+          setSaveState("conflict");
+          setFeedback({
+            tone: "warning",
+            text: "This chapter changed in another session. Your local text is preserved here; copy it before reloading.",
+          });
           return false;
         }
         if (!response.ok) {
@@ -147,23 +157,26 @@ export default function WritingStudio({ book }: { book: OwnedBookDetail }) {
         }
 
         const updated = (await response.json()) as Chapter;
-        const latest = activeRef.current;
-        const isActive = latest?.id_capitulo === updated.id_capitulo;
+        const latest = chaptersRef.current.find(
+          (item) => item.id_capitulo === updated.id_capitulo,
+        );
+        const isActive = activeRef.current?.id_capitulo === updated.id_capitulo;
 
-        if (isActive && chapterSignature(latest) !== sentSignature) {
-          setChapters((current) =>
-            current.map((item) =>
-              item.id_capitulo === updated.id_capitulo
-                ? {
-                    ...item,
-                    versao: updated.versao,
-                    atualizado_em: updated.atualizado_em,
-                  }
-                : item,
-            ),
+        if (latest && chapterSignature(latest) !== sentSignature) {
+          const revised = chaptersRef.current.map((item) =>
+            item.id_capitulo === updated.id_capitulo
+              ? { ...item, versao: updated.versao, atualizado_em: updated.atualizado_em }
+              : item,
           );
-          lastSaved.current = chapterSignature({ ...chapter, versao: updated.versao });
-          setSaveState("idle");
+          chaptersRef.current = revised;
+          setChapters(revised);
+          if (isActive) {
+            lastSaved.current.set(
+              updated.id_capitulo,
+              chapterSignature({ ...chapter, versao: updated.versao }),
+            );
+            setSaveState("idle");
+          }
           return true;
         }
 
@@ -173,9 +186,9 @@ export default function WritingStudio({ book }: { book: OwnedBookDetail }) {
           ),
         );
         if (isActive) {
-          lastSaved.current = chapterSignature(updated);
           setSaveState("saved");
         }
+        lastSaved.current.set(updated.id_capitulo, chapterSignature(updated));
         return true;
       } catch {
         setSaveState("error");
@@ -184,15 +197,17 @@ export default function WritingStudio({ book }: { book: OwnedBookDetail }) {
           text: "The writing service is unavailable. Your changes are still in this tab.",
         });
         return false;
+      } finally {
+        savingChapters.current.delete(chapter.id_capitulo);
       }
     },
-    [book.id_livro, refreshBook],
+    [book.id_livro],
   );
 
   useEffect(() => {
     if (!active || !editable) return;
     if (!active.titulo.trim()) return;
-    if (chapterSignature(active) === lastSaved.current) return;
+    if (chapterSignature(active) === lastSaved.current.get(active.id_capitulo)) return;
 
     const timer = window.setTimeout(() => {
       void saveChapter(active);
@@ -201,9 +216,15 @@ export default function WritingStudio({ book }: { book: OwnedBookDetail }) {
   }, [active, editable, saveChapter]);
 
   const flushActive = useCallback(async (): Promise<boolean> => {
-    const chapter = activeRef.current;
-    if (!chapter || !editable) return true;
-    if (chapterSignature(chapter) === lastSaved.current) return true;
+    const activeId = activeRef.current?.id_capitulo;
+    if (activeId === undefined || !editable) return true;
+    while (savingChapters.current.has(activeId)) {
+      await new Promise((resolve) => window.setTimeout(resolve, 25));
+    }
+    const chapter = chaptersRef.current.find((item) => item.id_capitulo === activeId);
+    if (!chapter || chapterSignature(chapter) === lastSaved.current.get(chapter.id_capitulo)) {
+      return true;
+    }
     return saveChapter(chapter);
   }, [editable, saveChapter]);
 
@@ -211,11 +232,10 @@ export default function WritingStudio({ book }: { book: OwnedBookDetail }) {
     const chapter = chapters.find((item) => item.id_capitulo === chapterId) ?? null;
     if (!chapter) return;
     if (active && active.id_capitulo !== chapterId) {
-      if (chapterSignature(active) !== lastSaved.current) {
+      if (chapterSignature(active) !== lastSaved.current.get(active.id_capitulo)) {
         void saveChapter(active);
       }
     }
-    lastSaved.current = chapterSignature(chapter);
     setActiveId(chapterId);
     setSaveState("idle");
     setFeedback(null);
@@ -252,7 +272,7 @@ export default function WritingStudio({ book }: { book: OwnedBookDetail }) {
       }
       const chapter = (await response.json()) as Chapter;
       setChapters((current) => sortChapters([...current, chapter]));
-      lastSaved.current = chapterSignature(chapter);
+      lastSaved.current.set(chapter.id_capitulo, chapterSignature(chapter));
       setActiveId(chapter.id_capitulo);
       setSaveState("saved");
     } catch {

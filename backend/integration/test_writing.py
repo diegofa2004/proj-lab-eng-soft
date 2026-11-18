@@ -1,9 +1,13 @@
 """Run explicitly against a migrated PostgreSQL database with DEMO_BILLING=true."""
 
+import os
+import zipfile
+from io import BytesIO
 from pathlib import Path
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
+from sqlalchemy.engine import make_url
 
 from app.core.config import settings
 from app.main import app
@@ -11,7 +15,15 @@ from app.seed import seed
 
 
 def test_writing_chapter_journey():
+    assert os.getenv("RUN_WRITING_INTEGRATION_TESTS") == "1", (
+        "Set RUN_WRITING_INTEGRATION_TESTS=1 to allow database-writing integration tests"
+    )
     assert settings.DEMO_BILLING, "Use a dedicated test database and enable demo billing"
+    database_name = make_url(settings.DATABASE_URL).database or ""
+    assert "test" in database_name.lower(), (
+        "Refusing to write integration data: DATABASE_URL must point to a database "
+        "whose name contains 'test'"
+    )
     seed()
     client = TestClient(app, base_url="http://testserver/v2/")
 
@@ -141,10 +153,13 @@ def test_writing_chapter_journey():
         "PUT",
         f"/books/{book_id}",
         token=token,
-        json=dict(payload, status_publicacao="publicado"),
+        json=dict(payload, titulo="Published title", status_publicacao="publicado"),
     )
     assert published["total_paginas"] == 1
-    assert api("GET", f"/books/{book_id}/content", token=token).content.startswith(b"PK")
+    epub = api("GET", f"/books/{book_id}/content", token=token).content
+    assert epub.startswith(b"PK")
+    with zipfile.ZipFile(BytesIO(epub)) as archive:
+        assert b"Published title" in archive.read("OEBPS/content.opf")
 
     published_detail = api("GET", f"/me/books/{book_id}", token=token)
     assert [author["nome"] for author in published_detail["autores"]] == [writer["username"]]
