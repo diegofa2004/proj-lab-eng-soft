@@ -31,6 +31,7 @@ export default async function AdminInsightsPage() {
     (a, b) => b.acessos - a.acessos || a.nome.localeCompare(b.nome),
   );
   const totalCategoryAccesses = genres.reduce((total, genre) => total + genre.acessos, 0);
+  const hasCategoryAccesses = totalCategoryAccesses > 0;
   const maxCategoryAccesses = Math.max(1, ...genres.map((genre) => genre.acessos));
 
   return (
@@ -138,7 +139,7 @@ export default async function AdminInsightsPage() {
           </p>
         </div>
 
-        {genres.length > 0 ? (
+        {hasCategoryAccesses ? (
           <ul className="mt-5 space-y-4">
             {genres.map((genre) => {
               const width = Math.max(0, (genre.acessos / maxCategoryAccesses) * 100);
@@ -170,7 +171,7 @@ export default async function AdminInsightsPage() {
           </p>
         )}
 
-        {genres.length > 0 ? (
+        {hasCategoryAccesses ? (
           <p className="mt-4 border-t border-black/10 pt-3 font-mono text-[11px] text-slate-500">
             {numberFormat.format(totalCategoryAccesses)} categorized accesses across{" "}
             {numberFormat.format(genres.length)} {genres.length === 1 ? "category" : "categories"}.
