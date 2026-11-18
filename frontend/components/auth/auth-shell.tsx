@@ -1,10 +1,10 @@
-import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
 
-import { LivruspLogo } from "@/components/home/livrusp-logos";
-
-import styles from "./auth.module.css";
+import { GUEST_NAV_LINKS } from "@/app/lib/navigation";
+import { pageBody, pageContainer } from "@/app/lib/ui";
+import SiteFooter from "@/components/layout/site-footer";
+import SiteHeader from "@/components/layout/site-header";
 
 type AuthShellProps = {
   mode: "login" | "signup";
@@ -15,54 +15,42 @@ export function AuthShell({ mode, children }: AuthShellProps) {
   const isLogin = mode === "login";
 
   return (
-    <div className={styles.shell}>
-      <header className={styles.header}>
-        <Link className={styles.logoLink} href="/" aria-label="livrUSP — home">
-          <LivruspLogo alt="" className={styles.logo} />
-        </Link>
+    <div className={pageBody}>
+      <div className={pageContainer}>
+        <SiteHeader currentUser={null} />
 
-        <nav aria-label="Account">
-          <Link className={styles.headerAction} href={isLogin ? "/signup" : "/login"}>
-            {isLogin ? "Sign up" : "Sign in"}
-            <span aria-hidden="true">↗</span>
-          </Link>
-        </nav>
-      </header>
+        <main className="grid gap-10 pt-4 pb-16 sm:pt-8 sm:pb-20 lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,460px)] lg:items-center lg:gap-16">
+          <section aria-label="About LivrUSP" className="min-w-0">
+            <p className="font-mono text-[11px] uppercase tracking-wider text-[#556B45]">
+              LivrUSP account
+            </p>
+            <h1 className="mt-3 max-w-3xl font-serif text-5xl leading-[0.98] font-normal tracking-tight text-black sm:text-6xl md:text-7xl">
+              {isLogin ? "Back to the books." : "A new chapter begins."}
+            </h1>
+            <p className="mt-5 max-w-md text-sm leading-relaxed text-black/60 sm:text-base">
+              {isLogin
+                ? "Your stories, your shelves, and your next great read are right where you left them."
+                : "Make room for every story you love. Read, share, and discover in one place."}
+            </p>
 
-      <main className={styles.main}>
-        <section className={styles.editorial} aria-label="About livrUSP">
-          <h1 className={styles.heroTitle}>
-            {isLogin ? (
-              <>Back to the books.</>
-            ) : (
-              <>A new chapter begins.</>
-            )}
-          </h1>
-          <p className={styles.heroDescription}>
-            {isLogin
-              ? "Your stories, your shelves, your next great read — right where you left them."
-              : "Make room for every story you love. Read, share and discover in one place."}
-          </p>
+            <div className="relative mt-10 h-[clamp(245px,27vw,350px)]" aria-hidden="true">
+              <div className="absolute inset-x-0 top-[28%] bottom-0 rounded-[30px] bg-[#1E2E4F]" />
+              <Image
+                alt=""
+                className="relative block h-full w-full object-contain object-bottom"
+                height={1024}
+                sizes="(max-width: 1024px) 85vw, 600px"
+                src="/auth-books-v2.png"
+                width={1536}
+              />
+            </div>
+          </section>
 
-          <div className={styles.bookshelf} aria-hidden="true">
-            <Image
-              alt=""
-              className={styles.booksImage}
-              height={1024}
-              sizes="(max-width: 900px) 40vw, 600px"
-              src="/auth-books-v2.png"
-              width={1536}
-            />
-          </div>
-        </section>
+          <div className="w-full">{children}</div>
+        </main>
 
-        {children}
-      </main>
-
-      <footer className={styles.footer}>
-        <span>© livrUSP · {new Date().getFullYear()}</span>
-        <span>Every story has a place.</span>
-      </footer>
+        <SiteFooter links={GUEST_NAV_LINKS} />
+      </div>
     </div>
   );
 }

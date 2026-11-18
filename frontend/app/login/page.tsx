@@ -1,131 +1,16 @@
-"use client";
-
-import Link from "next/link";
-import { type SyntheticEvent, useState } from "react";
+import type { Metadata } from "next";
 
 import { AuthShell } from "@/components/auth/auth-shell";
-import styles from "@/components/auth/auth.module.css";
+import LoginForm from "@/components/auth/login-form";
 
-type FormStatus = "idle" | "submitting" | "success" | "error";
+export const metadata: Metadata = {
+  title: "Sign in · LivrUSP",
+};
 
 export default function LoginPage() {
-  const [formStatus, setFormStatus] = useState<FormStatus>("idle");
-  const [message, setMessage] = useState("");
-
-  async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-
-    if (!form.checkValidity()) {
-      setFormStatus("error");
-      setMessage("Please check the fields above.");
-      form.reportValidity();
-      return;
-    }
-
-    setFormStatus("submitting");
-    setMessage("");
-
-    try {
-      const formData = new FormData(form);
-      const response = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: formData.get("username"),
-          password: formData.get("password"),
-        }),
-      });
-      const data = (await response.json()) as { detail?: unknown; username?: string };
-
-      if (!response.ok) {
-        setFormStatus("error");
-        setMessage(typeof data.detail === "string" ? data.detail : "Sign-in failed. Please try again.");
-        return;
-      }
-
-      setFormStatus("success");
-      setMessage("Welcome! Signing in...");
-      window.location.replace("/home");
-    } catch {
-      setFormStatus("error");
-      setMessage("Unable to reach the authentication service. Please try again.");
-    }
-  }
-
-  const isSubmitting = formStatus === "submitting";
-  const isComplete = formStatus === "success";
-
   return (
     <AuthShell mode="login">
-      <section
-        className={`${styles.formPanel} ${isComplete ? styles.formPanelComplete : ""}`}
-        aria-labelledby="login-heading"
-      >
-        {isComplete ? (
-          <div aria-live="polite" className={styles.completionState} role="status">
-            <h2 className={styles.completionTitle} id="login-heading">
-              {message || "Welcome! Signing in..."}
-            </h2>
-          </div>
-        ) : (
-          <>
-            <p className={styles.formEyebrow}>YOUR ACCOUNT / 01</p>
-            <h2 className={styles.formTitle} id="login-heading">Sign in</h2>
-            <p className={styles.formDescription}>Your next read is waiting for you.</p>
-
-            <form className={styles.form} noValidate onSubmit={handleSubmit}>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="username">Username</label>
-                <input
-                  autoComplete="username"
-                  className={styles.input}
-                  id="username"
-                  maxLength={100}
-                  minLength={1}
-                  name="username"
-                  placeholder="Your username"
-                  required
-                  type="text"
-                />
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="password">Password</label>
-                <input
-                  autoComplete="current-password"
-                  className={styles.input}
-                  id="password"
-                  maxLength={72}
-                  minLength={1}
-                  name="password"
-                  placeholder="Enter your password"
-                  required
-                  type="password"
-                />
-              </div>
-
-              <button className={styles.submitButton} disabled={isSubmitting} type="submit">
-                {isSubmitting ? "Signing in..." : "Sign in"}
-                {!isSubmitting && <span aria-hidden="true">↗</span>}
-              </button>
-
-              <p
-                aria-live="polite"
-                className={`${styles.formMessage} ${styles.error}`}
-                role="alert"
-              >
-                {message}
-              </p>
-            </form>
-
-            <p className={styles.switchText}>
-              New to livrUSP?{" "}
-              <Link className={styles.textLink} href="/signup">Create an account</Link>
-            </p>
-          </>
-        )}
-      </section>
+      <LoginForm />
     </AuthShell>
   );
 }
