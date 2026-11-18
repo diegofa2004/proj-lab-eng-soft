@@ -3,7 +3,10 @@ from datetime import datetime
 from pydantic import Field, field_validator
 
 from app.models.capitulo import MAX_CAPITULO_BYTES, MAX_CAPITULOS_POR_LIVRO
+from app.schemas.autor import AutorPublic
 from app.schemas.common import BookTitle, PublicSchema
+from app.schemas.genero import GeneroPublic
+from app.schemas.livro import LivroPublic
 
 
 class CapituloCreate(PublicSchema):
@@ -52,3 +55,17 @@ class CapituloReorder(PublicSchema):
         if len(set(value)) != len(value):
             raise ValueError("Chapter ids must be unique")
         return value
+
+
+class OwnedBookSummary(LivroPublic):
+    atualizado_em: datetime
+    total_capitulos: int
+    total_palavras: int
+    tem_epub: bool
+    pode_publicar: bool
+
+
+class OwnedBookDetail(OwnedBookSummary):
+    autores: list[AutorPublic]
+    generos: list[GeneroPublic]
+    capitulos: list[CapituloPublic]
