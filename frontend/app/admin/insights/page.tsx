@@ -27,6 +27,12 @@ export default async function AdminInsightsPage() {
   const booksWithAccess = accessedBooks.length;
   const topBook = accessedBooks[0] ?? null;
   const maxAccesses = Math.max(1, ...books.map((book) => book.acessos));
+  const genres = [...report.genres].sort(
+    (a, b) => b.acessos - a.acessos || a.nome.localeCompare(b.nome),
+  );
+  const totalCategoryAccesses = genres.reduce((total, genre) => total + genre.acessos, 0);
+  const hasCategoryAccesses = totalCategoryAccesses > 0;
+  const maxCategoryAccesses = Math.max(1, ...genres.map((genre) => genre.acessos));
 
   return (
     <section className="space-y-8">
@@ -118,6 +124,59 @@ export default async function AdminInsightsPage() {
             No book access data is available yet.
           </p>
         )}
+      </div>
+
+      <div className={`p-5 sm:p-6 ${card}`}>
+        <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-black/10 pb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-black">Accesses per category</h3>
+            <p className="mt-1 text-sm text-slate-600">
+              Books with multiple genres count once toward each category.
+            </p>
+          </div>
+          <p className="font-mono text-xs text-slate-500">
+            {numberFormat.format(genres.length)} {genres.length === 1 ? "category" : "categories"}
+          </p>
+        </div>
+
+        {hasCategoryAccesses ? (
+          <ul className="mt-5 space-y-4">
+            {genres.map((genre) => {
+              const width = Math.max(0, (genre.acessos / maxCategoryAccesses) * 100);
+              return (
+                <li className={`p-4 ${cardInset}`} key={genre.id_genero}>
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <span className="font-semibold text-[#1E2E4F]">{genre.nome}</span>
+                    <span className="font-mono text-sm font-semibold text-[#1E2E4F]">
+                      {numberFormat.format(genre.acessos)}
+                    </span>
+                  </div>
+                  <div
+                    aria-label={`${genre.nome}: ${genre.acessos} accesses`}
+                    className="mt-2 h-2.5 overflow-hidden rounded-full bg-[#D9E1F1]"
+                    role="img"
+                  >
+                    <div
+                      className="h-full rounded-full bg-[#556B45]"
+                      style={{ width: `${width}%` }}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="mt-5 text-sm text-slate-600">
+            No category access data is available yet.
+          </p>
+        )}
+
+        {hasCategoryAccesses ? (
+          <p className="mt-4 border-t border-black/10 pt-3 font-mono text-[11px] text-slate-500">
+            {numberFormat.format(totalCategoryAccesses)} categorized accesses across{" "}
+            {numberFormat.format(genres.length)} {genres.length === 1 ? "category" : "categories"}.
+          </p>
+        ) : null}
       </div>
     </section>
   );
