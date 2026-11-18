@@ -98,11 +98,19 @@ def preview_epub(book_id: int, db: DB, user: Reader):
     chapters = book_chapter_sources(db, book_id)
     if not chapters:
         raise HTTPException(422, "Write at least one chapter before generating an EPUB")
-    result = generate_book_epub(db, book, chapters)
-    return {
-        "total_palavras": result.total_palavras,
-        "total_paginas": result.total_paginas,
-    }
+    authors = ", ".join(
+        author.nome
+        for author in db.scalars(
+            select(Autor)
+            .join(LivroAutor, LivroAutor.id_autor == Autor.id_autor)
+            .where(LivroAutor.id_livro == book.id_livro)
+        )
+    )
+    result, path = generate_book_epub(book.id_livro, book.titulo, chapters, authors)
+    try:
+        return {"total_palavras": result.total_palavras, "total_paginas": result.total_paginas}
+    finally:
+        path.unlink(missing_ok=True)
 
 
 @router.post(
@@ -140,14 +148,14 @@ def update_chapter(
     grant_publish(db, user)
     book = owned_book(db, user, book_id)
     _require_editable(book)
+    _lock_book(db, book)
     chapter = require(
         db.scalar(
             select(Capitulo).where(
                 Capitulo.id_capitulo == chapter_id, Capitulo.id_livro == book_id
-            )
+            ).execution_options(populate_existing=True)
         )
     )
-    _lock_book(db, book)
     if data.versao != chapter.versao:
         raise HTTPException(409, "Chapter was updated by another session")
 
@@ -172,12 +180,23 @@ def delete_chapter(book_id: int, chapter_id: int, db: DB, user: Reader):
     )
     _lock_book(db, book)
     removed_order = chapter.ordem
+    max_order = db.scalar(
+        select(func.max(Capitulo.ordem)).where(Capitulo.id_livro == book_id)
+    ) or removed_order
     db.delete(chapter)
     db.flush()
+    # Move the tail out of the way before compacting to avoid transient
+    # collisions on the unique (id_livro, ordem) index.
     db.execute(
         update(Capitulo)
         .where(Capitulo.id_livro == book_id, Capitulo.ordem > removed_order)
-        .values(ordem=Capitulo.ordem - 1)
+        .values(ordem=Capitulo.ordem + max_order + 1)
+    )
+    db.flush()
+    db.execute(
+        update(Capitulo)
+        .where(Capitulo.id_livro == book_id, Capitulo.ordem > max_order)
+        .values(ordem=Capitulo.ordem - max_order - 2)
     )
     db.commit()
 
