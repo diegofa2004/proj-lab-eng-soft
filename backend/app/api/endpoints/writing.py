@@ -5,7 +5,13 @@ from fastapi import APIRouter, HTTPException
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
-from app.api.endpoints.catalog import CONTENT, grant_publish, owned_book
+from app.api.endpoints.catalog import (
+    CONTENT,
+    book_chapter_sources,
+    generate_book_epub,
+    grant_publish,
+    owned_book,
+)
 from app.api.platform import DB, Reader, profile_stats, require, save
 from app.db.base import Autor, Capitulo, Genero, Livro, LivroAutor, LivroGenero
 from app.models.user import User
@@ -17,6 +23,7 @@ from app.schemas.capitulo import (
     OwnedBookDetail,
     OwnedBookSummary,
 )
+from app.schemas.epub import EpubPreview
 from app.writing import MAX_CHAPTERS, book_metrics, summary_payload
 
 router = APIRouter(tags=["Writing"])
@@ -82,6 +89,28 @@ def my_books(db: DB, user: Reader):
 @router.get("/me/books/{book_id}", response_model=OwnedBookDetail)
 def owned_book_detail(book_id: int, db: DB, user: Reader):
     return _book_detail(db, owned_book(db, user, book_id), user)
+
+
+@router.post("/books/{book_id}/epub", response_model=EpubPreview)
+def preview_epub(book_id: int, db: DB, user: Reader):
+    grant_publish(db, user)
+    book = owned_book(db, user, book_id)
+    chapters = book_chapter_sources(db, book_id)
+    if not chapters:
+        raise HTTPException(422, "Write at least one chapter before generating an EPUB")
+    authors = ", ".join(
+        author.nome
+        for author in db.scalars(
+            select(Autor)
+            .join(LivroAutor, LivroAutor.id_autor == Autor.id_autor)
+            .where(LivroAutor.id_livro == book.id_livro)
+        )
+    )
+    result, path = generate_book_epub(book.id_livro, book.titulo, chapters, authors)
+    try:
+        return {"total_palavras": result.total_palavras, "total_paginas": result.total_paginas}
+    finally:
+        path.unlink(missing_ok=True)
 
 
 @router.post(

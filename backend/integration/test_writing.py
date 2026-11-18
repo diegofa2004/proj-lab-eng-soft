@@ -1,15 +1,15 @@
 """Run explicitly against a migrated PostgreSQL database with DEMO_BILLING=true."""
 
 import os
+import zipfile
+from io import BytesIO
+from pathlib import Path
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
-from sqlalchemy import select
 from sqlalchemy.engine import make_url
 
 from app.core.config import settings
-from app.db.base import Livro
-from app.db.session import SessionLocal
 from app.main import app
 from app.seed import seed
 
@@ -50,7 +50,7 @@ def test_writing_chapter_journey():
         plan = api("GET", "/plans")[0]["id_plano"]
         api("POST", "/me/checkout", token=token, json={"id_plano": plan})
 
-    author, token = account()
+    writer, token = account()
     other, other_token = account()
 
     api("POST", "/books/1/chapters", 403, token, json={"titulo": "Forbidden"})
@@ -63,6 +63,7 @@ def test_writing_chapter_journey():
         total_paginas=1,
     )
     book_id = api("POST", "/books", 201, token, json=payload)["id_livro"]
+    (Path("content") / f"{book_id}.epub").unlink(missing_ok=True)
 
     first = api(
         "POST",
@@ -138,8 +139,31 @@ def test_writing_chapter_journey():
         json={"titulo": "Stolen"},
     )
 
-    with SessionLocal.begin() as db:
-        db.scalar(select(Livro).where(Livro.id_livro == book_id)).status_publicacao = "publicado"
+    preview = api("POST", f"/books/{book_id}/epub", token=token)
+    assert preview == {"total_palavras": 3, "total_paginas": 1}
+    api(
+        "PUT",
+        f"/books/{book_id}/content",
+        409,
+        token,
+        files={"file": ("draft.epub", b"PK", "application/epub+zip")},
+    )
+
+    published = api(
+        "PUT",
+        f"/books/{book_id}",
+        token=token,
+        json=dict(payload, titulo="Published title", status_publicacao="publicado"),
+    )
+    assert published["total_paginas"] == 1
+    epub = api("GET", f"/books/{book_id}/content", token=token).content
+    assert epub.startswith(b"PK")
+    with zipfile.ZipFile(BytesIO(epub)) as archive:
+        assert b"Published title" in archive.read("OEBPS/content.opf")
+
+    published_detail = api("GET", f"/me/books/{book_id}", token=token)
+    assert [author["nome"] for author in published_detail["autores"]] == [writer["username"]]
+
     api(
         "PATCH",
         f"/books/{book_id}/chapters/{first['id_capitulo']}",
