@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { getBackendUrl } from "@/app/lib/books";
 import {
+  type PointMovement,
   type ProfileAsset,
   type ProfileDashboardStats,
   type ProfileLevel,
@@ -24,6 +25,7 @@ export type {
   ProfileAsset,
   ProfileAssetType,
   ProfileDashboardStats,
+  PointMovement,
   ProfileEditPayload,
   ProfileLevel,
   UserProfile,
@@ -223,4 +225,37 @@ export async function getProfileDashboardStats(): Promise<ProfileDashboardStats>
   }
 
   return defaultStats;
+}
+
+/** Fetches the reader's point movements, newest first. */
+export type ProfilePointMovementsResult =
+  | { status: "ok"; movements: PointMovement[] }
+  | { status: "unavailable"; detail: string };
+
+export async function getProfilePointMovements(): Promise<ProfilePointMovementsResult> {
+  const token = (await cookies()).get(accessTokenCookieName)?.value;
+  if (!token) {
+    return { status: "unavailable", detail: "Sign in to view your point history." };
+  }
+
+  try {
+    const response = await fetch(`${getBackendUrl()}/v2/me/points`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return {
+        status: "unavailable",
+        detail: "We could not load your point history. Please try again.",
+      };
+    }
+
+    const movements = (await response.json()) as PointMovement[];
+    return Array.isArray(movements)
+      ? { status: "ok", movements }
+      : { status: "unavailable", detail: "The points service returned an invalid response." };
+  } catch {
+    return { status: "unavailable", detail: "The points service is unavailable." };
+  }
 }
