@@ -394,7 +394,6 @@ export default function SubscriptionCheckout({
       setIsPremium(Boolean(getActiveSubscription(updatedSubscriptions)));
       setCancelledInSession(true);
       setSubscribedPlanOverride(null);
-      setSavedFamilyDetails(null);
       setLatestCheckoutReceipt(null);
       setCheckoutStatus("success");
       setFeedbackMessage(

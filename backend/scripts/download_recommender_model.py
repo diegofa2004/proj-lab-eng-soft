@@ -1,8 +1,8 @@
 """Download the configured sentence embedding model into the shared volume."""
 
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 from huggingface_hub import snapshot_download
 
