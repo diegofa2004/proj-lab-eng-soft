@@ -55,6 +55,7 @@ export default function SignupPage() {
         body: JSON.stringify({
           username: formData.get("username"),
           email: formData.get("email"),
+          birth_date: formData.get("birthDate"),
           password,
         }),
       });
@@ -150,6 +151,19 @@ export default function SignupPage() {
                   placeholder="you@example.com"
                   required
                   type="email"
+                />
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="birthDate">Date of birth</label>
+                <input
+                  autoComplete="bday"
+                  className={styles.input}
+                  id="birthDate"
+                  max={new Date().toISOString().slice(0, 10)}
+                  name="birthDate"
+                  required
+                  type="date"
                 />
               </div>
 
