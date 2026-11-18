@@ -19,7 +19,7 @@ export default async function PublishPage() {
     getAdminAuthors(),
     getAdminGenres(),
   ]);
-  const canPublish = Boolean(profile.is_admin || profile.pode_publicar);
+  const canPublish = Boolean(profile.is_admin || profile.pode_publicar || profile.is_premium);
   const today = new Date().toISOString().slice(0, 10);
 
   return (
@@ -63,8 +63,8 @@ export default async function PublishPage() {
                 This shelf is still locked.
               </h2>
               <p className="mt-4 max-w-2xl text-sm leading-relaxed text-black/65 sm:text-base">
-                Publishing is available to qualified publishers. Keep reading to reach the
-                required level, or review the subscription plans for additional access.
+                Publishing is available to premium subscribers and qualified publishers. Keep
+                reading to reach the required level, or review the subscription plans for access.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <Link className={primaryCompact} href="/subscription">
