@@ -7,8 +7,10 @@ import {
   getUserBookListsStatus,
 } from "@/app/lib/books";
 import { GUEST_NAV_LINKS, SIGNED_NAV_LINKS } from "@/app/lib/navigation";
+import { getBookNotes } from "@/app/lib/notes";
 import { card, pageBody, pageContainer } from "@/app/lib/ui";
 import BookDetailsCard from "@/components/books/book-details-card";
+import BookNotes from "@/components/books/book-notes";
 import ReviewForm from "@/components/books/review-form";
 import ReviewList from "@/components/books/review-list";
 import { LivruspLogo } from "@/components/home/livrusp-logos";
@@ -42,11 +44,12 @@ export default async function BookDetailsPage({ params }: BookDetailsPageProps) 
     );
   }
 
-  const [bookResult, reviews, currentUser, listStatus] = await Promise.all([
+  const [bookResult, reviews, currentUser, listStatus, notes] = await Promise.all([
     getBookById(bookId),
     getBookReviews(bookId),
     getOptionalCurrentUser(),
     getUserBookListsStatus(bookId),
+    getBookNotes(bookId),
   ]);
 
   if (bookResult.status === "not_found") {
@@ -115,6 +118,13 @@ export default async function BookDetailsPage({ params }: BookDetailsPageProps) 
             isFavorite={listStatus.isFavorite}
             isToRead={listStatus.isToRead}
             reviews={reviews}
+          />
+
+          <BookNotes
+            bookId={book.id_livro}
+            currentUser={currentUser}
+            loadError={notes.status === "unavailable" ? notes.detail : null}
+            notes={notes.status === "ok" ? notes.notes : []}
           />
 
           <ReviewForm
