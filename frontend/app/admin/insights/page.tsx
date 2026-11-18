@@ -23,8 +23,9 @@ export default async function AdminInsightsPage() {
     (a, b) => b.acessos - a.acessos || a.titulo.localeCompare(b.titulo),
   );
   const totalAccesses = books.reduce((total, book) => total + book.acessos, 0);
-  const booksWithAccess = books.filter((book) => book.acessos > 0).length;
-  const topBook = books[0] ?? null;
+  const accessedBooks = books.filter((book) => book.acessos > 0);
+  const booksWithAccess = accessedBooks.length;
+  const topBook = accessedBooks[0] ?? null;
   const maxAccesses = Math.max(1, ...books.map((book) => book.acessos));
 
   return (
