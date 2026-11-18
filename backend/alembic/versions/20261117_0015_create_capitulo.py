@@ -46,7 +46,7 @@ def upgrade() -> None:
         sa.CheckConstraint("length(trim(titulo)) > 0", name="ck_capitulo_titulo"),
         sa.CheckConstraint("versao > 0", name="ck_capitulo_versao"),
         sa.CheckConstraint(
-            "length(conteudo) <= 1048576", name="ck_capitulo_conteudo_tamanho"
+            "octet_length(conteudo) <= 1048576", name="ck_capitulo_conteudo_tamanho"
         ),
         sa.ForeignKeyConstraint(
             ["id_livro"], ["plataforma.livro.id_livro"], ondelete="CASCADE"
@@ -60,10 +60,35 @@ def upgrade() -> None:
         unique=True,
         schema="plataforma",
     )
-    op.create_index("capitulo_livro", "capitulo", ["id_livro"], schema="plataforma")
+    # Serialize chapter inserts per book so concurrent transactions cannot exceed
+    # the 200 chapter limit after both independently observe a lower count.
+    op.execute(
+        """
+        CREATE FUNCTION plataforma.verificar_limite_capitulos() RETURNS trigger
+        LANGUAGE plpgsql AS $$
+        BEGIN
+            PERFORM 1 FROM plataforma.livro WHERE id_livro = NEW.id_livro FOR UPDATE;
+            IF (SELECT count(*) FROM plataforma.capitulo WHERE id_livro = NEW.id_livro)
+                >= 200 THEN
+                RAISE EXCEPTION 'A book cannot have more than 200 chapters'
+                    USING ERRCODE = 'check_violation';
+            END IF;
+            RETURN NEW;
+        END;
+        $$
+        """
+    )
+    op.execute(
+        """
+        CREATE TRIGGER trg_capitulo_limite_por_livro
+        BEFORE INSERT ON plataforma.capitulo
+        FOR EACH ROW EXECUTE FUNCTION plataforma.verificar_limite_capitulos()
+        """
+    )
 
 
 def downgrade() -> None:
-    op.drop_index("capitulo_livro", table_name="capitulo", schema="plataforma")
+    op.execute("DROP TRIGGER IF EXISTS trg_capitulo_limite_por_livro ON plataforma.capitulo")
+    op.execute("DROP FUNCTION IF EXISTS plataforma.verificar_limite_capitulos()")
     op.drop_index("uq_capitulo_livro_ordem", table_name="capitulo", schema="plataforma")
     op.drop_table("capitulo", schema="plataforma")

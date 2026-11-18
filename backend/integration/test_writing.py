@@ -1,9 +1,11 @@
 """Run explicitly against a migrated PostgreSQL database with DEMO_BILLING=true."""
 
+import os
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
 from sqlalchemy import select
+from sqlalchemy.engine import make_url
 
 from app.core.config import settings
 from app.db.base import Livro
@@ -13,7 +15,15 @@ from app.seed import seed
 
 
 def test_writing_chapter_journey():
+    assert os.getenv("RUN_WRITING_INTEGRATION_TESTS") == "1", (
+        "Set RUN_WRITING_INTEGRATION_TESTS=1 to allow database-writing integration tests"
+    )
     assert settings.DEMO_BILLING, "Use a dedicated test database and enable demo billing"
+    database_name = make_url(settings.DATABASE_URL).database or ""
+    assert "test" in database_name.lower(), (
+        "Refusing to write integration data: DATABASE_URL must point to a database "
+        "whose name contains 'test'"
+    )
     seed()
     client = TestClient(app, base_url="http://testserver/v2/")
 
