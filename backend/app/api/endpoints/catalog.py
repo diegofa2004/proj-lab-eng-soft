@@ -1,7 +1,7 @@
 import zipfile
 from datetime import date
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile
@@ -175,6 +175,7 @@ def catalog(
     q: str = "",
     genre: int | None = None,
     author: int | None = None,
+    source: Literal["catalogo", "usuario"] | None = None,
     limit: Limit = 24,
     offset: Offset = 0,
 ):
@@ -189,9 +190,18 @@ def catalog(
              WHERE g.id_livro=b.id_livro AND g.id_genero=:genre))
         AND (CAST(:author AS bigint) IS NULL OR EXISTS (SELECT 1 FROM plataforma.livro_autor a
              WHERE a.id_livro=b.id_livro AND a.id_autor=:author))
+        AND (CAST(:source AS text) IS NULL OR b.origem=:source)
         ORDER BY b.data_publicacao DESC,b.id_livro DESC LIMIT :lim OFFSET :off
     """),
-            dict(q=q, pattern=f"%{q}%", genre=genre, author=author, lim=limit, off=offset),
+            dict(
+                q=q,
+                pattern=f"%{q}%",
+                genre=genre,
+                author=author,
+                source=source,
+                lim=limit,
+                off=offset,
+            ),
         )
         .mappings()
         .all()
