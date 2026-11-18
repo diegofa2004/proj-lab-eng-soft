@@ -6,7 +6,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { pageContainer } from "@/app/lib/ui";
 
-type Props = { bookId: number; title: string; totalPages: number; userId: number | null };
+type Props = {
+  bookId: number;
+  title: string;
+  totalPages: number;
+  userId: number | null;
+  backHref?: string;
+  backLabel?: string;
+};
 const MIN_FONT_SIZE_PT = 8;
 const MAX_FONT_SIZE_PT = 36;
 const DEFAULT_FONT_SIZE_PT = 12;
@@ -75,7 +82,14 @@ function findTocEntry(entries: TocEntry[], href?: string | null): TocEntry | nul
   return best;
 }
 
-export default function EpubReader({ bookId, title, totalPages, userId }: Props) {
+export default function EpubReader({
+  bookId,
+  title,
+  totalPages,
+  userId,
+  backHref,
+  backLabel,
+}: Props) {
   const viewerRef = useRef<HTMLDivElement>(null);
   const bookRef = useRef<EpubBook | null>(null);
   const renditionRef = useRef<Rendition | null>(null);
@@ -470,7 +484,7 @@ export default function EpubReader({ bookId, title, totalPages, userId }: Props)
     <div className={`${pageContainer} flex min-h-screen flex-col gap-3 py-3 sm:py-5`}>
       <header className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 shadow-sm">
         <div className="min-w-0">
-          <Link className="text-sm font-medium text-[#1E2E4F] hover:underline" href={`/books/${bookId}`}>← Back to book</Link>
+          <Link className="text-sm font-medium text-[#1E2E4F] hover:underline" href={backHref ?? `/books/${bookId}`}>{backLabel ?? "← Back to book"}</Link>
           <h1 className="truncate text-lg font-semibold" title={title}>{title}</h1>
         </div>
         <a className="text-sm font-semibold text-[#1E2E4F] hover:underline" href={`/api/books/${bookId}/content`}>Download EPUB</a>

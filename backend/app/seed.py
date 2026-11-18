@@ -204,7 +204,7 @@ def seed():
                 max_members=1,
                 requires_adult_holder=False,
             ),
-            nome="Premium demo",
+            nome="LivrUSP Premium Individual",
         )
         get_or_create(
             Plano,

@@ -10,9 +10,12 @@ import {
 import { card, cardInteractive } from "@/app/lib/ui";
 import { StarRatingDisplay } from "@/components/books/star-rating";
 import { LivruspLogo } from "@/components/home/livrusp-logos";
+import FavoriteButton from "@/components/books/favorite-button";
 
 type BookResultCardProps = {
   book: BookSearchResult;
+  isFavorite?: boolean;
+  showFavoriteButton?: boolean;
 };
 
 const MAX_VISIBLE_GENRES = 3;
@@ -22,7 +25,11 @@ function getPublicationYear(dateString: string): string | null {
   return Number.isNaN(parsed.getTime()) ? null : String(parsed.getUTCFullYear());
 }
 
-export default function BookResultCard({ book }: BookResultCardProps) {
+export default function BookResultCard({
+  book,
+  isFavorite = false,
+  showFavoriteButton = false,
+}: BookResultCardProps) {
   const authorNames = (book.autores ?? []).map((author) => author.nome).filter(Boolean);
   const genres = book.generos_canonicos ?? [];
   const visibleGenres = genres.slice(0, MAX_VISIBLE_GENRES);
@@ -36,7 +43,7 @@ export default function BookResultCard({ book }: BookResultCardProps) {
   const hasRating = averageRating > 0 || reviewCount > 0;
 
   return (
-    <li>
+    <li className="relative">
       <Link
         className={`group flex h-full gap-5 p-5 ${card} ${cardInteractive}`}
         href={`/books/${book.id_livro}`}
@@ -140,6 +147,14 @@ export default function BookResultCard({ book }: BookResultCardProps) {
           </p>
         </div>
       </Link>
+      {showFavoriteButton ? (
+        <FavoriteButton
+          bookId={book.id_livro}
+          className="absolute right-4 bottom-4 z-20"
+          initialIsFavorite={isFavorite}
+          variant="icon"
+        />
+      ) : null}
     </li>
   );
 }

@@ -1,0 +1,71 @@
+from datetime import datetime
+
+from pydantic import Field, field_validator
+
+from app.models.capitulo import MAX_CAPITULO_BYTES, MAX_CAPITULOS_POR_LIVRO
+from app.schemas.autor import AutorPublic
+from app.schemas.common import BookTitle, PublicSchema
+from app.schemas.genero import GeneroPublic
+from app.schemas.livro import LivroPublic
+
+
+class CapituloCreate(PublicSchema):
+    titulo: BookTitle
+    conteudo: str = ""
+
+    @field_validator("conteudo")
+    @classmethod
+    def validate_conteudo(cls, value: str) -> str:
+        if len(value.encode("utf-8")) > MAX_CAPITULO_BYTES:
+            raise ValueError("Chapter content must be at most 1 MiB")
+        return value
+
+
+class CapituloUpdate(PublicSchema):
+    non_nullable_fields = frozenset({"titulo", "conteudo", "versao"})
+    titulo: BookTitle | None = None
+    conteudo: str | None = None
+    versao: int = Field(gt=0)
+
+    @field_validator("conteudo")
+    @classmethod
+    def validate_conteudo(cls, value: str | None) -> str | None:
+        if value is not None and len(value.encode("utf-8")) > MAX_CAPITULO_BYTES:
+            raise ValueError("Chapter content must be at most 1 MiB")
+        return value
+
+
+class CapituloPublic(PublicSchema):
+    id_capitulo: int
+    id_livro: int
+    ordem: int
+    titulo: str
+    conteudo: str
+    versao: int
+    criado_em: datetime
+    atualizado_em: datetime
+
+
+class CapituloReorder(PublicSchema):
+    capitulos: list[int] = Field(min_length=1, max_length=MAX_CAPITULOS_POR_LIVRO)
+
+    @field_validator("capitulos")
+    @classmethod
+    def validate_unique_ids(cls, value: list[int]) -> list[int]:
+        if len(set(value)) != len(value):
+            raise ValueError("Chapter ids must be unique")
+        return value
+
+
+class OwnedBookSummary(LivroPublic):
+    atualizado_em: datetime
+    total_capitulos: int
+    total_palavras: int
+    tem_epub: bool
+    pode_publicar: bool
+
+
+class OwnedBookDetail(OwnedBookSummary):
+    autores: list[AutorPublic]
+    generos: list[GeneroPublic]
+    capitulos: list[CapituloPublic]

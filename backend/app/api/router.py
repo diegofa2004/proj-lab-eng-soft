@@ -11,6 +11,7 @@ from app.api.endpoints import (
     reading,
     recommendations,
     reference,
+    writing,
 )
 
 api_router = APIRouter()
@@ -36,6 +37,7 @@ for router in (
     catalog.router,
     reading.router,
     reference.router,
+    writing.router,
 ):
     v2_router.include_router(router)
 
