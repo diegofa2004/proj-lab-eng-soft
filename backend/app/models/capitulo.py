@@ -18,6 +18,7 @@ from app.db.session import Base
 from app.models.common import SCHEMA, primary_key_column
 
 MAX_CAPITULO_BYTES = 1024 * 1024
+MAX_CAPITULOS_POR_LIVRO = 200
 
 
 class Capitulo(Base):
@@ -27,10 +28,11 @@ class Capitulo(Base):
         CheckConstraint("length(trim(titulo)) > 0", name="ck_capitulo_titulo"),
         CheckConstraint("versao > 0", name="ck_capitulo_versao"),
         CheckConstraint(
-            f"length(conteudo) <= {MAX_CAPITULO_BYTES}", name="ck_capitulo_conteudo_tamanho"
+            f"octet_length(conteudo) <= {MAX_CAPITULO_BYTES}",
+            name="ck_capitulo_conteudo_tamanho",
         ),
+        # The unique index also supports lookups by its leftmost column (id_livro).
         Index("uq_capitulo_livro_ordem", "id_livro", "ordem", unique=True),
-        Index("capitulo_livro", "id_livro"),
         {"schema": SCHEMA},
     )
 

@@ -2,9 +2,8 @@ from datetime import datetime
 
 from pydantic import Field, field_validator
 
+from app.models.capitulo import MAX_CAPITULO_BYTES, MAX_CAPITULOS_POR_LIVRO
 from app.schemas.common import BookTitle, PublicSchema
-
-MAX_CAPITULO_CHARS = 1024 * 1024
 
 
 class CapituloCreate(PublicSchema):
@@ -14,7 +13,7 @@ class CapituloCreate(PublicSchema):
     @field_validator("conteudo")
     @classmethod
     def validate_conteudo(cls, value: str) -> str:
-        if len(value) > MAX_CAPITULO_CHARS:
+        if len(value.encode("utf-8")) > MAX_CAPITULO_BYTES:
             raise ValueError("Chapter content must be at most 1 MiB")
         return value
 
@@ -28,7 +27,7 @@ class CapituloUpdate(PublicSchema):
     @field_validator("conteudo")
     @classmethod
     def validate_conteudo(cls, value: str | None) -> str | None:
-        if value is not None and len(value) > MAX_CAPITULO_CHARS:
+        if value is not None and len(value.encode("utf-8")) > MAX_CAPITULO_BYTES:
             raise ValueError("Chapter content must be at most 1 MiB")
         return value
 
@@ -45,7 +44,7 @@ class CapituloPublic(PublicSchema):
 
 
 class CapituloReorder(PublicSchema):
-    capitulos: list[int] = Field(min_length=1)
+    capitulos: list[int] = Field(min_length=1, max_length=MAX_CAPITULOS_POR_LIVRO)
 
     @field_validator("capitulos")
     @classmethod
