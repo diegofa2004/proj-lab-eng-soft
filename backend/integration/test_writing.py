@@ -7,7 +7,6 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
-from sqlalchemy import select
 from sqlalchemy.engine import make_url
 
 from app.core.config import settings
