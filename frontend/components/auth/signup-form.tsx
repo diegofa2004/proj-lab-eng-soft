@@ -17,6 +17,12 @@ export default function SignupForm() {
   const [formStatus, setFormStatus] = useState<FormStatus>("idle");
   const [message, setMessage] = useState("");
   const [requiresSignIn, setRequiresSignIn] = useState(false);
+  const today = new Date();
+  const maxBirthDate = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, "0"),
+    String(today.getDate()).padStart(2, "0"),
+  ].join("-");
 
   async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -60,6 +66,7 @@ export default function SignupForm() {
         body: JSON.stringify({
           username: formData.get("username"),
           email: formData.get("email"),
+          birth_date: formData.get("birthDate"),
           password,
         }),
       });
@@ -176,6 +183,21 @@ export default function SignupForm() {
                 placeholder="you@example.com"
                 required
                 type="email"
+              />
+            </div>
+
+            <div>
+              <label className={authLabelClassName} htmlFor="birthDate">
+                Date of birth
+              </label>
+              <input
+                autoComplete="bday"
+                className={authInputClassName}
+                id="birthDate"
+                max={maxBirthDate}
+                name="birthDate"
+                required
+                type="date"
               />
             </div>
 

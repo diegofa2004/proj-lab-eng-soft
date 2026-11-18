@@ -52,6 +52,28 @@ export type AdminStats = {
   reviews: number;
 };
 
+export type AdminAccessBook = {
+  id_livro: number;
+  titulo: string;
+  acessos: number;
+};
+
+export type AdminAccessGenre = {
+  id_genero: number;
+  nome: string;
+  acessos: number;
+};
+
+export type AdminAccessReport = {
+  users: {
+    total_usuarios: number;
+    usuarios_nao_bloqueados: number;
+    usuarios_bloqueados: number;
+  };
+  books: AdminAccessBook[];
+  genres: AdminAccessGenre[];
+};
+
 export type AdminActionType =
   | "bloquear_usuario"
   | "desbloquear_usuario"

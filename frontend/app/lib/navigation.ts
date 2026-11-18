@@ -6,6 +6,9 @@ export type NavLink = {
 export const SIGNED_NAV_LINKS: readonly NavLink[] = [
   { label: "For You", href: "/home" },
   { label: "Library", href: "/library" },
+  { label: "Favorites", href: "/favorites" },
+  { label: "Write", href: "/write" },
+  { label: "Publish", href: "/publish" },
   { label: "Catalog", href: "/books" },
   { label: "Popular", href: "/books?sort=popularity" },
   { label: "Top Rated", href: "/books?sort=rating" },

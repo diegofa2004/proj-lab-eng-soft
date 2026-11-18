@@ -9,9 +9,7 @@ import {
   DEFAULT_FAMILY_AND_FRIENDS_PLAN,
   DEFAULT_INDIVIDUAL_PLAN,
   FAMILY_AND_FRIENDS_MAX_MEMBERS,
-  FAMILY_AND_FRIENDS_MIN_HOLDER_AGE,
   PREMIUM_BENEFITS,
-  calculateAgeFromBirthDate,
   formatCycleDuration,
   formatPaymentStatus,
   formatPerPersonPrice,
@@ -26,7 +24,6 @@ import {
   validateFamilyAndFriendsCheckout,
   type BillingConfig,
   type CheckoutResponse,
-  type FamilyPlanHolderDetails,
   type PaymentRecord,
   type Subscription,
   type SubscriptionPlan,
@@ -41,6 +38,9 @@ type SubscriptionCheckoutProps = {
   initialPlans: SubscriptionPlan[];
   initialSubscriptions: Subscription[];
   initialPayments: PaymentRecord[];
+  /** "plans" shows the plan cards; "form" shows the subscription form for the chosen plan. */
+  view?: "plans" | "form";
+  initialPlanId?: number | null;
 };
 
 type DisplayedReceipt = {
@@ -98,6 +98,8 @@ export default function SubscriptionCheckout({
   initialPlans,
   initialSubscriptions,
   initialPayments,
+  view = "plans",
+  initialPlanId = null,
 }: SubscriptionCheckoutProps) {
   const router = useRouter();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>(initialSubscriptions);
@@ -115,21 +117,20 @@ export default function SubscriptionCheckout({
     DEFAULT_FAMILY_AND_FRIENDS_PLAN;
 
   const initialActiveSubscription = getActiveSubscription(initialSubscriptions);
-  const initialDefaultPlanId =
-    initialActiveSubscription &&
-    availablePlans.some((plan) => plan.id_plano === initialActiveSubscription.id_plano)
+  const requestedPlan =
+    initialPlanId !== null
+      ? availablePlans.find((plan) => plan.id_plano === initialPlanId)
+      : undefined;
+  const initialDefaultPlanId = requestedPlan
+    ? requestedPlan.id_plano
+    : initialActiveSubscription &&
+        availablePlans.some((plan) => plan.id_plano === initialActiveSubscription.id_plano)
       ? initialActiveSubscription.id_plano
       : (availablePlans[0]?.id_plano ?? individualPlan.id_plano);
 
   const [selectedPlanId, setSelectedPlanId] = useState<number>(initialDefaultPlanId);
   const [subscribedPlanOverride, setSubscribedPlanOverride] =
     useState<SubscriptionPlan | null>(null);
-  const [savedFamilyDetails, setSavedFamilyDetails] =
-    useState<FamilyPlanHolderDetails | null>(null);
-
-  const [holderName, setHolderName] = useState<string>(initialProfile.nome_perfil);
-  const [holderBirthDate, setHolderBirthDate] = useState<string>("");
-  const [holderAgeConfirmed, setHolderAgeConfirmed] = useState<boolean>(false);
   const [familyMembers, setFamilyMembers] = useState<[string, string, string]>(["", "", ""]);
 
   const [checkoutStatus, setCheckoutStatus] = useState<RequestStatus>("idle");
@@ -176,13 +177,6 @@ export default function SubscriptionCheckout({
   const isSwitchingPlan = Boolean(
     activeSubscription && effectiveActivePlanId !== selectedPlan.id_plano,
   );
-
-  const holderAge = useMemo(
-    () => (holderBirthDate ? calculateAgeFromBirthDate(holderBirthDate) : null),
-    [holderBirthDate],
-  );
-  const isHolderAdult = holderAge !== null && holderAge >= FAMILY_AND_FRIENDS_MIN_HOLDER_AGE && holderAge <= 120;
-  const isHolderUnderage = holderAge !== null && holderAge < FAMILY_AND_FRIENDS_MIN_HOLDER_AGE;
 
   const filledExtraMembers = useMemo(
     () => familyMembers.map((member) => member.trim()).filter(Boolean),
@@ -270,10 +264,7 @@ export default function SubscriptionCheckout({
     let cleanedMembers: string[] = [];
     if (isFamilyPlanSelected) {
       const validation = validateFamilyAndFriendsCheckout({
-        holderName,
         holderEmail: initialProfile.email,
-        holderBirthDate,
-        holderAgeConfirmed,
         members: familyMembers,
       });
 
@@ -292,8 +283,6 @@ export default function SubscriptionCheckout({
     const payload = isFamilyPlanSelected
       ? {
           id_plano: selectedPlan.id_plano,
-          holder_birth_date: holderBirthDate.trim(),
-          holder_age_confirmed: holderAgeConfirmed,
           member_emails: cleanedMembers,
         }
       : {
@@ -323,18 +312,6 @@ export default function SubscriptionCheckout({
       }
 
       setSubscribedPlanOverride(selectedPlan);
-      if (isFamilyPlanSelected) {
-        setSavedFamilyDetails({
-          holderName: holderName.trim(),
-          holderEmail: initialProfile.email,
-          holderBirthDate: holderBirthDate.trim(),
-          holderAgeConfirmed,
-          members: cleanedMembers,
-        });
-      } else {
-        setSavedFamilyDetails(null);
-      }
-
       if (data && data.subscription) {
         const nextSubscriptions = mergeSubscription(subscriptions, data.subscription);
         setSubscriptions(nextSubscriptions);
@@ -417,7 +394,6 @@ export default function SubscriptionCheckout({
       setIsPremium(Boolean(getActiveSubscription(updatedSubscriptions)));
       setCancelledInSession(true);
       setSubscribedPlanOverride(null);
-      setSavedFamilyDetails(null);
       setLatestCheckoutReceipt(null);
       setCheckoutStatus("success");
       setFeedbackMessage(
@@ -532,27 +508,6 @@ export default function SubscriptionCheckout({
                       {formatSubscriptionDate(activeSubscription.fim)}
                     </dd>
                   </div>
-                  {savedFamilyDetails && activePlan && isFamilyAndFriendsPlan(activePlan) ? (
-                    <>
-                      <div>
-                        <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
-                          Primary Holder (18+)
-                        </dt>
-                        <dd className="mt-0.5 font-medium text-black">
-                          {savedFamilyDetails.holderName}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
-                          Covered People
-                        </dt>
-                        <dd className="mt-0.5 font-medium text-black">
-                          {1 + savedFamilyDetails.members.length} of{" "}
-                          {FAMILY_AND_FRIENDS_MAX_MEMBERS} slots
-                        </dd>
-                      </div>
-                    </>
-                  ) : null}
                   {activeSubscription.referencia_provedor ? (
                     <div className="col-span-2">
                       <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
@@ -649,18 +604,18 @@ export default function SubscriptionCheckout({
         >
           <div className="border-b border-black/10 pb-5">
             <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#556B45]">
-              Subscription Checkout
+              {view === "form" ? "Subscribe now" : "Subscription Checkout"}
             </p>
             <h2
               className="mt-2 font-serif text-3xl font-normal tracking-tight text-black sm:text-4xl"
               id="subscription-checkout-heading"
             >
-              LivrUSP Premium plans
+              {view === "form" ? selectedPlan.nome : "LivrUSP Premium plans"}
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-black/65">
-              Select the Individual plan for one reader or the Family and Friends plan for up to 4
-              different people at a lower cost per person. Both plans include the exact same Premium
-              benefits.
+              {view === "form"
+                ? "Review your order and fill in the details below to activate your Premium subscription."
+                : "Select the Individual plan for one reader or the Family and Friends plan for up to 4 different people at a lower cost per person. Both plans include the exact same Premium benefits."}
             </p>
           </div>
 
@@ -696,6 +651,7 @@ export default function SubscriptionCheckout({
 
           <form className="mt-6 space-y-6" noValidate onSubmit={handleCheckout}>
             {/* Two-Plan Selector */}
+            {view === "plans" ? (
             <div>
               <span className="block font-mono text-[11px] font-semibold uppercase tracking-wider text-[#556B45]">
                 Choose Your Plan
@@ -789,10 +745,53 @@ export default function SubscriptionCheckout({
                   );
                 })}
               </div>
+
+              <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-black/10 pt-5">
+                <button
+                  className="rounded-full bg-[#1E2E4F] px-7 py-2.5 text-xs font-semibold text-white transition hover:bg-[#15223B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E2E4F] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
+                  disabled={isSwitchingPlan || cancellingId !== null}
+                  onClick={() =>
+                    router.push(`/subscription/checkout?plan=${selectedPlan.id_plano}`)
+                  }
+                  type="button"
+                >
+                  Continue to details
+                </button>
+
+                <p
+                  aria-live="polite"
+                  className={`text-sm font-medium ${
+                    checkoutStatus === "error" ? "text-red-700" : "text-[#3A4B2E]"
+                  }`}
+                  role={checkoutStatus === "error" ? "alert" : "status"}
+                >
+                  {feedbackMessage}
+                </p>
+              </div>
+
+              {isSwitchingPlan && activeSubscription ? (
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/35 bg-amber-50 px-3.5 py-3 text-xs text-amber-950">
+                  <p className="leading-relaxed">
+                    Cancel your current active plan before switching to{" "}
+                    <strong>{selectedPlan.nome}</strong>.
+                  </p>
+                  <button
+                    className={dangerCompact}
+                    disabled={cancellingId !== null || isSubmitting}
+                    onClick={() => handleCancelSubscription(activeSubscription.id_assinatura)}
+                    type="button"
+                  >
+                    {cancellingId === activeSubscription.id_assinatura
+                      ? "Cancelling..."
+                      : "Cancel current plan"}
+                  </button>
+                </div>
+              ) : null}
             </div>
+            ) : null}
 
             {/* Family & Friends Holder (18+) & Group Members Setup */}
-            {isFamilyPlanSelected ? (
+            {view === "form" && isFamilyPlanSelected ? (
               <div className={`space-y-5 p-5 ${cardInset}`}>
                 <div className="border-b border-black/10 pb-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -804,72 +803,12 @@ export default function SubscriptionCheckout({
                     </span>
                   </div>
                   <p className="mt-1.5 text-xs leading-relaxed text-black/65">
-                    The Family and Friends plan requires a primary account holder who is
-                    at least <strong>{FAMILY_AND_FRIENDS_MIN_HOLDER_AGE} years old</strong> and
-                    covers up to <strong>{FAMILY_AND_FRIENDS_MAX_MEMBERS} different people</strong>{" "}
-                    with the exact same Premium benefits.
+                    The primary account holder must be 18 or older, based on the date of birth
+                    saved on the account. This plan covers up to{" "}
+                    <strong>{FAMILY_AND_FRIENDS_MAX_MEMBERS} different people</strong> with the
+                    exact same Premium benefits.
                   </p>
                 </div>
-
-                {/* Primary Holder */}
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className={labelClassName} htmlFor="family-holder-name">
-                      Primary Holder Name
-                    </label>
-                    <input
-                      className={fieldClassName}
-                      id="family-holder-name"
-                      onChange={(event) => setHolderName(event.target.value)}
-                      placeholder="Full name of primary holder"
-                      required
-                      type="text"
-                      value={holderName}
-                    />
-                  </div>
-
-                  <div>
-                    <label className={labelClassName} htmlFor="family-holder-birthdate">
-                      Primary Holder Date of Birth (18+ Required)
-                    </label>
-                    <input
-                      className={fieldClassName}
-                      id="family-holder-birthdate"
-                      onChange={(event) => setHolderBirthDate(event.target.value)}
-                      required
-                      type="date"
-                      value={holderBirthDate}
-                    />
-                    {isHolderAdult ? (
-                      <p className="mt-1.5 inline-flex items-center rounded-full border border-[#556B45]/30 bg-[#556B45]/15 px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[#3A4B2E]">
-                        Age {holderAge} · Adult holder verified (18+)
-                      </p>
-                    ) : isHolderUnderage ? (
-                      <p className="mt-1.5 text-xs font-medium text-red-700" role="alert">
-                        Holder is {holderAge} years old. Must be at least 18 years old.
-                      </p>
-                    ) : (
-                      <p className="mt-1.5 text-[11px] text-black/55">
-                        Primary holder must be at least {FAMILY_AND_FRIENDS_MIN_HOLDER_AGE} years
-                        old.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-black/10 bg-white/80 p-3.5 text-xs leading-relaxed text-black/80">
-                  <input
-                    checked={holderAgeConfirmed}
-                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-black/25 text-[#1E2E4F] focus:ring-[#1E2E4F]"
-                    id="family-holder-age-confirmed"
-                    onChange={(event) => setHolderAgeConfirmed(event.target.checked)}
-                    type="checkbox"
-                  />
-                  <span>
-                    I confirm that the primary account holder is <strong>at least 18 years old</strong> and responsible for
-                    managing the up to 4 different people included in this Family and Friends plan.
-                  </span>
-                </label>
 
                 {/* Up to 4 Different People */}
                 <div className="border-t border-black/10 pt-4">
@@ -883,21 +822,20 @@ export default function SubscriptionCheckout({
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-black/60">
-                    The primary holder counts as person #1. Optionally list up to 3 additional registered
-                    reader email addresses. You can include fewer than 4 now, or fill all 4
-                    slots.
+                    The primary holder counts as person #1. Add at least 1 and up to 3 additional
+                    registered reader email addresses, for up to 4 people in total.
                   </p>
 
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <div className="rounded-xl border border-[#1E2E4F]/20 bg-[#D9E1F1]/45 px-3.5 py-2.5">
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[#1E2E4F]">
-                          Person 1 · Primary Holder (18+)
+                          Person 1 · Primary Holder
                         </span>
                         <span className="font-mono text-[10px] text-[#556B45]">Included</span>
                       </div>
                       <p className="mt-1 truncate text-sm font-medium text-black">
-                        {holderName.trim() || initialProfile.nome_perfil}
+                        {initialProfile.nome_perfil}
                       </p>
                       <p className="truncate font-mono text-[11px] text-black/55">
                         {initialProfile.email}
@@ -910,7 +848,7 @@ export default function SubscriptionCheckout({
                           className="block font-mono text-[10px] font-semibold uppercase tracking-wider text-black/60"
                           htmlFor={`family-member-${slotIndex + 2}`}
                         >
-                          Person {slotIndex + 2} (Optional)
+                          Person {slotIndex + 2}{slotIndex === 0 ? " (Required)" : " (Optional)"}
                         </label>
                         <input
                           className={fieldClassName}
@@ -928,10 +866,20 @@ export default function SubscriptionCheckout({
             ) : null}
 
             {/* Checkout Summary */}
+            {view === "form" ? (
+            <>
             <div className={`space-y-3 p-5 ${cardInset}`}>
-              <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[#556B45]">
-                Order Summary
-              </span>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[#556B45]">
+                  Order Summary
+                </span>
+                <Link
+                  className="text-xs font-semibold text-[#1E2E4F] transition hover:underline"
+                  href="/subscription"
+                >
+                  ← Change plan
+                </Link>
+              </div>
 
               <dl className="grid gap-3 text-sm sm:grid-cols-2">
                 <div>
@@ -969,21 +917,6 @@ export default function SubscriptionCheckout({
                       : `${perPersonIndividualLabel} / person`}
                   </dd>
                 </div>
-                {isFamilyPlanSelected ? (
-                  <div>
-                    <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
-                      Primary Holder (18+)
-                    </dt>
-                    <dd className="mt-0.5 text-xs font-medium text-black/80">
-                      {holderName.trim() || "Name required"} ·{" "}
-                      {isHolderAdult
-                        ? `${holderAge} yrs (18+ verified)`
-                        : isHolderUnderage
-                          ? `${holderAge} yrs (Must be 18+)`
-                          : "Birth date required"}
-                    </dd>
-                  </div>
-                ) : null}
                 <div>
                   <dt className="font-mono text-[10px] uppercase tracking-wider text-black/50">
                     Total Due
@@ -1068,7 +1001,17 @@ export default function SubscriptionCheckout({
               >
                 {feedbackMessage}
               </p>
+              {checkoutStatus === "success" ? (
+                <Link
+                  className="text-xs font-semibold text-[#1E2E4F] transition hover:underline sm:text-sm"
+                  href="/subscription"
+                >
+                  View my membership →
+                </Link>
+              ) : null}
             </div>
+            </>
+            ) : null}
           </form>
 
           {/* Latest Payment Confirmation Receipt */}
@@ -1141,6 +1084,7 @@ export default function SubscriptionCheckout({
         </section>
 
         {/* Subscription & Payment History Card */}
+        {view === "plans" ? (
         <section
           aria-labelledby="subscription-history-heading"
           className={`${card} p-6 sm:p-8`}
@@ -1288,6 +1232,7 @@ export default function SubscriptionCheckout({
             </div>
           </div>
         </section>
+        ) : null}
       </div>
     </div>
   );
