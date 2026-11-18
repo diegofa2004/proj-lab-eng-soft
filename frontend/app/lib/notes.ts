@@ -13,11 +13,15 @@ export type PersonalNote = {
   data_atualizacao: string;
 };
 
-export async function getBookNotes(bookId: number): Promise<PersonalNote[]> {
+export type BookNotesResult =
+  | { status: "ok"; notes: PersonalNote[] }
+  | { status: "unavailable"; detail: string };
+
+export async function getBookNotes(bookId: number): Promise<BookNotesResult> {
   const token = (await cookies()).get(accessTokenCookieName)?.value;
 
   if (!token) {
-    return [];
+    return { status: "ok", notes: [] };
   }
 
   try {
@@ -30,12 +34,14 @@ export async function getBookNotes(bookId: number): Promise<PersonalNote[]> {
     );
 
     if (!response.ok) {
-      return [];
+      return { status: "unavailable", detail: "We could not load your notes. Please try again." };
     }
 
     const notes = (await response.json()) as PersonalNote[];
-    return Array.isArray(notes) ? notes : [];
+    return Array.isArray(notes)
+      ? { status: "ok", notes }
+      : { status: "unavailable", detail: "The notes service returned an invalid response." };
   } catch {
-    return [];
+    return { status: "unavailable", detail: "The notes service is unavailable." };
   }
 }

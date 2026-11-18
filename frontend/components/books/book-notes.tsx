@@ -18,6 +18,7 @@ type BookNotesProps = {
   bookId: number;
   currentUser: CurrentUser | null;
   notes: PersonalNote[];
+  loadError?: string | null;
 };
 
 function formatNoteDate(value: string): string {
@@ -34,7 +35,7 @@ function formatNoteDate(value: string): string {
   }).format(parsed);
 }
 
-export default function BookNotes({ bookId, currentUser, notes }: BookNotesProps) {
+export default function BookNotes({ bookId, currentUser, notes, loadError = null }: BookNotesProps) {
   const [draftText, setDraftText] = useState("");
   const [draftLocation, setDraftLocation] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -249,6 +250,12 @@ export default function BookNotes({ bookId, currentUser, notes }: BookNotesProps
         </div>
       </form>
 
+      {loadError ? (
+        <p className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+          {loadError}
+        </p>
+      ) : null}
+
       {notes.length > 0 ? (
         <ul className="mt-8 space-y-4">
           {notes.map((note) => (
@@ -336,7 +343,7 @@ export default function BookNotes({ bookId, currentUser, notes }: BookNotesProps
             </li>
           ))}
         </ul>
-      ) : (
+      ) : loadError ? null : (
         <p className={`mt-8 p-5 text-sm text-black/60 ${cardInset}`}>
           You have not written any notes for this book yet.
         </p>

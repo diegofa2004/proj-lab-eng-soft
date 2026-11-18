@@ -123,7 +123,8 @@ export default async function BookDetailsPage({ params }: BookDetailsPageProps) 
           <BookNotes
             bookId={book.id_livro}
             currentUser={currentUser}
-            notes={notes}
+            loadError={notes.status === "unavailable" ? notes.detail : null}
+            notes={notes.status === "ok" ? notes.notes : []}
           />
 
           <ReviewForm
