@@ -1,10 +1,15 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 
 from app.api.endpoints.catalog import catalog
 
 
 def test_catalog_filters_books_by_source():
     engine = create_engine("sqlite://")
+
+    @event.listens_for(engine, "before_cursor_execute", retval=True)
+    def adapt_postgres_search_syntax(_conn, _cursor, statement, parameters, _context, _executemany):
+        return statement.replace(" ILIKE ", " LIKE "), parameters
+
     with engine.connect() as db:
         db.exec_driver_sql("ATTACH DATABASE ':memory:' AS plataforma")
         db.exec_driver_sql(
