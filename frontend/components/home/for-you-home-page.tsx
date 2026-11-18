@@ -15,6 +15,7 @@ import {
   secondaryCompact,
 } from "@/app/lib/ui";
 import BookCoverCard from "@/components/books/book-cover-card";
+import { StarRatingDisplay } from "@/components/books/star-rating";
 import SiteFooter from "@/components/layout/site-footer";
 import SiteHeader from "@/components/layout/site-header";
 
@@ -236,8 +237,11 @@ export default function ForYouHomePage({
                   >
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-sm font-semibold">{activity.username}</span>
-                      <span className="rounded-full bg-[#FBE251]/70 px-2.5 py-1 text-xs font-bold">
-                        {activity.rating}/5
+                      <span className="flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1">
+                        <StarRatingDisplay rating={activity.rating} size="sm" />
+                        <span className="text-xs font-bold text-[#1E2E4F]">
+                          {activity.rating}/5
+                        </span>
                       </span>
                     </div>
                     <h3 className="mt-5 font-serif text-2xl leading-tight">
