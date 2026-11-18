@@ -60,7 +60,12 @@ export default async function ProfilePage() {
             assets={assets}
             initialProfile={profile}
             levels={levels}
-            pointMovements={pointMovements}
+            pointMovements={
+              pointMovements.status === "ok" ? pointMovements.movements : []
+            }
+            pointMovementsError={
+              pointMovements.status === "unavailable" ? pointMovements.detail : null
+            }
             stats={stats}
           />
         </main>

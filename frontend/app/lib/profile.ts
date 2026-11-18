@@ -228,10 +228,14 @@ export async function getProfileDashboardStats(): Promise<ProfileDashboardStats>
 }
 
 /** Fetches the reader's point movements, newest first. */
-export async function getProfilePointMovements(): Promise<PointMovement[]> {
+export type ProfilePointMovementsResult =
+  | { status: "ok"; movements: PointMovement[] }
+  | { status: "unavailable"; detail: string };
+
+export async function getProfilePointMovements(): Promise<ProfilePointMovementsResult> {
   const token = (await cookies()).get(accessTokenCookieName)?.value;
   if (!token) {
-    return [];
+    return { status: "unavailable", detail: "Sign in to view your point history." };
   }
 
   try {
@@ -241,12 +245,17 @@ export async function getProfilePointMovements(): Promise<PointMovement[]> {
     });
 
     if (!response.ok) {
-      return [];
+      return {
+        status: "unavailable",
+        detail: "We could not load your point history. Please try again.",
+      };
     }
 
     const movements = (await response.json()) as PointMovement[];
-    return Array.isArray(movements) ? movements : [];
+    return Array.isArray(movements)
+      ? { status: "ok", movements }
+      : { status: "unavailable", detail: "The points service returned an invalid response." };
   } catch {
-    return [];
+    return { status: "unavailable", detail: "The points service is unavailable." };
   }
 }

@@ -36,6 +36,7 @@ type ProfileEditorProps = {
   levels: ProfileLevel[];
   stats: ProfileDashboardStats;
   pointMovements: PointMovement[];
+  pointMovementsError: string | null;
 };
 
 const labelClassName =
@@ -133,6 +134,7 @@ export default function ProfileEditor({
   levels,
   stats,
   pointMovements,
+  pointMovementsError,
 }: ProfileEditorProps) {
   const router = useRouter();
   const [savedProfile, setSavedProfile] = useState<UserProfile>(initialProfile);
@@ -542,11 +544,15 @@ export default function ProfileEditor({
                 </p>
               </div>
               <span className="rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 font-mono text-[11px] font-semibold text-red-700">
-                -{totalInactivityDeduction} pts
+                {pointMovementsError ? "— pts" : `-${totalInactivityDeduction} pts`}
               </span>
             </div>
 
-            {recentInactivityMovements.length > 0 ? (
+            {pointMovementsError ? (
+              <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800" role="alert">
+                {pointMovementsError}
+              </p>
+            ) : recentInactivityMovements.length > 0 ? (
               <ul className="mt-3">
                 {recentInactivityMovements.map((movement) => (
                   <li
